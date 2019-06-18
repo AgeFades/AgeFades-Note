@@ -1,8 +1,3 @@
----
-typora-copy-images-to: ./img
-typora-root-url: ../Linux系统扫描技术及安全防范
----
-
 # 慕课 - Linux系统扫描技术及安全防范
 
 ## 扫描技术 : 
@@ -119,7 +114,7 @@ typora-root-url: ../Linux系统扫描技术及安全防范
 
 ​			tcpdump -np -ieth0 src host IP地址 : 只查看该 Ip​		
 
-![](/img/源码包编译过程.png)
+![](<https://i.loli.net/2019/06/18/5d08a8919f74558358.png>)
 
 ​		​				
 
@@ -135,7 +130,9 @@ typora-root-url: ../Linux系统扫描技术及安全防范
 
 #### 	    traceroute : 
 
-##### ​		Tracerouter 原理 : ![](/img/Traceroute原理.png)
+##### ​		Tracerouter 原理 : 
+
+​		![Traceroute原理.png](https://i.loli.net/2019/06/18/5d08a96861e5858991.png)
 
 ##### ​		traceroute 参数使用 :
 
@@ -159,7 +156,9 @@ typora-root-url: ../Linux系统扫描技术及安全防范
 
 ​		典型命令 : nmap 、ncat
 
-#### ​	nmap :![](/img/nmap.png)
+#### ​	nmap :
+
+​		![nmap.png](https://i.loli.net/2019/06/18/5d08a98dea72a16898.png)
 
 ##### 		安装 : yum install nmap
 
@@ -179,9 +178,11 @@ typora-root-url: ../Linux系统扫描技术及安全防范
 
 ​				SYN 攻击
 
-​					利用 TCP 协议缺陷进行，导致系统服务停止响应，网络带宽跑满或者响应缓慢。​					![](/img/SYN攻击原理.png)
+​					利用 TCP 协议缺陷进行，导致系统服务停止响应，网络带宽跑满或者响应缓慢。​					
 
-​	
+​				![SYN攻击原理.png](https://i.loli.net/2019/06/18/5d08a9b1168f995086.png)
+
+
 
 ​				DDOS 攻击
 
@@ -229,9 +230,9 @@ typora-root-url: ../Linux系统扫描技术及安全防范
 
 ​		通过 tracert 路由跟踪一个公网地址，发现有走内网的核心设备转发。
 
-​		![](/img/tracert.png)
+![tracert.png](https://i.loli.net/2019/06/18/5d08a94903a2595175.png)	
 
-### ​	Step2:
+### 	Step2:
 
 ​		通过端口范围扫描 nmap ，得知开放了 80(http)、23(Telnet)端口。
 
@@ -245,7 +246,7 @@ typora-root-url: ../Linux系统扫描技术及安全防范
 
 ​		登录到管理界面后，尝试用 nc 命令进行交互式 shell 操作。
 
-​	![](/img/nc.png)
+​	![nc.png](https://i.loli.net/2019/06/18/5d08a9075955120944.png)
 
 ### ​	Step5:
 
