@@ -312,7 +312,7 @@
 
 ​	参数 : -connlimit-above n	# 限制并发个数
 
-​	例 : iptables -I INPUT -p tcp -syn -dport 80 -m connlimit --connlimit-above 100 -j REJECT
+​	例 : iptables -I INPUT -p tcp -syn -dport 80 -m connlimit --connlimit-above 10 -j REJECT
 
 ### Limit 模块 :
 
@@ -408,4 +408,4 @@ iptables -I FORWARD -s 10.10.0.50 -j ACCEPT
 
 ```
 
-​	
+# 	

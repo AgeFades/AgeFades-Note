@@ -214,11 +214,11 @@
 
 ​				通过 iptables 防止扫描
 
-​					iptables -A FORWARD -p tcp -syn -m limit -limit 1/s -limit-burst 5 -j ACCEPT
+​					iptables -A FORWARD -p tcp -syn -m limit --limit 1/s -limit-burst 5 -j ACCEPT
 
-​					iptables -A FORWARD -p tcp -tcp-flags SYN,ACK,FIN,RST RST -m limit -limit 1/s -j ACCEPT
+​					iptables -A FORWARD -p tcp -tcp-flags SYN,ACK,FIN,RST RST -m limit --limit 1/s -j ACCEPT
 
-​					iptables -A FORWARD -p icmp -icmp-type echo-request -m limit -limit 1/s -j ACCEPT
+​					iptables -A FORWARD -p icmp -icmp-type echo-request -m limit --limit 1/s -j ACCEPT
 
 ​					以上三条命令为教程命令，实际使用中均报错。
 
