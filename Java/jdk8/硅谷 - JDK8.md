@@ -367,15 +367,106 @@ System.out.println(dss.getSum()); // or getAverage | getMax ...
 
 #### 		Fork / Join 框架​			![UTOOLS1561602608462.png](https://i.loli.net/2019/06/27/5d142a31b9b2726965.png)
 
+#### ​		Fork / Join 与传统线程池的区别
 
+​			采用 "工作窃取" 模式（work - stealing）:
 
-​		
+​				当执行新任务时，拆分成更小的任务执行，并将小任务加到线程队列中
+
+​				然后再从一个随机线程的队列中偷一个放到自己的队列中。
+
+​			优势 : 
+
+​				一般的线程池，如果一个线程正在执行的任务由于某些原因无法继续运行
+
+​				该线程就处于等待状态。
+
+​				Fork / Join 中，如某个子任务的线程等待另一个子任务的完成而阻塞
+
+​				该线程会主动寻找其他未运行的子任务来运行
+
+​				减少线程等待时间，提供性能和吞吐量。
+
+## Optional 
+
+### 	介绍
+
+​		java.util.Optional : 容器类，代表一个值存在或不存在。
+
+​		原来 null 表示一个值不存在，现在 Optional 可以更好的避免空指针异常。
+
+### 	常用方法
+
+​		Optional.of(T t) : 创建一个 Optional 实例
+
+```java
+/**
+* 此处打印为 Employee[ xx =null ...]
+* 如果 Optional.of(null), 还是会报空指针异常
+*/
+Optional<Employee> op = Optional.of(new Employee());
+System.out.println(op.get());
+```
+
+​		Optional.empty() : 创建一个空的 Optional 实例
+
+```java
+/**
+* 此处报错，NoSeachElement ....
+*/
+Optional<Employee> op = Optional.empty();
+System.out.println(op.get());
+```
+
+​		Optional.ofNullable(T t) : 若 t 不为 null，创建 Otional 实例，否则创建空实例
+
+​		isPresent() : 判断是否包含值
+
+​		orElse(T t) : 如果调用对象包含值，返回该值，否则返回 t
+
+​		orElseGet(Supplier s) : 如果调用对象包含值，返回该值，否则返回 s 获取的值
+
+​		map(Function f) : 如果有值对其处理，并返回处理后的 Optional，否则返回 Optional.empty()
+
+​		flatMap(Function mapper) : 与 map 类似，要求返回值必须是 Optional
 
 ## 接口中的默认方法与静态方法
 
+### 	默认方法
+
+​		类优先原则
+
+​			若某接口中定义了一个默认方法，而另外一个父类或接口中又定义了一个同名的方法时
+
+​			选择父类中的方法。如果一个父类提供了具体的实现，那么接口中具有相同名称和参数的
+
+​				默认方法会被忽略
+
+​			接口冲突。如果一个父接口提供一个默认方法，而另一个接口中也提供了一个具有相同名称
+
+​			和参数列表的方法（不管方法是否有默认方法），那么必须覆盖该方法来解决冲突。
+
 ## 新时间日期 API
 
+​	个人感觉这部分没什么太大的意义，时间日期类的处理都可参照 [Hutool.cn]()
+
 ## 其他新特性
+
+### 	重复注解与类型注解
+
+​		JDK8 对注解处理提供了两点改进
+
+​			可重复的注解及可用于类型的注解
+
+​		感觉也没啥用
+
+## 总结
+
+​	JDK8 最重要的两个更新
+
+​	Lambda 表达式
+
+​	Stream 流
 
 
 
