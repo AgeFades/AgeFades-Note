@@ -222,7 +222,7 @@ Stream.generate(() -> Math.random())
 * distinct : 筛选，通过流所生成元素的 hashCode() 和 equals() 去除重复元素
 * map : 映射，接收 Lambda，将 元素转换成其他形式 或提取信息。
 * 			 接收函数作为参数，该函数会被应用到每个元素上，并将其映射成一个新的元素
-* flatMap : 接收一个函数作为参数,将流中的每个值都换成另一个流，然后把所有流合并成	*			一个流
+* flatMap : 接收一个函数作为参数,将流中的每个值都换成另一个流，然后把所有流合并成一个流
 * sorted() : 自然排序(Comparable)
 * sorted(Comparator com) : 定制排序(Comparator)
 */
@@ -291,10 +291,95 @@ employees.stream()
     	 .min(Double::compare);
 ```
 
+```java
+/**
+* 规约与收集
+*
+* 规约
+* reduce(T identity,BinaryOperator) / reduce(BinaryOperator) :
+* 	可以将流中元素反复结合起来，得到一个值
+* map 与 reduce 的；连接通常称为 map-reduce 模式(映射规约)
+*
+* 收集
+* collect : 将流转换为其他形式，接收一个 Collector 接口的实现，用于给 Stream 中元素汇总 
+* 	Collectors.counting() : 总数
+* 	Collectors.averagingDouble(Employee::getSalary()) : 平均值
+* 	Collectors.summingDouble(Employee::getSalary())	: 总和
+* 	Collectors.maxBy((e1,e2) -> Double.compare(e1.getSalary(),e2.getSalary())) : 最大值
+* 	Collectors.joining(",") : 组合某字符串
+*/
 
+// 规约
+List<Integer> list = Arrays.asList(1,2,3,4,5);
+Integer sum = list.stream()
+    			  .reduce(0,(x,y) -> x + y);
+System.out.println(sum); // 15
+
+Optional<Double> op = employees.stream()
+    						   .map(Employee::getSalary)
+    						   .reduce(Double::sum);
+System.out.println(op.get()); // 员工工资总和
+
+// 收集
+List<String> list = employees.stream()
+    						 .map(Employee::getName)
+    						 .collect(Collector.toList()); 
+
+HashSet<String> hs = employees.stream()
+    						  .map(Employee::getName)
+    						  .collect(Collectors.toCollection(HashSet::new));
+							  .forEach(System.out::println);
+
+// 分组
+Map<Status,List<Employee>> map = employees.stream()    									 											  .collect(Collectors
+									      .groupingBy(Employee::getStatus);
+
+// 多级分组
+Map<Status,Map<String,List<Employee>>> map = employees.stream()                                                                                                                                               .collect(Collectors																.groupingBy(Employee::getStatus,Collectors.groupingBy( e ->{
+    if(((Employee) e).getAge() <= 35 ) return "青年";
+    else if(((Employee) e).getAge() <= 50 ) return "中年";
+    else return "老年";
+})))
+      
+// 分区
+Map<Boolean,List<Employee>> map = employees.stream()
+                                           .collect(Collectors.partitioningBy( e -> 												   e.getSalary() >8000));                                                                                                    
+                                                                                                                                               
+// 数据收集
+DoubleSummaryStatistices dss = employees.strean()
+                                 		.collect(Collectors
+                                	    .summarizingDouble(Employee::getSalary)); 
+System.out.println(dss.getSum()); // or getAverage | getMax ...                                                                                                                                               
+                                                                                                                                                                                                                                                                                                                                                                                                                         
+                                                                                                                                              
+
+```
+
+### 	并行流与顺序流
+
+​		JDK8 中将并行进行了优化，Stream API 可以声明性地通过 
+
+​		parallel() 与 sequential() 在并行流与顺序流之间进行切换。
+
+#### 		并行流
+
+​			把一个内容分成多个数据块，并用不同的线程分别处理每个数据块的流。
+
+#### 		Fork / Join 框架​			![UTOOLS1561602608462.png](https://i.loli.net/2019/06/27/5d142a31b9b2726965.png)
+
+
+
+​		
 
 ## 接口中的默认方法与静态方法
 
 ## 新时间日期 API
 
 ## 其他新特性
+
+
+
+
+
+
+
