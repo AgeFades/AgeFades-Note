@@ -4,7 +4,7 @@
 
 ​	SpringCloud + OAuth2 : 三方认证登录协议
 
-```java
+```xml
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-oauth2</artifactId>
@@ -13,7 +13,7 @@
 
 ​	SpringSocial : 第三方登录依赖
 
-```Java
+```xml
 		<dependency>
 			<groupId>org.springframework.social</groupId>
 			<artifactId>spring-social-config</artifactId>
