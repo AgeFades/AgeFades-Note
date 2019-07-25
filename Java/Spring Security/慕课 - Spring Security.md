@@ -496,8 +496,216 @@ public class MyAspect {
 
 ​		攻击防护（防止伪造身份）
 
+### 基本原理
+
+![UTOOLS1562215094652.png](https://i.loli.net/2019/07/04/5d1d82b89ff0761615.png)
+
+### 自定义用户认证逻辑
+
+```java
+/**
+ * 默认的 UserDetailsService 实现
+ * 不做任何处理，只在控制台打印一句日志，然后抛出异常，提醒业务系统自己配置 UserDetailsService。
+ */
+@Slf4j
+public class DefaultUserDetailsService implements UserDetailsService {
+
+	@Override
+	public UserDetails loadUserByUsername(String username) 
+        				throws 	UsernameNotFoundException {
+        /**
+         * TODO 根据 username 查找用户信息
+         * return new User(username,password,authorities)
+         *		其他 boolean 构造参数 : 默认均为 true
+         *			isAccountNotExpired() : 没过期？
+         *			isAccountNonLocked() : 没锁定？
+         *			isCredentialsNonExpired() : 密码没过期？
+         *			isEnabled() : 不能用？
+         * 密码是否匹配是有 Security 来完成的
+         */
+		logger.warn("请配置 UserDetailsService 接口的实现.");
+		throw new UsernameNotFoundException(username);
+	}
+
+}
+```
+
+### ​自定义密码加密工具	
+
+```java
+@Bean
+public PasswordEncoder passwordEncoder(){
+    return new BCryptPasswordEncoder();
+}
+```
+
+### 个性化用户认证流程
+
+#### 	自定义登录页面
+
+```java
+@Override
+protected void configure(HttpSecurity http) throws Exception{
+    http.formLogin().loginPage("自定义登录页");	// rest 路径
+}
+```
+
+#### 	![UTOOLS1562217502616.png](https://i.loli.net/2019/07/04/5d1d8c1fabb9335289.png)
+
+​	![image-20190704132214346](/Users/admin/Library/Application Support/typora-user-images/image-20190704132214346.png)
+
+#### 	自定义登录成功处理
+
+```java
+/**
+ * 浏览器环境下登录成功的处理器
+ * 
+ * @author zhailiang
+ */
+@Component("imoocAuthenticationSuccessHandler")
+public class ImoocAuthenticationSuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
+
+	private Logger logger = LoggerFactory.getLogger(getClass());
+
+	@Autowired
+	private ObjectMapper objectMapper;
+
+	@Autowired
+	private SecurityProperties securityProperties;
+
+	private RequestCache requestCache = new HttpSessionRequestCache();
+
+	@Override
+	public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
+			Authentication authentication) throws IOException, ServletException {
+
+		logger.info("登录成功");
+
+		if (LoginResponseType.JSON.equals(securityProperties.getBrowser().getSignInResponseType())) {
+			response.setContentType("application/json;charset=UTF-8");
+			String type = authentication.getClass().getSimpleName();
+			response.getWriter().write(objectMapper.writeValueAsString(new SimpleResponse(type)));
+		} else {
+			// 如果设置了imooc.security.browser.singInSuccessUrl，总是跳到设置的地址上
+			// 如果没设置，则尝试跳转到登录之前访问的地址上，如果登录前访问地址为空，则跳到网站根路径上
+			if (StringUtils.isNotBlank(securityProperties.getBrowser().getSingInSuccessUrl())) {
+				requestCache.removeRequest(request, response);
+				setAlwaysUseDefaultTargetUrl(true);
+				setDefaultTargetUrl(securityProperties.getBrowser().getSingInSuccessUrl());
+			}
+			super.onAuthenticationSuccess(request, response, authentication);
+		}
+
+	}
+
+}
+
+```
+
+```java
+@Override
+protected void configure(HttpSecurity http) throws Exception{
+    http.formLogin().successHandler("xxx");	// 自定义成功处理器
+}
+```
+
+#### 	自定义登录失败处理
+
+​		与上类似
+
+### 认证流程详解
+
+![UTOOLS1562218505542.png](https://i.loli.net/2019/07/04/5d1d900a751b769974.png)
+
+![UTOOLS1562218541359.png](https://i.loli.net/2019/07/04/5d1d902da5db693313.png)
+
+### 图片认证码
+
+#### 	开发流程
+
+​		根据随机数生成图片
+
+​		将随机数存到 Session 中
+
+​		在将生成的图片写到接口的响应中
+
+​		开发 Security 上的 Filter 链
+
+![UTOOLS1562218803858.png](https://i.loli.net/2019/07/04/5d1d9134a230f71992.png)
+
+### 记住我
+
+​	前端页面需提供 checkbox name 为 remember-me
+
+![UTOOLS1562218889204.png](https://i.loli.net/2019/07/04/5d1d91898f97456569.png)
+
+![UTOOLS1562218932843.png](https://i.loli.net/2019/07/04/5d1d91b52a47295061.png)
+
+```java
+	/**
+	 * 记住我功能的token存取器配置
+	 * @return
+	 */
+	@Bean
+	public PersistentTokenRepository persistentTokenRepository() {
+		JdbcTokenRepositoryImpl tokenRepository = new JdbcTokenRepositoryImpl();
+		tokenRepository.setDataSource(dataSource);
+//		tokenRepository.setCreateTableOnStartup(true);	// 自动建表
+		return tokenRepository;
+	}
+```
+
+### 短信验证码登录
+
+​	![UTOOLS1562219573669.png](https://i.loli.net/2019/07/04/5d1d9436a3a4174942.png)
+
+![UTOOLS1562219837514.png](https://i.loli.net/2019/07/04/5d1d953e178f747114.png)
+
+## OAuth
+
+### OAuth 协议简介
+
+![UTOOLS1562221106328.png](https://i.loli.net/2019/07/04/5d1d9a33600f747640.png)
+
+### OAuth 授权模式
+
+#### 	授权码模式（推荐）
+
+#### 	密码模式
+
+#### 	客户端模式（基本不用）
+
+#### 	简化模式（基本不用）
+
+### Spring Social
+
+#### 	基本原理
+
+![UTOOLS1562221341362.png](https://i.loli.net/2019/07/04/5d1d9b1db8a6a49303.png)
+
+​	![UTOOLS1562221379640.png](https://i.loli.net/2019/07/04/5d1d9b43f379a23753.png)
+
+![UTOOLS1562221662923.png](https://i.loli.net/2019/07/04/5d1d9c6006e0d24227.png)
+
+### QQ登录
+
+​	<https://wiki.connect.qq.com/get_user_info>
+
+​	定义 QQUserInfo，接收 QQ 用户信息
+
+​	定义 QQ 接口，内置一个方法 UserInfo getQQUserInfo()
+
+​	编写 QQImpl 实现 QQ ，并继承 AbstractOAuth2ApiBinding
+
+​		父类其中定义了两个成员变量
+
+​		accessToken	令牌 final 的全局对象，所以 QQImpl 是多例的
+
+​		restTemplate	Http 工具
+
+![UTOOLS1562733046964.png](https://i.loli.net/2019/07/10/5d2569f85962586854.png)
 
 
-​	
 
-​	
+
+
