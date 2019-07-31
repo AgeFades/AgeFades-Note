@@ -598,12 +598,478 @@ public class Test(){
 
 ##### 			MessageListenerAdapter ：消息监听适配器
 
+​	通过 MessageListenerAdapter 的代码看出如下核心属性 :
+
+​		defaultListenerMethod 默认监听方法名称，用于设置监听方法名称
+
+​		Delegate 委托对象，实际的委托对象，用于处理消息
+
+​		queueOrTagToMethodName 队列标识与方法名称组成的集合
+
+​			可以一一进行队列与方法名称的匹配
+
+​			队列和方法名称绑定，即指定队列里的消息会被绑定的方法所接受处理
+
 ##### 			MessageConverter : 消息转换器
 
-​				Jackson2JsonMessageConverter : Json
+​	正常情况下，消息体为二级制进行传输
 
-​				DefaultJackson2JavaTypeMapper : Java 对象
+​	自定义常用转换器 : MessageConverter ，一般来说都需要实现该接口
 
-​				
+​	重写两个方法 :
 
-##### 
+​		toMessage : Java 对象转换为 Message 对象
+
+​		fromMessage : Message 对象转换为 Java 对象
+
+​	Jackson2JsonMessageConverter : 进行 Java 对象的转换功能
+
+​	DefaultJackson2JavaTypeMapper : 进行 Java 对象的映射关系
+
+​	自定义二进制转换器 : 比如图片类型、PDF、PPT、流媒体
+
+### SpringBoot 整合配置详解
+
+#### 生产端
+
+```java
+/**
+ * 注意 : 在发送消息的时候对 template 进行配置 mandatory=true 保证监听有效
+ * spring:
+ *   rabbitmq:
+ *		publisher-confirms=true
+ * 		publisher-returns=true
+ *		template:
+ *			mandatory=true
+ * 生产端还可以配置其他属性，比如发送重试、超时时间、次数、间隔等
+ */
+publisher-confirms // 实现一个监听器用于监听 Broker 端给我们返回的确认请求
+    RabbitTemplate.ConfirmCallback
+    rabbitTemplate.setConfirmCallback( (correlationData,ack,cause) -> 
+     if(!ack) log.info("消息发送异常");
+    )
+    
+publisher-returns // 保证消息对 Broker 端是可达的，如果出现路由键不可达的情况
+				  // 则使用监听器对不可达的消息进行后续的处理，保证消息的路由成功
+	RabbitTemplate.ReturnCallback
+    rabbitTemplate.setReturnCallback( 
+    				(message,replyCode,replyText,exchange,routingKey) -> {
+    		System.out.println("消息返回结果")
+    })
+			
+	
+```
+
+#### 消费端
+
+```yaml
+spring:
+	rabbitmq:
+		listener:
+			simple:
+				acknowledge-mode: MANUAL # 手动签收 ACK
+				concurrency: 1
+				max-concurrency: 5
+```
+
+​	首先配置ACK手工确认模式，保证消息的可靠性送达
+
+​	或者在消费端消费失败的时候可以做到重回队列、根据业务记录日志等处理
+
+​	可以设置消费端的监听个数和最大个数，用于控制消费端的并发情况
+
+​	消费端监听 @RabbitMQListener 注解
+
+​	@RabbitListener 是一个组合注解，里面可以注解配置
+
+​		@QueueBinding
+
+​		@Queue
+
+​		@Exchange
+
+​		直接通过这个组合注解一次性搞定消费端交换机、队列、绑定、路由、并且配置监听功能等
+
+![UTOOLS1564468404074.png](https://i.loli.net/2019/07/30/5d3fe4b65cf5d22354.png)
+
+### Spring Cloud Stream 整合
+
+![UTOOLS1564468961690.png](https://i.loli.net/2019/07/30/5d3fe7067057a51243.png)
+
+## RabbitMQ 集群架构
+
+### 主备模式
+
+​	也被称为 Warren 模式
+
+​	一般在并发和数据量不高的情况下
+
+​	主节点挂了，从节点提供服务（类似 ActiveMq 利用 Zookeeper 做主备）
+
+```shell
+# HA Proxy 配置
+listen rabbitmq_cluster
+bind 0.0.0.0:5673 # 配置 tcp 监听
+mode tcp # 轮询
+balance roundrobin # 负载均衡
+server xxx ip:port check inter 5000 rise 2 fall 2	# 主节点
+server xxx ip:port backup check inter 5000 rise 2 fall 2 # 从节点
+# inter 每隔 5s 对 MQ 集群做健康检查，2次正确证明服务器可用，2次失败证明服务不可用，并且配置主从切换
+```
+
+### 远程模式
+
+​	实现双活的一种模式，简称 Shovel 模式
+
+​	把消息进行不同数据中心的复制工作，跨地域的让两个 mq 集群互联
+
+### 镜像模式
+
+​	Mirror 模式
+
+​	保证 100% 数据不丢失
+
+​	主要就是实现数据的同步（100% 一般是 3 个节点以上）
+
+![UTOOLS1564470564040.png](https://img01.sogoucdn.com/app/a/100520146/c66c4cc9dd36b10d11fab49b49e737d9)
+
+### 多活模式
+
+​	实现异地数据复制的主流模式
+
+​	依赖 rabbitmq 的 federation 插件
+
+​		federation 插件是个不需要构建 Cluster，而在 Brokers 之间传递消息的高性能插件
+
+​		连接的双方可以使用不同的 users 和 virtual hosts
+
+​		也可以使用版本不同的 RabbitMQ 和 Erlang
+
+​	RabbitMQ 部署架构采用多中心模式，在每套数据中心各部署一套 RabbitMQ 集群，各中心的 RabbitMQ 服务除了需要为业务提供正常的消息服务外，中心之间还需要实现部分队列消息共享。
+
+![UTOOLS1564471516040.png](https://img01.sogoucdn.com/app/a/100520146/f231c0700be316d4f26d7fa614161da1)
+
+### RabbitMQ 集群镜像模式构建
+
+![UTOOLS1564473776486.png](https://img04.sogoucdn.com/app/a/100520146/36bd9af05308ac2d0f256a6cb58c437d)
+
+```shell
+# 1. 停止各个节点的 MQ 服务
+rabbitmqctl stop
+
+# 2. 文件同步
+cd /var/lib/rabbitmq
+chmod 777 .erlang.cookie # master 节点
+scp .erlang.cookie hort:/var/lib/rabbitmq/
+vim /etc/hostname # 修改当前主机名
+
+# 3. 启动服务
+cd /usr/local
+rabbitmq-server -detached
+lsof -i:port # 检测 mq 服务端口是否启动
+
+# 4. slave 加入集群
+rabbitmqctl stop_app
+rabbitmqctl join_cluster rabbit@hostname # master 的 hostname
+rabbitmqctl start_app
+
+# rabbitmqctl forget_cluster_node rabbit@hostname 移除 xx 节点
+
+# 5. 修改集群名称
+rabbitmqctl set_cluster_name xxx # 默认为 master 节点名称
+
+# 6. 查看集群状态
+rabbitmqctl cluster_status # 查看集群状态
+
+# 7. 同步消息 master
+rabbitmqctl set_policy ha-all "^" '{"ha-mode":"all"}'
+
+```
+
+### HAProxy
+
+​	HAProxy 是一款提供高可用性、负载均衡以及基于 TCP（第四层）和 HTTP（第七层）应用的代理软件，支持虚拟主机。
+
+#### 	Haproxy 性能最大化
+
+​		单进程、事件驱动模型显著降低了上下文切换的开销及内存占用
+
+​		任何可用情况下，单缓冲机制能以不复制任何数据的方式完成读写操作，节约大量 CPU and Memory
+
+​		借助于 Linux 2.6 以上的 splice() 系统调用，HAProxy 可以实现 **零复制转发**，在 3.5 以上的 OS 中还可以实现 **零复制启动**
+
+​		内存分配器在固定大小的内存池中可实现即时内存分配，显著减少创建一个会话的时长
+
+​		侧重于使用弹性二叉树、实现 O(logN) 的低开销来保持计时器命令、保持运行队列命令以及管理轮询及最少连接队列	
+
+#### 	Haproxy 安装
+
+```shell
+yum install gcc vim wget # 下载依赖包
+
+wget http://www.haproxy.org/download/1.6/src/haproxy-1.6.5.tar.gz # 下载源码包
+
+tar -zxvf haproxy-1.6.5.tar.gz -C /usr/local # 解压
+
+cd /usr/local/haproxy-1.6.5 # 进入目录
+
+make TARGET=linux31 PREFIX=/usr/local/haproxy # 编译
+make install PREFIX=/usr/local/haproxy # 安装
+mkdir /etc/haproxy
+
+groupadd -r -g 149 haproxy # 赋权
+useradd -g haproxy -r -s /sbin/nologin -u 149 haproxy
+
+vim /etc/haproxy/haproxy.cfg # 创建配置文件	
+# 具体配置略
+
+/usr/local/haproxy/sbin/haproxy -f /etc/haproxy/haproxy.cfg # 启动 haproxy
+ps -ef | grep haproxy # 查看进程状态
+
+```
+
+### KeepAlived
+
+​	主要通过 VRRP 协议实现高可用功能的（虚拟路由器冗余协议）
+
+​	VRRP 出现的目的就是为了解决静态路由单点故障问题，保证个别节点宕机时，整个网络不间断地运行
+
+​	KeepAlived 一方面具有配置管理 LVS 的功能，同时具有对 LVS 下面节点进行健康检查的功能，另一方面也可以实现系统网络服务的高可用功能
+
+#### 	KeepAlived 高可用原理
+
+​		KeepAlived 正常工作时，主节点不断向从节点发送心跳消息
+
+​		主节点不发送心跳时，从节点调用自身接管协议，接管主节点的 ip 资源及服务
+
+​		主节点恢复时，从节点释放主节点 Ip 资源及服务，回到从节点角色
+
+```shell
+yum install -y openssl openssl-devel # 安装所需软件包
+
+wget http://www.keepalived.org/software/keepalived-1.2.18.tar.gz # 下载
+
+tar -zxvf keepalived-1.2.18.tar.gz -C /usr/local/ # 解压
+
+cd keepalived-1.2.18/ && ./config --prefix=/usr/local/keepalived
+
+make && make install # 编译、安装
+
+# 将 keepalived 安装成 Linux 系统服务
+mkdir /etc/keepalived
+cp /usr/local/keepalived/etc/keepalived/keepalived.conf /etc/keepalived/
+
+cp /usr/local/keepalived/etc/rc.d/init.d/keepalived /etc/init.d/
+cp /usr/local/keepalived/etc/sysconfig/keepalived /etc/sysconfig/
+ln -s /usr/local/sbin/keepalived /usr/sbin/
+
+# 如果存在则删除 rm /sbin/keepalived
+ln -s /usr/local/keepalived/sbin/keepalived /sbin/
+
+# 设置开机自启
+chkconfig keepalived on 
+
+vim /etc/keepalived/keepalived.conf # 修改配置文件
+# 具体配置略
+```
+
+### 集群配置文件
+
+#### ​	关键配置参数
+
+```shell
+tcp_listerners # 设置 rabbitmq 的监听端口，默认为 [5672]
+
+dist_free_limit # 磁盘低水位线，若磁盘容量低于指定值则停止接收数据，默认值为{mem_relative,1.0}，即与内存相关联 1:1，也可定制为多少 byte
+
+vm_memory_high_watermark # 设置内存低水位线，若低于该水位线，则开启流控机制，默认值 0.4，即内存总量的 40%
+
+hipe_compile # 将部分 rabbitmq 代码用 High Performance Erlang compiler 编译，提升性能，该参数是实验性，若出现 erlang vm segfaults ，应关掉
+
+force_fine_statistics # 若为 true，更加精细化的统计，影响性能
+
+# 集群节点模式 : Disk 为磁盘模式存储，Ram 为内存模式存储
+# 具体配置略
+```
+
+### 集群回复与故障转移​
+
+#### 	前提
+
+​		AB 两个节点组成一个镜像队列，B为 Master
+
+#### 	场景1
+
+​		A先停，B后停
+
+##### 		方案
+
+​			先启动 Master，再启动 Slave  or 先启动 Slave，30S 之内启动 Master 即可恢复镜像对列
+
+#### 	场景2
+
+​		AB 同时停机
+
+##### 		方案
+
+​			30s 之内连续启动 AB 即可恢复镜像队列
+
+#### 	场景3
+
+​		A先停、B后停、且A无法恢复
+
+##### 		方案
+
+​			启动 B ，在 B 上调用控制台命令 rabbitmqctl forget_cluster_node A
+
+​			解除与 A 的关系，再将新的 Slave 节点加入B 即可
+
+#### 	场景4 	
+
+​		A先停、B后停、且B无法恢复	
+
+##### 		方案
+
+​			3.4.2 版本后，rabbitmqctl forget_cluster_node --offline B
+
+​			解除与 B 的关系，再将新的 Slave 节点加入A 即可
+
+#### 	场景5
+
+​		A先停、B后停、且AB无法恢复，但是能得到 A 或 B 的磁盘文件
+
+##### 		方案
+
+​			将 A 或 B 的磁盘文件拷贝到新节点的对应目录下，将新节点的 Hostname 改为 A 或 B，启动后按场景3 或 场景4 处理
+
+### 延迟插件的作用
+
+#### 	延迟队列可以做什么事情
+
+​		消息的延迟推送
+
+​		定时任务的执行
+
+​		消息重试策略的配合使用
+
+​		业务削峰限流、降级的异步延迟消息机制
+
+#### 	延迟插件的安装
+
+​		过于繁琐，略
+
+## 互联网大厂 SET 架构
+
+​	SET : 单元化	
+
+​	在 RabbitMQ 中实现 SET 架构，就是借助前面所述 "多活" 模式
+
+## 大厂的 MQ 组件实现思路和架构设计方案
+
+![UTOOLS1564544543927.png](https://i.loli.net/2019/07/31/5d410e220a1fa45071.png)		
+
+### MQ 组件实现功能点
+
+​		支持消息高性能的序列化转换、异步化发送消息
+
+​		支持消息生产实例与消费实例的链接化缓存化、提升性能
+
+​		支持可靠性传递消息，保障消息的100%不丢失
+
+​		支持消费端的幂等操作，避免消费端重复消费的问题
+
+​		支持迅速消息发送模式，在一些 日志收集/统计分析 等需求下可以保证高性能，超高吞吐量
+
+​		支持延迟消息模式，消息可以延迟发送，指定延迟消息，用于某些延迟检查，服务限流场景
+
+​		支持事物消息，且 100% 保障可靠性投递
+
+​		支持顺序消息，保证消息送达消费端的前后顺序
+
+​		支持消息补偿，重试，以及快速定位异常/失败消息
+
+​		支持集群消息负载均衡
+
+​		支持消息路由策略
+
+### 迅速消息发送
+
+​	迅速消息是指消息不进行落库存储，不做可靠性保证
+
+​	适用非核心消息、日志数据、统计分析等
+
+​	性能最高，吞吐量最大
+
+### 确认消息发送
+
+![UTOOLS1564545157886.png](https://i.loli.net/2019/07/31/5d41108732fea10585.png)
+
+​	业务数据、消息数据入库
+
+​	发送消息
+
+​	消费端执行业务逻辑，成功后手动 ack
+
+​	生产端收到 ack，confirmCallBack 修改数据库中消息记录状态
+
+​	如果消费端消费失败，未发送 ack
+
+​	定时任务定时检测消息表中状态为 0 的消息，抓取数据并重发，记录次数
+
+​	连续3次重试失败的消息，将消息状态修改为 2 ，等待人工补偿
+
+### 批量消息发送
+
+​	将消息放到一个集合里统一进行提交
+
+​	比如投掷到 threadloacl 里的集合，拥有相同会话 Id,并带有此次提交消息的相关属性，最重要的是将这一批消息合并，对于 Channel 而言，就是发送一次消息
+
+​	在消费端进行批量处理，当成原子业务操作
+
+​	不保证可靠性
+
+![UTOOLS1564550049351.png](https://i.loli.net/2019/07/31/5d4123a33815460714.png)	
+
+### 延迟消息发送
+
+​	在 Message 封装的时候添加 delayTime 属性
+
+### 顺序消息
+
+​	发送的顺序消息，必须保障消息投递到同一个队列中，且该消费者只有一个
+
+​	统一提交，并且所有消息的会话ID 一致
+
+​	添加消息属性 : 顺序标记的序号、和本次顺序消息的 SIZE 属性，进行落库操作
+
+​	并行进行发送给自身的延迟消息，进行后续处理消费
+
+​	消费端收到延迟消息后，根据会话 ID、SIZE 抽取数据处理即可
+
+​	定时轮询补偿机制
+
+![UTOOLS1564550707582.png](https://i.loli.net/2019/07/31/5d412635606b775639.png)
+
+### 事务消息发送
+
+​	采用类似可靠性投递的机制
+
+​	数据源必须是同一个
+
+​	利用 Spring DataSourceTransactionManager，在本地事务提交的时候进行发送消息 
+
+![UTOOLS1564550875894.png](https://i.loli.net/2019/07/31/5d4126dc560a692268.png)
+
+### 消息幂等性
+
+#### ​	可能非幂等的原因
+
+​		可靠性消息投递机制
+
+​		MQ Broker 服务与消费端传输消息的过程中的网络波动
+
+​		消费端故障或异常
+
+![UTOOLS1564550997673.png](https://i.loli.net/2019/07/31/5d4127562803460358.png)
+
+#### 

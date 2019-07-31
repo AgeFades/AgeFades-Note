@@ -1,4 +1,4 @@
-# 炼数成金 - Docker
+# 整合 - Docker
 
 ## Docker 的技术原理介绍
 
@@ -102,28 +102,30 @@
 
 ## Docker 的部署安装
 
-​	该教程采用 CentOS 7
+### 	Ubuntu
 
 ```shell
-yum install docker # yum 安装 docker
+uname -a # 检查系统内核版本,docker Linux 内核版本有要求
 
-cat >/etc/yum/repos.d/docker.repo <<-EOF	# 切换 docker 仓库
-[dockerrepo]
-name=Docker Repository
-baseurl=https://yum.dockerproject.org/repo/main/centos/7
-enabled=1
-gpgcheck=1
-gpgkey=https://yum.dockerproject.org/gpg
-EOF
+ls -l /sys/class/misc/device-mapper # 检查驱动
 
-yum install docker-engine # yum 安装 docker 引擎
+# 安装 Ubuntu 维护的版本，版本低
+sudo apt-get install docker.io
+source /etc/bash_completion.d/docker.io
 
-systemctl start docker.service # 启动 docker
-systemctl enable docker.service # 设置开机自启
-systemctl grep docker # 查看 docker 进程的状态
-
+# 安装 Docker 维护的版本
+sudo apt-get install -y curl # whereis curl 查看系统是否存在 curl，不存在则安装
+curl -sSL https://get.docker.com/ubuntu/ | sudo sh
 docker version # 查看 docker 版本
+
+# 使用非 root 用户
+sudo groupadd docker
+sudo gpasswd -a ${USER} docker
+sudo service docker restart
+
 ```
+
+
 
 ## Docker 配置文件与日志
 
@@ -143,6 +145,12 @@ OPTIONS # 用来控制 Docker Daemon 进程参数
 http_proxy=xxx:8080 # 代理设置 or https
 
 cd /user/lib/systemd/system/docker.service # docker 配置文件
+
+/var/lib/docker # docker 文件存储位置
+/var/lib/docker/mnt # 存储 docker 镜像文件
+
+vim /etc/default/docker # 修改 docker 默认仓库地址配置文件
+DOCKER_OPTS="--registry-mirror=" # 可为阿里云 docker 加速器
 ```
 
 ### 	日志
@@ -157,9 +165,18 @@ tail -f /var/log/message | grep docker # 监听 docker 日志
 ```shell
 docker search # 查找 docker 镜像
 docker pull # 拉取镜像
+docker push # 推送镜像
 docker images # 查看本地所有镜像
 docker run # 运行镜像
 docker ps # 查看正在运行的 docker 容器
+docker inspect 容器名 # 返回容器所有信息
+docker rm 容器名 # 删除停止的容器
+docker logs [-f] [-t] [--tail] 容器名 # 查看容器日志,-f 跟踪 -t 在返回的结果上加上时间戳
+docker top 容器名 # 查看容器内进程
+docker stop 容器名 # 停止容器(等待)
+docker kill 容器名 # 杀死容器(立即)
+docker info # 查看 Docker 信息
+docker rmi # 删除镜像
 
 docker run [OPTIONS] IMAGE[:tag] [COMMAND] [ARG...]
 # 决定容器的运行方式、前台执行还是后台执行
