@@ -10,9 +10,9 @@
 
 ​		cgroups 是将任意进程进行分组化管理的 Linux 内核功能
 
-#### 		重要概念
+#### 			重要概念
 
-##### 			子系统
+##### 					子系统
 
 ​				资源控制器，**每种子系统就是一个资源的分配器**
 
@@ -204,5 +204,170 @@ docker build -t xx . # 通过当前目录下的 dockerfile 构建镜像
 
 ![UTOOLS1564032018169.png](https://i.loli.net/2019/07/25/5d393c1810bc085036.png)
 
-## Docker 容器互联
+## Dockerfile
+
+```shell
+# KV 形式，所有 V 都是举例
+FROM CentOS # 基础镜像
+
+LABEL maintainer="agefades@qq.com" # 作者
+LABEL version="1.0" # 版本
+LABEL description="Agefades's demo dockerfile" # 描述
+
+# RUN ，镜像构建执行的 Shell 命令，避免过多的 AuFS 文件层，尽量合并成一条命令
+RUN yum update && yum install -y vim \
+python-dev # 反斜线 \ 换行 
+
+# 尽量使用 WORKDIR,而不是 RUN cd，尽量使用绝对目录
+WORKDIR /root # 工作目录，如果没有会自动创建
+
+# ADD，不仅可以添加，还可以解压
+ADD hello / # 将本地 hello 文件添加到容器中根目录
+ADD test.tar.gz / # 添加到根目录并解压
+
+# COPY 相较于 ADD ，大部分情况下优先级更高，但是没有解压功能
+# 添加远程文件或目录，尽量使用 curl 或者 wget
+
+# ENV
+ENV MYSQL_VERSION 5.6 # 设置环境变量
+RUN apt-get install -y mysql-server="${MYSQL_VERSION}" \
+&& rm -rf /var/lib/apt/lists/* # 引用环境变量
+
+# CMD 设置容器启动后默认执行的命令和参数
+# 如果 docker run 指定了其他命令，CMD 命令被忽略
+# 如果定义多个 CMD，只有最后一个会执行
+
+# ENTRYPOINT 设置容器启动时运行的命令
+# 不会被忽略，一定会执行
+
+# ESPOSE 暴露端口
+```
+
+## Docker Hub
+
+​	官网 : hub.docker.com
+
+```shell
+docker login # 登录账户
+docker push xx # 推送镜像，参数为镜像名
+```
+
+## Docker 网络
+
+```shell
+docker network ls # 展示 docker 网络协议
+```
+
+### 	Bridge Network
+
+![UTOOLS1564650535344.png](https://i.loli.net/2019/08/01/5d42ac27aa07625379.png)
+
+### 	容器之间的 link
+
+```shell
+link 是一个参数
+在 docker 容器内部 iptables 加了一层 DNS 记录
+通过其他容器的 name 指向该容器的 ip
+```
+
+### 	容器的端口映射
+
+```shell
+-p 80:80 # 映射宿主机与 docker 容器的端口关系
+```
+
+### 	host
+
+```shell
+容器与宿主机共享Ip + Port
+```
+
+### 	none
+
+```shell
+没有网卡设备
+```
+
+## Docker Volume
+
+```shell
+-v # 指定宿主机与容器之间的目录 or 文件挂载关系
+```
+
+## Docker Compose
+
+```shell
+# docker 的一个批处理文件工具
+# 通过一个 yml 文件定义多容器的 docker 应用
+# 通过一条命令，根据 yml 定义去创建或管理多个容器
+```
+
+### 	Services
+
+```shell
+# 一个service 代表一个 container
+# container 可以从 image 创建，也可以由自定义 dockerfile 构建
+# Service 启动类似 docker run，可以指定各种参数
+```
+
+```yaml
+services:
+	db:
+		image: postgres:9.4
+		volumes:
+			- "db-data:/var/lib/postgresql/data"
+		networks:
+			- back-tier
+```
+
+```yaml
+services:
+	worker:
+		build: ./worker
+		links:
+			- db
+			- redis
+		networks:
+			- back-tier
+```
+
+### 	compose 安装
+
+```shell
+sudo curl -L "https://github.com/docker/compose/releases/download/1.24.1/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+sudo chmod +x /usr/local/bin/docker-compose
+
+sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose
+
+docker-compose --version
+```
+
+```shell
+docker-compose -f docker-compose.yml up -d # 默认文件名可省略 -f 指定文件，-d 后台启动
+docker-compose ps
+docker-compose stop # 停止不删除容器
+docker-compose down # 停止并删除
+docker-compose start # 启动容器
+docker-compose exec [service_name] bash # 进入服务容器内部
+
+docker network ls # 展示 docker 网络
+```
+
+### 	Docker 水平扩展和负载均衡
+
+```shell
+docker-compose up --scale [service_name]=10 -d # 将服务容器扩展至10个
+```
+
+```yaml
+lb:
+	image: dockercloud/haproxy
+	links:
+		- web
+	ports:
+		- 8080:80
+	volumes:
+		- /var/run/docker.sock:/var/run/docker.sock
+```
 
