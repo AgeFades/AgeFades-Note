@@ -36,7 +36,7 @@ daemonize no
 
 # 指定Redis监听端口，默认端口为6379，作者在自己的一篇博文中解释了为什么选用6379作为默认端口，
 # 因为6379在手机按键上MERZ对应的号码，而MERZ取自意大利歌女Alessia Merz的名字
-port 6379
+port 16279
 
 # 绑定的主机地址
 # bind 0.0.0.0
@@ -110,7 +110,7 @@ appendfsync everysec
 # 启动容器
 docker run -d \
 --name redis \
--p 16371:6379 \
+-p 16279:6379 \
 -v /docker/redis/conf/redis.conf:/etc/redis/redis.conf \
 -v /docker/redis/data:/data \
 redis redis-server /etc/redis/redis.conf --appendonly yes
