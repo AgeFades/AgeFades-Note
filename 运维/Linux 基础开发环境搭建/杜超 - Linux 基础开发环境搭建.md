@@ -307,3 +307,148 @@ docker run --name mongo -d \
 docker.io/mongo:latest \
 ```
 
+## Wiki 安装
+
+```shell
+# https://github.com/phachon/mm-wiki
+
+# 后台启动命令
+nohup ./mm-wiki --conf conf/mm-wiki.conf >> /platform/mm-wiki/logs/out.log 2>&1 &
+```
+
+## Blog 安装
+
+```shell
+# 拉取镜像
+docker pull b3log/solo
+
+# 先手动建库（库名 solo，字符集使用 utf8mb4，排序规则 utf8mb4_general_ci
+
+# 启动容器
+docker run --detach --name solo --network=host \
+--env RUNTIME_DB="MYSQL" \
+--env JDBC_USERNAME="root" \
+--env JDBC_PASSWORD="beluga@mysql." \
+--env JDBC_DRIVER="com.mysql.cj.jdbc.Driver" \
+--env JDBC_URL="jdbc:mysql://127.0.0.1:13307/solo?useUnicode=yes&characterEncoding=UTF-8&useSSL=false&serverTimezone=UTC" \
+--rm \
+b3log/solo --listen_port=8080 --server_scheme=http --server_host=www.agefades.com
+```
+
+## 禅道安装
+
+```shell
+# 拉取镜像
+docker pull idoop/zentao  
+
+# 创建挂载目录
+mkdir -p /docker/chandao
+
+# 运行容器
+docker run -d -p 7777:80 -p 3308:3306 \
+        -e USER="root" -e PASSWD="beluga@chandao." \
+        -e BIND_ADDRESS="false" \
+        -v /docker/chandao:/opt/zbox/ \
+        --name chandao \
+        idoop/zentao:latest
+        
+# 浏览器访问页面，初始账号密码为 admin/123456，进入后修改密码
+```
+
+## ES6.7 安装
+
+```shell
+# 创建挂载目录
+mkdir -p /docker/elasticsearch/data
+
+# 赋予权限
+chmod -R 777 /docker/elasticsearch/data
+
+# 启动容器
+docker run -d \
+-e ES_JAVA_OPTS="-Xms3g -Xmx3g" \
+-p 19200:9200 \
+-p 19300:9300 \
+-v /docker/elasticsearch/data:/usr/share/elasticsearch/data \
+--name es6.7 docker.io/elasticsearch:6.7.0
+
+# 启动报错
+vim /etc/sysctl.conf 
+# 最后一行添加
+vm.max_map_count=655360
+# 保存退出后，执行
+sysctl -p
+# 重启es
+docker start es6.7
+
+# 检测 ES
+curl localhost:9200
+```
+
+## Kibana 安装
+
+```shell
+# 下载镜像
+docker pull docker.io/kibana:6.7.0
+
+# 创建挂载目录
+mkdir -p /docker/kibana/conf
+
+# 创建配置文件
+vim /docker/kibana/conf/kibana.yml
+
+# 编写配置
+server.name: kibana
+server.host: "0"
+elasticsearch.hosts: [ "http://[你自己服务器的ip]:9200" ]
+xpack.monitoring.ui.container.elasticsearch.enabled: true
+
+# 启动容器
+docker run -d \
+--name kibana6.7 \
+-p 5601:5601 \
+-v /docker/kibana/conf/kibana.yml:/usr/share/kibana/config/kibana.yml \
+-e ELASTICSEARCH_URL=http://[你自己ES服务器的ip]:9200 docker.io/kibana:6.7.0 
+
+# 注意端口开放
+```
+
+## IK 分词器安装
+
+```shell
+# 进入容器内部
+docker exec -it  es6.7 bash
+
+# 安装插件
+elasticsearch-plugin install https://github.com/medcl/elasticsearch-analysis-ik/releases/download/v6.7.0/elasticsearch-analysis-ik-6.7.0.zip
+
+# 下载完成后检查
+cd plugins/
+ls
+
+# 有 ik 则安装完成
+```
+
+## Head 插件安装
+
+```shell
+# 拉取镜像
+docker pull docker.io/mobz/elasticsearch-head:5
+
+# 启动容器
+docker run -d --name head -p 9100:9100 docker.io/mobz/elasticsearch-head:5
+
+# 修改跨域配置
+docker cp es6.7:/usr/share/elasticsearch/config/elasticsearch.yml /root/elasticsearch.yml
+
+vim /root/elasticsearch.yml
+
+# 末尾添加
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+
+docker cp /root/elasticsearch.yml es6.7:/usr/share/elasticsearch/config/elasticsearch.yml
+
+docker restart es6.7
+```
+
