@@ -4,7 +4,7 @@
 
 ```sql
 SELECT 
-DATE_FORMAT(create_time,'%Y-%m-%d'),count(*) 
+    DATE_FORMAT(create_time,'%Y-%m-%d'),count(*) 
 FROM test 
 GROUP BY  
 DATE_FORMAT(create_time,'%Y-%m-%d')
