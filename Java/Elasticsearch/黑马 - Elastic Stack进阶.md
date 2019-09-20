@@ -302,3 +302,9 @@ shard = hash(routing) % number_of_primary_shards
 		# 3. 一旦所有的 document 都被取回，协调节点会将结果返回给客户端
 ```
 
+## Beats
+
+```shell
+# 官网 https://www.elastic.co/cn/products/beats
+```
+
