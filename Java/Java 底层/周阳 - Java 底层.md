@@ -1,4 +1,4 @@
-# 周阳 - 阿里P6面试
+# 周阳 - Java 底层
 
 ## JUC 多线程及高并发
 
@@ -380,5 +380,159 @@ public class ResolveABADemo {
 }
 ```
 
-### 请编码一个不安全的ArrayList 案例并给出解决方案
+### 请编码一个线程不安全的ArrayList 案例并给出解决方案
+
+#### ArrayList 线程不安全代码验证
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * java.util.ConcurrentModificationException : 并发修改异常
+ */
+public class ContainerNotSafeDemo {
+
+    public static void main(String[] args) {
+        List<String> list = new ArrayList<>();
+        for(int i = 1;i <= 30; i++ )
+        {
+            new Thread(() -> {
+                list.add(UUID.randomUUID().toString().substring(0,8));
+                System.out.println(list);
+            },String.valueOf(i)).start();
+        }
+    }
+
+}
+```
+
+#### 导致原因
+
+```shell
+# 并发争抢修改导致
+```
+
+#### 解决方案
+
+```shell
+# Vector
+	# JDK1.0 推出 List 的实现类，add 方法由 synchronized 修饰
+	# 基本不会有人用，因为 synchronized 同步代码块对并发性能影响太大
+	
+# Collections.synchronizedList(new ArrayList<>());
+	
+# CopyOnWriteArrayList <最终方案>
+	# 写时复制
+		# 原理即下述源码
+		# 支持并发读，而不需要加锁
+		# 读写分离思想，读和写是用的不同容器
+	# Object[] element : 元素数组是由 volatile 修饰
+	# add() 方法中追加 ReetrantLock 锁
+	# 源码如下 :
+```
+
+```java
+public boolean add(E e){
+    final ReetrantLock lock = this.lock;
+    lock.lock();
+    try{
+        Object[] elements = getArray();
+        int len = elements.length;
+    	Object[] newElements = Arrays.copyOf(elements,len+1);
+        newElements[len] = e;
+        setArray(newElements);
+        return true;
+    } finally {
+        lock.unlock();
+    }
+}
+```
+
+### 请给出一个线程不安全的 HashSet案例并给出解决方案
+
+#### HashSet 线程不安全代码验证
+
+```java
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+/**
+ * java.util.ConcurrentModificationException : 并发修改异常
+ */
+public class ContainerNotSafeDemo {
+
+    public static void main(String[] args) {
+        Set<String> set = new HashSet<>();
+        for(int i = 1;i <= 30; i++ )
+        {
+            new Thread(() -> {
+                set.add(UUID.randomUUID().toString().substring(0,8));
+                System.out.println(set);
+            },String.valueOf(i)).start();
+        }
+
+    }
+}
+```
+
+#### 解决方案
+
+```shell
+# Collections.synchronizedSet(new HaseSet<>());
+
+# CopyOnWriteArraySet
+	# 构造方法中举着 Set 的牌子，其实用的是 CopyOnWriteArrayList
+		# 在 add() 方法中扩展了 indexOf() 方法遍历数组，看add元素是否已存在
+	# 扩展 : HashSet 的构造方法其实是创建了一个容量为 16，负载因子为 0.75 的 HashMap
+		# HashSet KV 中元素值为 K,V 是一个常量
+```
+
+### 请给出一个线程不安全的 HashMap案例并给出解决方案
+
+#### HashMap 线程不安全代码验证
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * java.util.ConcurrentModificationException : 并发修改异常
+ */
+public class ContainerNotSafeDemo {
+
+    public static void main(String[] args) {
+        Map<String,Object> map = new HashMap<>();
+        for(int i = 1;i <= 30; i++ )
+        {
+            new Thread(() -> {
+                map.put(Thread.currentThread().getName(),UUID.randomUUID().toString().substring(0,8));
+                System.out.println(map);
+            },String.valueOf(i)).start();
+        }
+        
+    }
+}
+```
+
+#### 解决方案
+
+```shell
+# Collections.synchronizedMap(new HashMap<>())
+
+# ConcurrentHashMap
+```
+
+### 请你谈谈对Java 锁的理解
+
+#### 公平和非公平锁
+
+```shell
+
+```
 
