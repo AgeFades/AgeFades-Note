@@ -1,4 +1,4 @@
-# 周阳 - Java 底层
+# 周阳 - Java 底层<上>
 
 ## JUC 多线程及高并发
 
@@ -1350,5 +1350,326 @@ class ShareData {
 	# 实现 Runnable 接口
 	# 实现 Callable 接口
 	# 使用线程池
+	
+# FetureTask<> 实现 callable、Runnabel 接口，获取一个异步计算并带返回值的线程
 ```
+
+#### FetureTask 代码验证
+
+```java
+import java.util.concurrent.FutureTask;
+
+public class CallableDemo {
+
+    public static void main(String[] args) throws Exception{
+        FutureTask<String> task = new FutureTask<>(() -> {
+            System.out.println(Thread.currentThread().getName() + "\t FutureTask come in");
+            return "快乐的一只小青蛙";
+        });
+
+        new Thread(task,"Future").start();
+        System.out.println(task.get());
+    }
+
+}
+```
+
+### 为什么用线程池？优势在哪？
+
+```shell
+# 线程池主要控制运行线程的数量
+	# 处理过程中，将任务放入队列
+	# 线程创建后启动这些任务
+	# 如果线程数量超过了最大数量限制，则排队等候
+	# 等待其它线程执行完毕，再从队列中取出任务执行
+	
+# 线程池其实就是阻塞队列
+
+# 主要特点
+	# 线程复用
+	# 控制最大并发数
+	# 管理线程
+	
+# Java 中的线程池是通过 Executor 框架实现的
+	# 该框架中用到了 Executor、Executors、ExecutorService、ThreadPoolExecutor 这几个类
+```
+
+![UTOOLS1571032812959.png](https://i.loli.net/2019/10/14/CDzUX7oprfdVlbA.png)
+
+### 线程池3个常用方式
+
+```shell
+# JDK8 已经有五种线程使用方式
+
+# 重点常用的三种
+	# Executors.newFixedThreadPool(int)
+		# 固定队列容量线程池
+		# BlokingQueue 是 LinkedBlokingQueue()，有界队列，但是容量为 Integer.MAX_VALUE
+	
+	# Executors.newSingleThreadExecutor()
+		# 单线程容量线程池
+		# 一样也是 LinkedBlokingQueue()
+	
+	# Executors.newCacheThreadPool()
+		# N个线程容量线程池
+		# 由并发量决定池子中的线程数
+		# SynchronousQueue
+```
+
+#### FixedThreadPool 代码验证
+
+```java
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+public class ThreadPoolDemo {
+
+    public static void main(String[] args){
+        // 1池5个处理线程
+        ExecutorService pool = Executors.newFixedThreadPool(5);
+
+        try {
+            for (int i = 1; i <= 10; i++) {
+                pool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + "\t 办理业务!");
+                });
+            }
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            pool.shutdown();
+        }
+    }
+
+}
+```
+
+### 线程池七大参数入门简介
+
+```shell
+# 一个银行网点 <线程池>
+	# -> 共 10* 个窗口 <maximumPoolSize 最大线程数>
+	# -> 开放 5* 个窗口 <corePoolSize 核心线程数>
+	# -> 今天办理业务的特别多，其余5个窗口加班一天* <keepAliveTime + unit 多余线程存活时间+单位>
+	# -> 办理业务的人在窗口前排队* <workQueue 请求任务的阻塞队列>
+	# -> 银行*里的A*职员、B*职员... 给办理业务 <threadFactory 产生线程、线程名、线程序数...>
+	# -> 最多排10个，来了11个，并且每个窗口都有人在办理业务，多的人怎么拒绝*呢？<handler 拒绝策略>
+
+# corePoolSize
+	# 线程池中的常驻核心线程数
+	# 创建线程池后，当有请求任务进来，就安排池中的线程去执行请求任务
+	# 当线程池中的线程数目达到 corePoolSize 后，就会把到达的任务放到缓存队列中
+	
+# maximumPoolSize
+	# 线程池能够容纳同时执行的最大线程数，此值必须大于等于1
+	
+# keepAliveTime
+	# 多余的空闲线程的存活时间
+	# 当前线程池数量超过 corePoolSize 时，当空闲时间达到 keepAliveTime 值时，
+		# 多余空闲线程会被销毁直到只剩下 corePoolSize 个线程为止
+		
+# unit
+	# keepAliveTime 的单位
+	
+# workQueue
+	# 任务队列，被提交但尚未被执行的任务
+	
+# threadFactory
+	# 表示生成线程池中工作线程的线程工厂<线程名字、线程序数...>
+	# 用于创建线程一般用默认的即可
+	
+# handler
+	# 拒接策略，表示当队列满了并且工作线程大于等于线程池的最大线程数(maximumPoolSize)时
+		# 如何拒绝新的任务
+```
+
+### 请你谈谈线程池的底层工作原理？
+
+![UTOOLS1571104813186.png](https://i.loli.net/2019/10/15/aHzDS4Od9uRMk6V.png)
+
+```shell
+# 1. 创建线程池后，等待请求任务
+
+# 2. 当调用 execute() 方法添加请求任务时，线程池做如下判断
+	# 如果正在运行的线程数量小于 corePoolSize，马上创建线程执行请求任务
+	# 如果正在运行的线程数量大于或等于 corePoolSize，将请求任务放入阻塞队列
+	# 如果阻塞队列满了，且正在运行的线程数小于 mamimumPoolSize,创建非核心线程执行请求任务
+	# 如果队列满了且线程池线程达到最大线程数，线程池启动饱和拒绝策略来执行
+	
+# 3. 当一个线程完成任务时，从阻塞队列中取出下一个任务来执行
+
+# 4. 当一个线程无事可做超过一定时间<keepAliveTime>时，线程池会判断
+	# 如果当前运行的线程数大于 corePoolSize，该线程被销毁
+	# 所以，线程池完成所有请求任务后，最终会收缩到 corePoolSize 的大小
+```
+
+### 线程池的4种拒绝策略理论简介
+
+```shell
+# JDK 内置的拒绝策略
+	# AbortPolicy(默认)
+		# 直接抛出 RejectedExecutionException 异常阻止系统正常运行
+		
+	# CallerRunsPolicy
+		# "调用者运行" 一种调节机制
+		# 该策略既不会抛弃任务，也不会抛出异常
+		# 而是将某些任务回退到调用者，从而降低新任务的流量
+		
+	# DiscardOldestPolicy
+		# 抛弃队列中等待最久的任务
+		# 然后把当前任务中加入队列中尝试再次提交当前任务
+		
+	# DiscardPolicy
+		# 直接丢弃任务，不予任何处理也不抛出异常
+		# 如果允许任务丢失，这是最好的一种方案
+		
+# 以上拒绝策略都是实现了 RejectedExecutionHandler 接口
+```
+
+### 线程池在实际生产中使用哪一个
+
+```shell
+# 阿里巴巴 Java 开发手册
+	# 线程池不允许使用 Executors 创建，而是通过 ThreadPoolExecutor 的方式
+	
+	# FixedThreadPool 和 SingleThreadPool
+		# 允许的阻塞队列容量为 Integer.MAX_VALUE，可能会堆积大量的请求，导致 OOM
+		
+	# CachedThreadPool 和 ScheduledThreadPool
+		# 允许的创建线程数量为 Integer.MAX_VALUE,可能会创建大量的线程，导致 OOM
+```
+
+### 线程池的手写改造和拒绝策略
+
+```java
+import java.util.concurrent.*;
+
+public class ThreadPoolDemo {
+
+    public static void main(String[] args) {
+        ExecutorService threadPool =
+                new ThreadPoolExecutor(2,
+                        5,
+                        1L,
+                        TimeUnit.SECONDS,
+                        new LinkedBlockingDeque<Runnable>(3),
+                        Executors.defaultThreadFactory(),
+                        new ThreadPoolExecutor.CallerRunsPolicy());
+
+            for(int i = 1;i <= 9; i++ )
+                threadPool.execute(() -> {
+                    System.out.println(Thread.currentThread().getName() + "\t 办理业务" );
+                    try {
+                        TimeUnit.SECONDS.sleep(1L);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                });
+    }
+
+}
+```
+
+### 线程池合理配置参数
+
+```shell
+# CPU 密集型
+	# 意思是该任务需要大量的运算，而没有阻塞，CPU 一直全速运行
+	# CPU 密集任务只有在真正的多核 CPU 上才可能得到加速(通过多线程)
+	# CPU 密集型任务配置尽可能少的线程数量
+	# 一般公式 : CPU 核数 + 1个线程的线程池最大线程数
+	
+# IO 密集型
+	# 由于 IO 密集型任务线程并不是一直在执行任务，则应配置尽可能多的线程
+	# 一般公式 : CPU 核数* 2
+	
+# IO 密集型 2
+	# IO 密集型、即该任务需要大量的 IO，即大量的堵塞
+	# 在单线程上运行 IO 密集型的任务会导致浪费大量的 CPU 算力浪费在等待上
+	# 所以，IO 密集型任务中使用多线程可以大大的加速程序运行，即时在单核 CPU 上
+	# 这种加速主要就是利用了被浪费掉的阻塞时间
+	# 参考公式 : CPU 核数 / (1 - 阻塞系数)
+		# 例: 8 核CPU 8/(1-0.9) = 80 个线程数
+```
+
+### 死锁编码以及定位分析
+
+```shell
+# 产生死锁的主要原因
+	# 死锁是指两个或两个以上的线程在执行过程中，因争夺资源而造成的一种互相等待的现象
+	# 例: AB互相拿手枪指着对方，"你先放下枪"，"不，你先放下枪"....
+```
+
+![UTOOLS1571117532133.png](https://i.loli.net/2019/10/15/EgHK7N5yCpFAthi.png)
+
+#### 死锁代码验证
+
+```java
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class DeadLockDemo {
+
+    public static void main(String[] args) {
+        ShareData data = new ShareData();
+        new Thread(() -> {
+            data.lock1();
+            },"A").start();
+
+        new Thread(() -> {
+            data.lock2();
+        },"B").start();
+    }
+
+}
+
+class ShareData{
+
+    ReentrantLock lock = new ReentrantLock();
+    ReentrantLock lock2 = new ReentrantLock();
+    public void lock1(){
+        lock.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + "\t 获得锁1");
+            TimeUnit.SECONDS.sleep(1);
+            lock2();
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void lock2(){
+        lock2.lock();
+        try {
+            System.out.println(Thread.currentThread().getName() + "\t 获得锁2");
+            lock1();
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+}
+```
+
+#### 死锁定位分析
+
+```shell
+# 找进程
+	# jps -l : 列出系统所有正在运行的 Java 进程<ps -ef | grep java>
+```
+
+![UTOOLS1571118504233.png](https://i.loli.net/2019/10/15/v7Khp5fyqAL8XO4.png)
+
+ 
+
+```shell
+# 看问题
+	# jstack <进程号>
+```
+
+![](http://baijingins.oss-cn-beijing.aliyuncs.com/images/2019/10/15/15711188940981903.png)
 
