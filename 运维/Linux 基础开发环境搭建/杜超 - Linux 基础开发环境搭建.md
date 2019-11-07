@@ -452,3 +452,58 @@ docker cp /root/elasticsearch.yml es6.7:/usr/share/elasticsearch/config/elastics
 docker restart es6.7
 ```
 
+## RabbitMQ 安装
+
+```shell
+# 拉取镜像
+docker pull rabbitmq:3.7.7-management
+
+# 运行容器
+docker run -d -p 5671:5617 -p 5672:5672 -p 4369:4369 -p 15671:15671 -p 15672:15672 -p 25672:25672 --name rabbit-3.7.7 rabbitmq:3.7.7-management
+
+# 进入容器
+docker exec -it rabbit-3.7.7 /bin/bash
+
+# 进入 plugin 目录
+cd plugins
+
+# 更新 apt-get
+apt-get update
+
+# 安装下载工具 wget
+apt-get install -y wget
+
+# 下载延迟队列插件
+wget https://dl.bintray.com/rabbitmq/community-plugins/3.7.x/rabbitmq_delayed_message_exchange/rabbitmq_delayed_message_exchange-20171201-3.7.x.zip
+
+# 安装解压工具 unzip
+apt-get install -y unzip
+
+# 解压插件包
+unzip rabbitmq_delayed_message_exchange-20171201-3.7.x.zip
+
+# 启动延迟队列插件
+rabbitmq-plugins enable rabbitmq_delayed_message_exchange
+
+# 修改默认 guest 密码
+rabbitmqctl change_password guest swordsman
+
+# 添加用户并授予超级管理员权限
+rabbitmqctl add_user swordsman swordsman
+rabbitmqctl set_user_tags swordsman administrator
+
+# 赋予 / 虚拟主机权限
+rabbitmqctl set_permissions -p / swordsman '.*' '.*' '.*'
+
+# 退出容器
+exit
+
+# 重启容器
+docker restart rabbit-3.7.7
+
+# 管理台访问地址
+[ip]+[port]
+
+# 默认账号密码 guest
+```
+
