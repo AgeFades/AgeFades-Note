@@ -237,12 +237,12 @@ default-character-set=utf8
 default-character-set=utf8
 
 # docker 启动容器
-docker run -p 13307:3306 \
+docker run -p 3306:3306 \
 --name mysql \
--e MYSQL_ROOT_PASSWORD=beluga@mysql. \
+-e MYSQL_ROOT_PASSWORD=root \
 --privileged=true \
--v /docker/mysql/data:/var/lib/mysql \
--v /docker/mysql/conf/my.cnf:/etc/mysql/conf.d/mysql.cnf \
+-v /Users/apple/Documents/Docker/mysql/data:/var/lib/mysql \
+-v /Users/apple/Documents/Docker/mysql/conf/my.cnf:/etc/mysql/conf.d/mysql.cnf \
 -d docker.io/mysql:5.7
 ```
 
@@ -285,7 +285,7 @@ docker run -d \
 --name redis \
 -p 6379:6379 \
 -v /docker/redis/data:/data \
-redis --requirepass 'agefades'
+redis
 ```
 
 ## MongoDB 安装
@@ -366,10 +366,10 @@ chmod -R 777 /docker/elasticsearch/data
 
 # 启动容器
 docker run -d \
--e ES_JAVA_OPTS="-Xms3g -Xmx3g" \
--p 19200:9200 \
--p 19300:9300 \
--v /docker/elasticsearch/data:/usr/share/elasticsearch/data \
+-e ES_JAVA_OPTS="-Xms256m -Xmx256m" \
+-p 9200:9200 \
+-p 9300:9300 \
+-v /Users/apple/Documents/Docker/elasticsearch/data:/usr/share/elasticsearch/data \
 --name es6.7 docker.io/elasticsearch:6.7.0
 
 # 启动报错
@@ -407,8 +407,8 @@ xpack.monitoring.ui.container.elasticsearch.enabled: true
 docker run -d \
 --name kibana6.7 \
 -p 5601:5601 \
--v /docker/kibana/conf/kibana.yml:/usr/share/kibana/config/kibana.yml \
--e ELASTICSEARCH_URL=http://[你自己ES服务器的ip]:9200 docker.io/kibana:6.7.0 
+-v /Users/apple/Documents/Docker/kibana/conf/kibana.yml:/usr/share/kibana/config/kibana.yml \
+-e ELASTICSEARCH_URL=http://localhost:9200 docker.io/kibana:6.7.0 
 
 # 注意端口开放
 ```
