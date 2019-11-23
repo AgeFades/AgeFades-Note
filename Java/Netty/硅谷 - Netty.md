@@ -1084,8 +1084,19 @@ https://bintray.com/netty/downloads/netty/
 
 ### 传统阻塞 I/O 服务模型
 
+![UTOOLS1574391930248.png](https://i.loli.net/2019/11/22/cuSJh3YU8mzDCrE.png)
+
 ```shell
-# 差一张图
+# 工作原理图
+	# 黄色表示对象，蓝色表示线程，白色表示方法
+	
+# 模型特点
+	# 采用阻塞 IO 模式获取输入的数据
+	# 每个连接都需要独立的线程完成数据的输入，业务处理，数据返回
+	
+# 问题分析
+	# 当并发数很大，就会创建大量的线程，占用很大系统资源
+	# 连接创建后，如果当前线程暂时没有数据可读，该线程会阻塞在 read 操作，造成线程资源浪费
 ```
 
 ### Reactor 模式
@@ -1107,9 +1118,7 @@ https://bintray.com/netty/downloads/netty/
 
 #### 单 Reactor 单线程
 
-```shell
-# 差一张图
-```
+![UTOOLS1574392242847.png](https://i.loli.net/2019/11/22/E8B6f7N2TKdYLja.png)
 
 ##### 方案说明
 
@@ -1137,8 +1146,18 @@ https://bintray.com/netty/downloads/netty/
 
 #### 单 Reactor 多线程
 
+![UTOOLS1574392320439.png](https://i.loli.net/2019/11/22/axhVybweSJNrMG8.png)
+
 ```shell
-# 差一张图
+# 方案说明:
+	# Reactor 对象通过 select 监控客户端请求事件 ->
+		# 收到事件后，通过 dispatch 进行分发 ->
+		# 如果建立连接请求，则由 Acceptor 通过 accept 处理连接请求 ->
+		# 创建一个 Handler 对象处理完成连接后的各种事件 ->
+		# 如果不是连接请求，则由 reactor 分发调用连接对应的 handler 来处理 ->
+		# handler 只负责响应事件，不做具体的业务处理，通过 read 读取数据后，会分发给后面的 worker 线程池的某个线程处理业务 ->
+		# worker 线程池会分配独立线程完成真正的业务，并将结果返回给 handler ->
+		# handler 收到响应后，通过 send 将结果返回给 client
 ```
 
 ##### 方案优缺点分析
@@ -1153,8 +1172,18 @@ https://bintray.com/netty/downloads/netty/
 
 #### 主从 Reactor 多线程
 
+![UTOOLS1574393123063.png](https://i.loli.net/2019/11/22/AVgU5PiTzRW2vIy.png)
+
 ```shell
-# 差一张图
+# 方案说明
+	# Reactor 主线程 MainReactor 对象通过 select 监听连接事件，收到事件后，通过 Acceptor 处理连接事件 -> 
+	# 当 Acceptor 处理连接事件后，MainReactor 将连接分配给 SubReactor ->
+	# Subreactor 将连接加入到连接队列进行监听，并创建 handler 进行各种事件处理 ->
+	# 当有新事件发生时，Subreactor 就会调用对应的 handler 处理 ->
+	# handler 通过 read 读取数据，分发给后面的 worker 线程处理 ->
+	# worker 线程池分配独立的 worker 线程进行业务处理，并返回结果 ->
+	# handler 收到响应的结果后，再通过 Send 将结果返回给 Client ->
+	# Reactor 主线程可以对应多个 Reactor 子线程，即 MainReactor 可以关联多个 SubReactor
 ```
 
 ##### 方案优缺点分析
@@ -1201,7 +1230,36 @@ https://bintray.com/netty/downloads/netty/
 
 ## Netty 模型
 
+![UTOOLS1574400521473.png](https://i.loli.net/2019/11/22/IpE2AymJTkaeB3X.png)
+
 ```shell
-# 差一张图
+# Netyy 抽象出两组线程池:
+	# BossGroup: 专门负责接收客户端的连接
+	# WorkerGroup: 专门负责网络的读写
+	# BossGroup 和 WorkerGroup 都是 NioEventLoopGroup
+	
+# NioEventLoopGroup:
+	# 相当于一个事件循环组，这个组中含有多个事件循环，每一个循环事件是 NioEventLoop
+	# 多个线程，即含有多个 NioEventLoop
+	
+# NioEventLoop:
+	# 表示一个不断循环的执行处理任务的线程
+	# 每个 NioEventLoop 都有一个 Selector，用于监听绑定其上的 Socket 的网络通信
+	
+# Boss NioEventLoop 循环执行的步骤:
+	# 轮询 accept 事件 ->
+		# 处理 accept 事件，与 client 建立连接 ->
+		# 生成 NioSocketChannel，并将其注册到某个 Work NioEventLoop 上的 Selector 上 ->
+		# 处理任务队列的任务，即 runAllTasks
+
+# Worker NioEventLoop 执行的步骤:
+	# 轮询 read、write 事件 —>
+		# 处理 read、write 事件，在对应的 NioSocketChannel 上处理 ->
+		# 处理任务队列的任务，即 runAllTasks
+		
+# Worker NioEventLoop 处理业务时，会使用 pipeline(管道)
+	# pipeline 中包含了 channel，即通过 pipeline 获取到对应通道
+	# pipeline 中还维护了很多的处理器
 ```
 
+### Netty 快速入门实例 - TCP 服务
