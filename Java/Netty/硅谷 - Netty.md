@@ -1263,3 +1263,433 @@ https://bintray.com/netty/downloads/netty/
 ```
 
 ### Netty 快速入门实例 - TCP 服务
+
+```shell
+# 这里代码比较多了，就不往这里放了。
+```
+
+### 异步模型
+
+#### 基本介绍
+
+```shell
+# 异步的概念和同步相对。
+	# 当一个异步过程调用发出后，调用者不能立即得到结果。
+	# 实际处理这个调用的组件在完成后，通过状态、通知和回调来通知调用者。
+	
+# Netty 中的 I/O 操作是异步的，包括 Bind、Write、Connect 等操作会简单的返回一个 ChannelFuture
+
+# 调用者并不能立即获得结果，而是通过 Future-Listener 机制。
+	# 用户可以方便的主动获取或者通过通知机制获得 IO 操作结果
+	
+# Netty 的异步模型是建立在 Future 和 Callback 之上的。
+	# Callback 就是回调。
+	# Future 的核心思想:
+		# 假设一个方法，计算过程可能非常耗时，等待方法返回显然不合适。
+		# 那可以在调用方法的时候，立即返回一个 Future。
+		# 后续通过 Future 去监控方法的处理过程。（即: Future-Listener 机制）
+```
+
+#### 工作示意图
+
+![UTOOLS1575526235291.png](https://img02.sogoucdn.com/app/a/100520146/f3143b7dae9b9b9313b7a98095adb78e)
+
+```shell
+# 在使用 Netty 进行编程时，拦截操作和转换出入栈数据只需要提供 callback 或利用 future 即可。
+	# 这使得 链式操作 简单、高效，并有利于编写可重用的、通用的代码。
+	
+# Netty 框架的目标就是让业务逻辑从网络基础应用编码中分离出来。
+```
+
+#### Future - Listener 机制
+
+```shell
+# 当 Future 对象刚刚创建时，处于非完成状态，调用者可以通过返回的 ChannelFuture 来获取操作执行的状态，注册监听函数来执行完成后的操作。
+
+# 常见操作:
+	# isDone : 判断当前操作是否完成
+	# isSuccess : 判断已完成的当前操作是否成功
+	# getCause : 获取已完成的当前操作失败的原因
+	# isCancelled : 判断已完成的当前操作是否被取消
+	# addListener : 注册监听器，当操作已完成，将会通知指定的监听器
+```
+
+### Netty 快速入门实例 - HTTP 服务
+
+```shell
+# 代码略...
+```
+
+#### Http 服务过滤资源
+
+```shell
+# 通过 HttpObject Uri 对特定资源过滤
+```
+
+#### 阶段内容梳理
+
+```shell
+# 用户程序自定义的普通任务
+
+# 用户自定义定时任务
+
+# 非当前 Reactor 线程调用 Channel 的各种方法
+
+# 例如在 推送系统 的业务线程里面，根据 用户的标识，找到对应的 Channel 引用
+	# 然后调用 Write 类方法向该用户推送消息，就会进入到这种场景。
+	# 最终的 Write 会提交到任务队列后被 异步消费
+```
+
+```shell
+# Netty 抽象出两组线程池
+	# BossGroup 专门负责接收客户端连接，WorkerGroup 专门负责网络读写操作
+	
+	# NioEventLoop 表示一个不断循环执行处理任务的线程
+		# 每个 NioEventLoop 都有一个 selector,用于监听绑定在其上的 socket 网络通道。
+		
+	# NioEventLoop 内部采用串行化设计
+		# 从消息的读取 -> 解码 -> 处理 -> 编码 -> 发送，使用由 IO 线程 NioEventLoop 负责
+		
+# NioEventLoopGroup 下包含多个 NioEventLoop
+	# 每个 NioEventLoop 中包含有一个 Selector，一个 taskQueue
+	
+	# 每个 NioEventLoop 的 Selector 上可以注册监听多个 NioChannel
+	
+	# 每个 NioChannel 只会绑定在唯一的 NioEventLoop 上
+	
+	# 每个 NioChannel 都绑定一个自己的 ChannelPipeline
+		
+
+```
+
+### ChannelPipeline
+
+```shell
+# ChannelPipeline 是一个 Handler 的集合
+	# 它负责处理和拦截 inbound 或者 outbound 的事件和操作，相当于一个贯穿 Netty 的链。
+
+# ChannelPipeline 实现了一种高级形式的拦截过滤器模式	
+	# 使用户可以完全控制事件的处理方式，以及 Channel 中各个的 ChannelHandler 如何相互交互
+```
+
+```shell
+# 在 Netty 中每个 Channel 都有且仅有一个 ChannelPipeline 与之对应
+
+# 组成关系如下图:
+```
+
+![UTOOLS1575532207356.png](https://img02.sogoucdn.com/app/a/100520146/ce39b9a2b3be01ecbf51cdc6f4766926)
+
+```shell
+# 一个 Channel 包含了一个 ChannelPipeline
+	# 而 ChannelPipeline 中又维护了一个由 ChannelHandlerContext 组成的双向链表
+	# 并且每个 ChannelHandlerContext 中又关联着一个 ChannelHandler
+	
+# 入栈事件和出栈事件在一个双向链表中
+	# 入栈事件会从链表 head 往后传递到最后一个入栈的 handler
+	# 出栈事件会从链表 tail 往前传递到最前一个出栈的 handler
+	# 两种类型的 handler 互不干扰
+```
+
+#### 常用方法
+
+```shell
+# ChannelPipeline addFirst(ChannelHandler... handlers) :
+	# 把一个业务处理类（handler）添加到链中的第一个位置
+	
+# ChannelPipeline addLast(...)
+	# 跟上面的相反
+```
+
+### Netty 核心模块组件梳理
+
+#### BootStrap、ServerBootStrap
+
+```shell
+# BootStrap 意思是引导
+	# 一个 Netty 应用通常由一个 BootStrap 开始
+	# 主要作用是配置整个 Netty 程序，串联各个组件
+	# Netty 中 BootStrap 类是客户端程序的启动引导类
+	# ServerBootStrap 是服务端启动引导类
+```
+
+##### 常见方法
+
+```java
+// 该方法用于服务器端，用来设置两个 EventLoop
+public ServerBootStrap group(EventLoopGroup parentGroup, EventLoopGroup childGroup)
+  
+// 该方法用于客户端，用来设置一个 EventLoop
+public B group(EventLoopGroup group)
+  
+// 该方法用来设置一个服务器端的通道实现
+public B channel( Class<? extends C> channelClass)
+  
+// 用来给 ServerChannel 添加配置
+public <T> B option( ChannelOption<T> option, T value )
+  
+// 用来给接收到的通道添加配置
+public <T> ServerBootStrap childOption( ChannelOption<T> childOption, T value )
+
+// 该方法用来设置业务处理类 (自定义的 handler)
+public ServerBootStrap childHandler( ChannelHandler childHandler )
+  
+// 该方法用于服务器端，用来设置占用的端口号
+public ChannelFuture bind( int inetPort )
+  
+// 该方法用于客户端，用来连接服务器
+public ChannelFuture connect( String inetHost, int inetPort )
+```
+
+#### Future、ChannelFuture
+
+```shell
+# Netty 中所有的 IO 操作都是异步的，不能立刻得知消息是否被正确处理。
+	# 但是可以过一会等它执行完成或者直接注册一个监听
+	# 具体的实现就是通过 Future 和 ChannelFuture
+	# 他们可以注册一个监听，当操作执行成功或失败时监听会自动触发注册的监听事件。
+```
+
+##### 常见方法
+
+```java
+// 返回当前正在进行 IO 操作的通道
+public Channel channel()
+  
+// 等待异步操作执行完毕
+public ChannelFuture sync()
+```
+
+#### Channel
+
+```shell
+# Netty 网络通信的组件，能够用于执行网络 I/O 操作。
+	# 通过 Channel 可获得当前网络连接的通道的状态
+	# 通过 Channel 可获得网络连接的配置参数（例如接收缓冲区大小）
+	
+# Channel 提供异步的网络 I/O 操作（如建立连接，读写，绑定端口）
+	# 异步调用意味着任何 I/O 调用都将立即返回，并且不保证在调用结束时所请求的 I/O 操作已完成
+	# 调用立即返回一个 ChannelFuture 实例
+	# 通过注册监听器到 ChannelFuture 上，可以 I/O 操作成功、失败或取消时回调通知调用方
+	
+# 支持关联 I/O 操作与对应的处理程序
+	
+# 不同协议、不同的阻塞类型的连接都有不同的 Channel 类型与之对应
+```
+
+##### 常用 Channel 类型
+
+```shell
+# NioSocketChannel : 异步的客户端 TCP Socket 连接
+
+# NioServerSocketChannel : 异步的服务端 TCP Socket 连接
+
+# NioDatagramChannel : 异步的 UDP 连接
+
+# NioSctpChannel : 异步的客户端 Sctp 连接
+
+# NioSctpServerChannel : 异步的 Sctp 服务器端连接
+
+# 这些通道涵盖了 UDP 和 TCP 网络 IO 以及文件 IO
+```
+
+#### Selector
+
+```shell
+# Netty 基于 Selector 对象实现 I/O 多路复用
+
+# 通过 Selector 一个线程可以监听多个连接的 Channel 事件
+
+# 当向一个 Selector 中注册 Channel 后，
+	# Selector 内部的机制就可以自动不断地查询（select）这些注册的 Channel 是否有已就绪的 I/O 事件
+	# 例如: 可读、可写、网络连接完成等
+	# 这些程序就可以很简单地使用一个线程高效地管理多个 Channel
+```
+
+#### ChannelHandler 及其实现类
+
+```shell
+# ChannelHandler 是一个接口，处理 I/O 事件或拦截 I/O 操作
+	# 并将其转发到其 ChannelPipeline（业务处理链）中的下一个处理程序
+	
+# ChannelHandler 本身并没有提供很多方法，因为这个接口有许多的方法需要实现
+	# 方便使用者继承子类
+	
+# 我们经常需要自定义一个 Handler 类去继承 ChannelInboundHandlerAdapter
+	# 通过重写相应方法实现业务逻辑
+	# public void channelActive( ChannelHandlerContext ctx ) : 通道就绪事件
+	# public void channelRead( ... ) : 通道读取数据事件
+	# ...
+	
+# ChannelHandler 及其实现类一览图: 
+```
+
+![UTOOLS1575538310081.png](https://img04.sogoucdn.com/app/a/100520146/29fe90218c744679cf6dd95864056a8c)
+
+#### ChannelHandlerContext
+
+```shell
+# 保存 Channel 相关的所有上下文信息，同时关联一个 ChannelHandler 对象
+
+# 即 ChannelHandlerContext 中包含一个具体的事件处理器 ChannelHandler
+	# 同时 ChannelHandlerContext 中也绑定了对应的 pipeline 和 Channel 的信息
+	# 方便对 ChannelHandler 进行调用
+```
+
+##### 常用方法
+
+```shell
+# ChannelFuture close() : 关闭通道
+
+# ChannelOutboundInvoker flush() : 刷新
+
+# ChannelFuture writeAndFlush( Object msg ) : 
+	# 将数据写到 ChannelPipeline 中当前 ChannelHandler 的下一个 ChannelHandler 开始处理
+```
+
+#### ChannelOption
+
+```shell
+# Netty 在创建 Channel 实例后，一般都需要设置 ChannelOption 参数
+
+# ChannelOption 参数如下:
+	# ChannelOption.SO_BACKLOG : 
+		# 对应 TCP/IP 协议 listen 函数中的 backlog 参数，用来初始化服务器可连接队列大小。
+		# 服务端处理客户端连接请求是顺序处理的
+		# 所以同一时间只能处理一个客户端连接
+		# 多个客户端来的时候，服务端将不能处理的客户端连接请求放在队列中等待处理
+		# backlog 参数指定了队列的大小
+		
+	# ChannelOption.SO_KEEPALIVE
+    # 一直保持连接活动状态
+```
+
+#### EventLoopGroup 和其实现类 NioEventLoopGroup
+
+```shell
+# EventLoopGroup 是一组 EventLoop 的抽象
+	# Netty 为了更好的利用多核 CPU 资源，一般会有多个 EventLoop 同时工作
+	# 每个 EventLoop 维护着一个 Selector 实例
+	
+# EventLoopGroup 提供 next 接口
+	# 可以从组里面按照一定规则获取其中一个 EventLoop 来处理任务
+	# 在 Netty 服务器端编程中，我们一般都需要提供两个 EventLoopGroup
+	# 例如: BossEventLoopGroup 和 WorkerEventLoopGroup
+	
+# 通常一个服务端口即一个 ServerSocketChannel 对应一个 Selector 和一个 EventLoop 线程
+	# BossEventLoop 负责接收客户端的连接并将 SocketChannel 交给 
+		# WorkerEventLoopGroup 来进行 IO 处理
+		
+# 常用方法
+public NioEventLoopGroup() : 构造方法
+public Future<?> shutdownGracefully() : 断开连接，关闭线程
+```
+
+![UTOOLS1575539904374.png](https://img04.sogoucdn.com/app/a/100520146/0f698b6e2dbeaa91ed0544f7e0ac4f00)
+
+#### Unpooled 类
+
+```shell
+# Netty 提供一个专门用来操作缓冲区（即 Netty 的数据容器）的工具类
+
+# 常用方法:
+public static ByteBuf copiedBuffer( CharSequence string, Charset charset ) :
+	# 通过给定的数据和字符编码返回一个 ByteBuf 对象（类似于 NIO 中的 ByteBuffer 但有区别）
+```
+
+##### 代码案例
+
+```shell
+# 代码略...
+```
+
+### Netty 群聊系统
+
+```shell
+# 代码略...
+```
+
+### Netty 心跳机制实例
+
+```shell
+# 代码略...
+```
+
+### Netty 实现 WebSocket 长连接开发
+
+```shell
+# 代码略...
+```
+
+## Google Protobuf
+
+### 编码和解码的基本介绍
+
+```shell
+# 编写网络应用程序时，因为数据在网络中传输的都是二进制字节码数据
+	# 在发送数据时就需要编码，接收数据时就需要解码
+	
+# codec<编解码器> 的组成部分有两个:
+	# decoder<解码器> : 负责把字节码数据转换成业务数据
+	# encoder<编码器> : 负责把业务数据转换成字节码数据
+```
+
+### Netty 本身的编码解码的机制和问题分析
+
+```shell
+# Netty 自身提供了一些 codec
+	# StringEncoder : 对字符串数据进行编码
+	# ObjectEncoder : 对 Java 对象进行编码
+	# 反之就是解码器...
+	
+# ObjectCodec 底层使用的是 Java 序列化，所以存在如下问题:
+	# 无法跨语言
+	# 序列化后的体积太大，是二进制编码的 5 倍多
+	# 序列化性能太低
+	
+# 所以引入了新的解决方案 -> Google 的 Protobuf
+```
+
+### Protobuf
+
+```shell
+# Google 发布的开源项目，是一种轻便高效的结构化数据存储格式
+	# 很适合做数据存储或 RPC 数据交换格式
+	
+# 目前很多公司:
+	# http + json
+	# tcp + protobuf
+	
+# Protobuf 是以 message 的方式来管理数据的，支持跨平台、跨语言
+```
+
+![UTOOLS1575597504431.png](https://img03.sogoucdn.com/app/a/100520146/00693bec36fd0c210359d3e82da3b5ec)
+
+## Netty 编解码器和 handler 的调用机制
+
+### 基本说明
+
+```shell
+# Netty 的主要组件:
+	# Channel
+	# EventLoop
+	# ChannelFuture
+	# ChannelHandler
+	# ChannelPipe
+	# ...
+```
+
+```shell
+# ChannelHandler 充当了入栈和出栈数据的应用程序逻辑的容器。
+	
+# ChannelPipeline 提供了 ChannelHandler 链的容器
+```
+
+### 编码解码器
+
+```shell
+# 当 Netty 发送或者接收一个消息的时候，就会发生一次数据转换。
+
+# Netty 提供了一系列使用的编解码器，都实现了 Handler 接口并重写 channelRead 方法
+```
+

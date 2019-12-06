@@ -623,3 +623,522 @@ class ExtendBalancer extends Balancer {
 }
 ```
 
+### 深入理解 Nacos 的 Namespace
+
+```shell
+# Ribbon 只能调用相同 NameSpace 下的服务 
+
+# Nacos 中利用 NameSpace 机制对服务做了隔离
+```
+
+### 现有架构存在的问题
+
+```shell
+# 代码不可读
+
+# 复杂的 URL 难以维护
+
+# 难以响应需求的变化
+
+# 编程的体验不统一
+```
+
+## 使用Feign 实现远程 HTTP 调用
+
+### 什么是 Feign
+
+```shell
+# Fegin 是Netflix 开源的声明式 HTTP 客户端
+
+# Fegin 整合了 Ribbon 的负载均衡，所以上面的配置都是有用的
+```
+
+### 使用 Feign
+
+```xml
+<!-- 加依赖 -->
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+```
+
+```shell
+# 启动类上加注解
+@EnabelFeignClients
+```
+
+```java
+// 示例
+@FeignClient(name = "user") // name 表示调用的服务名
+public interface UserClient {
+
+    /**
+     * 统计系统用户数量
+     */
+    @GetMapping("/sysUser/page")
+    ApiResult page(@RequestBody PageRequest pageRequest);
+}
+```
+
+### Feign 的组成
+
+| 接口               | 作用                                     | 默认值                                                       |
+| ------------------ | ---------------------------------------- | ------------------------------------------------------------ |
+| Feign.Builder      | Feign 的入口                             | Feign.Builder                                                |
+| Client             | Feign 底层用什么去请求                   | 和 Ribbon 配合时: LoadBalanceFeignClient<br />不和 Ribbonn 配合时，Feign.Client.Default |
+| Contract           | 契约，注解支持                           | SpringMvcContract                                            |
+| Encoder            | 编码器，用于将对象转换成 HTTP 请求消息体 | SpringEncoder                                                |
+| Decoder            | 解码器，将响应消息体转成对象             | ResponseEntityDecoder                                        |
+| Logger             | 日志管理器                               | Slf4jLogger                                                  |
+| RequestInterceptor | 用于为每个请求添加通用逻辑               | 无                                                           |
+
+### 细粒度配置自定义
+
+```shell
+# Java 代码配置方式，不推荐，还是可能有Spring IOC 父子上下文重复扫描的问题
+
+# 配置文件配置
+```
+
+#### 自定义 Feign 日志级别
+
+| 级别                  | 打印内容                                         |
+| --------------------- | ------------------------------------------------ |
+| NONE<默认值>          | 不记录任何日志                                   |
+| BASIC<适用于生产级别> | 仅记录请求方法、URL、响应状态代码以及执行时间    |
+| HEADERS               | 记录 BASIC 级别的基础上，记录请求和响应的 header |
+| FULL<适用于开发级别>  | 记录请求和响应的 header、body 和元数据           |
+
+#### 配置属性方式指定 Feign 日志级别
+
+```yaml
+feign:
+	client:
+		conifg:
+			# 想要调用的微服务的名称
+			user:
+				loggerLevel: full
+```
+
+### 全局配置自定义
+
+```shell
+# Java 代码方式:
+	# 只建议在启动类上的 @EnabelFeignClients 注解上做配置
+
+# 配置文件自定义
+```
+
+#### Java 代码配置
+
+```java
+// 自定义编写 GlobalFeignConfiguration 配置类，例如日志级别...
+@EnabelFeignClients(defualtConfiguration = GlobalFeignConfiguration.class)
+```
+
+#### 配置属性方式
+
+```yaml
+feign:
+	client:
+		conifg:
+			# 全局配置
+			default:
+				loggerLevel: full
+```
+
+### 支持的配置项
+
+#### 支持的配置项 - 代码方式
+
+| Logger.Level                   | 作用                                                   |
+| ------------------------------ | ------------------------------------------------------ |
+| Logger.Level                   | 指定日志级别                                           |
+| Retryer                        | 指定重试策略                                           |
+| ErrorDecoder                   | 指定错误解码器                                         |
+| Request.Options                | 超时时间                                               |
+| Collection<RequestInterceptor> | 拦截器                                                 |
+| SetterFactory                  | 用于设置 Hystrix 的配置属性，Feign 整合 Hystrix 才会用 |
+
+#### 支持的配置项 - 配置方式
+
+```yaml
+feign:
+	client:
+		config:
+			# 服务名
+			<feignName>:
+				connectTimeout: 5000 # 连接超时时间
+				readTimeout: 5000 # 读取超时时间
+				loggerLevel: full # 日志级别
+				errorDecoder: com.example.SimpleErrorDecoder # 错误解码器
+				retryer: com.example.SimpleRetryer	# 重试策略
+				requestInterceptors:
+					- com.example.FooRequestInterceptor # 拦截器
+				decode404: false # 是否对 404 错误码解码
+				encoder: com.example.SimpleEncoder # 编码器
+				decoder: com.example.SimpleDecoder # 编码器
+				contract: com.example.SimpleContract # 契约
+```
+
+### 配置最佳实践总结
+
+```yaml
+# Feign 配置属性的优先级
+全局代码配置 < 全局属性配置 < 细粒度代码配置 < 细粒度属性配置
+
+# 尽量使用属性配置，尽量保持单一性
+```
+
+### Feign 的继承
+
+```shell
+# 官方不建议使用
+
+# 很多公司使用
+```
+
+### 多参数请求构造
+
+```yaml
+# 加上配置，解决两个 FeignClient 代理重复的问题
+spring:
+	main:
+		allow-bean-definition-overriding: true
+```
+
+```java
+// 在 FeignClient 方法参数中加上注解，主要是针对 GET 请求，需要在 url 上拼装参数
+@SpringQueryMap
+```
+
+### Feign 脱离 Ribbon 使用
+
+```shell
+# 目前阶段的 Feign 调用服务都是已经注册在 Nacos 上的服务，如果要调用没有注册到注册中心的服务，怎么办
+```
+
+```java
+@FeignClient(name = "服务名", url = "服务地址")
+
+// 举例
+@FeignClient(name = "baidu", url = "http://www.baidu.com")
+```
+
+### RestTemplate VS Feign
+
+| 角度             | RestTemplate | Feign                            |
+| ---------------- | ------------ | -------------------------------- |
+| 可读性、可维护性 | 一般         | 极佳                             |
+| 开发体验         | 欠佳         | 极佳                             |
+| 性能             | 很好         | 中等<RestTemplate 的 50%左右>    |
+| 灵活性           | 极佳         | 中等<内置功能可满足绝大多数需求> |
+
+### Feign 性能优化
+
+```shell
+# 为 Feign 配置连接池，性能提升 15% 左右
+
+# Feign 支持 HttpClient 和 Ok Http，配置思路基本一致，okHttp 需要自己指定版本
+
+# 日志级别配置为 BASIC 就可以
+```
+
+```xml
+<!-- 加依赖 -->
+<dependency>
+		<groupId>io.github.openfeign</groupId>
+  	<artifactId>feign-httpclient</artifactId>
+</dependency>
+```
+
+```yaml
+# 改配置
+feign:
+	httpclient:
+		# 让 feign 使用 apache httpclient 做请求，而不是默认的 urlConnetction
+		enabled: true
+		max-connections: 200 # feign 的最大连接数
+		max-connections-per-route: 50 # feign 单个路径的最大连接数
+```
+
+## Sentinel
+
+### 雪崩效应
+
+![UTOOLS1574832411109.png](https://i.loli.net/2019/11/27/xqjWyfdtgPVIKeU.png)
+
+### 常见容错方案
+
+```shell
+# 请求超时释放线程
+
+# 限流，控制阻塞线程最大数
+
+# 仓壁模式
+
+# 断路器模式
+```
+
+![UTOOLS1574833034965.png](https://i.loli.net/2019/11/27/Yz8x2GbMrkIC9Oi.png)
+
+### 使用 Sentinel 实现容错
+
+#### Sentinel 是什么
+
+```shell
+# 轻量级的流量控制、熔断降级 Java 库
+```
+
+#### 整合 Sentinel
+
+```xml
+<!-- 整合 Sentinel 的依赖，此时会暴露出/actuator/sentinel 的端点 -->
+<dependency>
+  <groupId>com.alibaba.cloud</groupId>
+  <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+</dependency>
+```
+
+#### Sentinel 控制台
+
+```shell
+# 官方提供的 Sentinel 可视化界面
+```
+
+```shell
+# 本人使用 Docker 安装，此时最新版本为 1.6.3
+
+# 拉取镜像
+docker pull bladex/sentinel-dashboard:1.6.3
+
+# 运行容器
+docker run -d \
+--name sentinel \
+-p 8858:8858 \
+bladex/sentinel-dashboard:1.6.3
+
+# 浏览器访问 localhost:8858
+
+# 默认账户密码均为 sentinel
+```
+
+```yaml
+# 将应用注册到 Sentinel 中
+spring:
+	cloud:
+		sentinel:
+			transport:
+				dashboard: localhost:8858
+```
+
+```shell
+# 此时启动应用，并有流量进入，才会加载到 Sentinel 的监控列表中
+	# 所以，Sentinel 监控是懒加载模式
+```
+
+#### 流控规则
+
+![UTOOLS1574842120288.png](https://i.loli.net/2019/11/27/GFZQzvkfgeCMxhq.png)
+
+![UTOOLS1574842219660.png](https://i.loli.net/2019/11/27/UlvWnEYbD3VcNrh.png)
+
+```shell
+# 直接
+	# 就最直接的
+	# 针对来源 是对系统内所有微服务而言，default 表示所有
+	
+# 关联
+	# 当关联的资源达到阈值，就限流自己<保护模式>
+	# 适用于 Selecte 接口 QPS 过快，而限流 Update 接口
+	# 关联资源 即关联的 Api
+	
+# 链路
+	# 只记录指定链路上的流量
+	# 例如 A、B 方法都调用 C 方法，此时在 C 方法上增加限流链路规则，对象为 A，即针对A 调用限流，其他的链路流量都不限制
+	# 在 C 方法上需要加注解 @SentinelResource("") 限流资源名
+ 	# 入口资源 是针对细粒度的 Api 入口
+```
+
+![UTOOLS1574842317713.png](https://i.loli.net/2019/11/27/GqxghoTe9Bf3lZK.png)
+
+#### 流控效果
+
+```shell
+# 快速失败
+	# 直接抛出异常
+	
+# Warm Up
+	# 根据 codeFactor(默认3,冷加载因子) 的值，从 阈值/codeFactor，经过预热时长，才到达设置的 QPS 阈值
+	# 例如 单机阈值为 100，预热时长为 10秒，冷加载因子默认是3，所以系统会用 100/3 作为最初的阈值，在10 s 内才达到 100
+	# 适用于秒杀服务
+	
+# 排队等待
+	# 匀速排队，让请求以均匀的速度通过，阈值类型必须设成 QPS，否则无效
+	# 例如: 单机阈值为 1，超时时间为 2s，在阻塞的前两秒内等待，超时后报出异常
+	# 适用于突发流量
+```
+
+### 降级规则详解
+
+![UTOOLS1575252443000.png](https://i.loli.net/2019/12/02/3tYiFr14NE8XIDh.png)
+
+#### 降级策略详解
+
+```shell
+# RT
+	# 平均响应时间
+	# 平均响应时间(秒级统计) 超出阈值 && 在时间窗口内通过的请求 >= 5 ->
+		# 触发降级(断路器打开) ->
+		# 时间窗口结束 ->
+		# 关闭降级
+		
+	# 注意点:
+		# 默认 RT 最大 4900ms
+		# 通过 -Dcsp.sentinel.statistic.max.rt=xxx 修改
+		
+
+# 异常比例
+	# QPS >= 5 && 异常比例(秒级统计) 超过阈值 ->
+		# 触发降级(断路器打开) ->
+		# 时间窗口结束 -> 
+		# 关闭降级
+
+# 异常数
+	# 异常数（分钟统计）超过阈值 ->
+		# 触发降级(断路器打开) ->
+		# 时间窗口结束 ->
+		# 关闭降级
+		
+	# 注意点:
+		# 时间窗口小于 60秒可能会出现问题
+		
+# Sentinel 的断路器目前没有半开状态
+```
+
+### 热点规则详解
+
+![UTOOLS1575265339581.png](https://i.loli.net/2019/12/02/8x4jEIseOt2nMJG.png)
+
+```shell
+# Sentinel 控制台里默认是不支持热点规则的，需要自己写一些代码
+
+# 对接口的请求参数某些值做限流规则，并且需要在端点上加 @SentinelResource 注解
+
+# 注意点:
+	# 参数必须是基本类型或者 String
+```
+
+### 系统规则详解
+
+```shell
+# LOAD
+	# 当系统 load1(1分钟的 load) 超过阈值，且并发线程数超过系统容量时触发，建议设置为 CPU 核数 * 2.5
+	# 仅对 Linux / Unix - like 机器生效
+	
+	# 系统容量 = maxQps * minRt
+		# maxQps: 秒级统计出来的最大 QPS
+		# minRt: 秒级统计出来的最小响应时间
+
+# RT
+	# 所有入口流量的平均 RT 达到阈值触发
+
+# 线程数
+	# 所有入口流量的并发线程数达到阈值触发
+
+# 入口 QPS
+	# 所有入口流量的 QPS 达到阈值触发
+```
+
+### 授权规则详解
+
+![UTOOLS1575266005271.png](https://img03.sogoucdn.com/app/a/100520146/9f744a66e57894369d43123c90f5c220)
+
+### Sentinel 与控制台通信原理剖析
+
+#### 控制台是如何获取到微服务的监控信息的？
+
+![UTOOLS1575266322733.png](https://img01.sogoucdn.com/app/a/100520146/94a9f66140c8b35ec000b87cffd621db)
+
+#### 用控制台配置规则时，控制台是如何将规则发送到各个微服务的呢？
+
+```shell
+# 通过微服务注册在Sentinel 的地址通信，Sentinel 调用微服务的 setRules 端点。
+```
+
+### Sentinel API
+
+```java
+@GetMapping("/test-api")
+public String testApi(@RequestParam(required = false) String a) {
+
+	// 定义一个 Sentinel 保护的资源，名称是 test-api
+  Entry entry = null;
+  try {
+    entry = SphU.entry("test-api");
+    // 被保护的业务逻辑
+    return a;
+  } catch (BlockException e) {
+    log.warn("限流或者降级了", e);
+    return "限流或者降级了";
+  } finally {
+    if (entry != null) {
+      // 退出 entry
+      entry.exit();
+    }
+  }
+  
+}
+```
+
+### Feign 整合 Sentinel
+
+```yaml
+# 添加配置
+feign:
+	sentinel:
+		enabled: true
+```
+
+#### 限流降级发生时，如何定制自己的处理逻辑？
+
+```java
+// 在 @FeignClient 注解上增加属性
+@FeignClient(name = "user-center", fallback = Xxx.class)
+
+// Xxx.class 需要实现 @FeignClient 标注的类，并加上 @Component 注解
+```
+
+#### 如何获取到异常
+
+```java
+// 在 @FeignClient 注解上增加属性，fallbackFactory 和 fallback 不能共存
+@FeignClient(name = "user-center", fallbackFactory = Xxx.class)
+
+// Xxx.class 需要实现 FallbackFactory<Xxx(@FeignClient 标注的类)>
+```
+
+### Sentinel 使用姿势总结
+
+| 使用方式     | 使用方式                      | 使用方法                 |
+| ------------ | ----------------------------- | ------------------------ |
+| 编码方式     | API                           | try...catch...finally    |
+| 注解方式     | SentinelResource              | blockHandler/fallback    |
+| RestTemplate | SentinelRestTemplate          | blockHandler/fallback    |
+| Feign        | feign.sentinel.enabled = true | fallback/fallbackFactory |
+
+### 规则持久化
+
+#### 拉模式
+
+```shell
+
+```
+
+#### 推模式
+
+```shell
+
+```
+

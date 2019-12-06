@@ -238,12 +238,12 @@ default-character-set=utf8
 
 # docker 启动容器
 docker run -p 3306:3306 \
---name mysql \
+--name mysql8 \
 -e MYSQL_ROOT_PASSWORD=root \
 --privileged=true \
 -v /Users/apple/Documents/Docker/mysql/data:/var/lib/mysql \
 -v /Users/apple/Documents/Docker/mysql/conf/my.cnf:/etc/mysql/conf.d/mysql.cnf \
--d docker.io/mysql:5.7
+-d docker.io/mysql:8.0.18 
 ```
 
 ## Jenkins 安装
@@ -284,7 +284,7 @@ systemctl restart jenkins
 docker run -d \
 --name redis \
 -p 6379:6379 \
--v /docker/redis/data:/data \
+-v /Users/apple/Documents/Docker/redis/data:/data \
 redis
 ```
 
