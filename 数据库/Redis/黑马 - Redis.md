@@ -1646,6 +1646,97 @@ geohash key member [member ...]
 		# 使用布隆过滤器（有关布隆过滤器的命中问题对当前状况可以忽略）
 		
 	# 实施监控:
-		# 实时监控
+		# 实时监控 Redis 命中率（业务正常范围时，通常会有一个波动值）与null 数据的占比
+			# 非活动时段波动: 通常检测 3-5 倍，超过 5 倍纳入重点排查对象
+			# 活动时段波动: 通常检测 10-50 倍，超过 50 倍纳入重点排查对象
+		# 根据倍数不同，启动不同的排查流程，然后使用黑名单进行防控（运营）
+		
+	# key 加密:
+		# 问题出现后，临时启动防灾业务 key，对 key 进行业务层传输加密服务，设定校验程序，过来的 key 校验
+		# 例如每天随机分配 60 个加密串，挑选 2-3 个，混淆到页面数据 id 中
+			# 发现访问 key 不满足规则，驳回数据即可
+		
+# 总结:
+	# 缓存击穿访问了不存在的数据，跳过了合法数据的 redis 数据缓存阶段
+	# 每次访问数据库，导致对数据库服务器造成压力。
+	# 通常此类数据的出现量是一个较低的值，当出现此类情况以毒攻毒，并及时报警
+	# 无论是黑名单还是白名单，都是对整体系统的压力，警报解除后尽快移除
 ```
+
+### 性能指标监控
+
+#### 性能指标 Performance
+
+| Name                      | Description              |
+| ------------------------- | ------------------------ |
+| latency                   | Redis 响应一个请求的时间 |
+| instantaneous_ops_per_sec | 平均每秒处理请求总数     |
+| hit rate（calculated）    | 缓存命中率（计算出来的） |
+
+#### 内存指标 Memory
+
+| Name                    | Description                                    |
+| ----------------------- | ---------------------------------------------- |
+| user_memory             | 已使用内存                                     |
+| mem_fragmentation_ratio | 内存碎片率                                     |
+| evicted_keys            | 由于最大内存限制被移除的 key 的数量            |
+| blocked_clients         | 由于 BLPOP、BRPOP、BRPOPLPUSH 而被阻塞的客户端 |
+
+#### 基本活动指标 Basic activity
+
+| Name                       | Description                |
+| -------------------------- | -------------------------- |
+| connected_clients          | 客户端连接数               |
+| connected_slaves           | Slave 数量                 |
+| master_last_io_seconds_ago | 最近一次主从交互之后的秒数 |
+| keyspace                   | 数据库中的key 值总数       |
+
+#### 持久性指标 Persistence
+
+| Name                        | Description                        |
+| --------------------------- | ---------------------------------- |
+| rdb_last_save_time          | 最后一次持久化保存到磁盘的时间戳   |
+| rdb_changes_since_last_save | 自最后一次持久化以来数据库的更改数 |
+
+#### 错误指标 Error
+
+| Name                           | Description                             |
+| ------------------------------ | --------------------------------------- |
+| rejected_connections           | 由于达到 maxclient 限制而被拒绝的连接数 |
+| keyspace_misses                | Key 值查找失败（没有命中）次数          |
+| master_link_down_since_seconds | 主从断开的持续时间（以秒为单位）        |
+
+#### 监控方式
+
+##### 工具
+
+```shell
+# Cloud Insight Redis
+
+# Prometheus
+
+# Redis-stat
+
+# Redis-faina
+
+# RedisLive
+
+# zabbix
+```
+
+##### 命令
+
+```shell
+# benchmark
+
+# redis cli
+	# monitor
+	# showlog
+```
+
+![UTOOLS1576634336786.png](https://img01.sogoucdn.com/app/a/100520146/cdac93863b78f12df2e6bdbdd9a12aa3)
+
+![UTOOLS1576634351811.png](https://img03.sogoucdn.com/app/a/100520146/07ac7ed52dbf6ae16cda1c170bbf3bad)
+
+![UTOOLS1576634369200.png](https://img02.sogoucdn.com/app/a/100520146/0faeb4c897a93541c70b9b66754c1c8b)
 
