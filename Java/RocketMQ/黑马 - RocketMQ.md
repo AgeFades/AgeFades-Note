@@ -50,13 +50,16 @@ docker pull foxiswho/rocketmq:broker-4.3.2
 docker run -p 9876:9876 --name rmqserver \
 -e "JAVA_OPT_EXT=-server -Xms128m -Xmx128m -Xmn128m" \
 -e "JAVA_OPTS=-Duser.home=/opt" \
--v /docker/rmq/rmqserver/logs:/opt/logs \
--v /docker/rmq/rmqserver/store:/opt/store \
-foxiswho/rocketmq:server-4.3.2
+-v /Users/apple/Documents/Docker/rmq/rmqserver/logs:/opt/logs \
+-v /Users/apple/Documents/Docker/rmq/rmqserver/store:/opt/store \
+foxiswho/rocketmq:server-4.3.2;
+
+# 创建 broker 容器
+docker run -p 10911:10911 -p 10909:10909 --name rmqbroker -e "JAVA_OPTS=-Duser.home=/opt" -e "JAVA_OPT_EXT=-server -Xms128m -Xmx128m -Xmn128m" -v /Users/apple/Documents/Docker/rmq/rmqbroker/logs:/opt/logs -v /Users/apple/Documents/Docker/rmq/rmqbroker/store:/opt/store -v /Users/apple/Documents/Docker/rmq/rmqbroker/conf/broker.conf:/etc/rocketmq/broker.conf foxiswho/rocketmq:broker-4.3.2
 
 # 创建 RocketMq-Console
 docker pull styletang/rocketmq-console-ng:1.0.0
-docker run -e "JAVA_OPTS=-Drocketmq.namesrv.addr=['你自己的Ip']:9876 -
+docker run -e "JAVA_OPTS=-Drocketmq.namesrv.addr=localhost:9876 -
 Dcom.rocketmq.sendMessageWithVIPChannel=false" -p 8082:8080 -t styletang/rocketmqconsole-ng:1.0.0
 
 # 浏览器访问Ip + Port即可

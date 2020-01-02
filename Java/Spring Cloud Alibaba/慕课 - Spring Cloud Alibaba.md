@@ -1142,3 +1142,190 @@ feign:
 
 ```
 
+## SpringCloud Gateway
+
+### 为什么要使用网关
+
+```shell
+# 统一登录认证
+
+# 对外只暴露一个域名
+
+# 转换对浏览器不友好的协议通信
+```
+
+### SpringCloug Gateway 是什么？
+
+```shell
+# Spring Cloud 的第二代网关实现，未来会取代 Zuul
+
+# 基于 Netty、Reactor以及 WebFlux 构建
+```
+
+### 编写 SpringCloud Gateway
+
+```xml
+<dependency>
+  <groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-gateway</artifactId>
+</dependency>
+```
+
+```yml
+spring:
+	cloud:
+		gateway:
+			discovery:
+				locator:
+					enbaled: true # 让 Gateway 通过服务发现组件找到其他的微服务
+```
+
+### 核心概念
+
+#### Route
+
+```shell
+# 路由:
+	# Gateway 的基础元素，可简单理解成一条转发的规则。
+	# 包含: ID、目标Url、Predicate 集合以及 Filter 集合
+```
+
+#### Predicate
+
+```shell
+# 断言:
+	# java.util.function.Predicate
+	# Gateway 使用 Predicate 实现路由的匹配条件
+```
+
+#### Filter
+
+```shell
+# 过滤器:
+	# 修改请求以及响应
+```
+
+#### 总结
+
+```shell
+# 路由 -> 转发规则
+
+# 断言 -> 控制请求 -> 路由的条件
+
+# 过滤器 -> 为路由添加业务逻辑
+```
+
+#### 路由配置示例
+
+```yml
+spring:
+	cloud:
+		gateway:
+			routes:
+				- id: some_route
+					uri: http://www.baidu.com
+					predicates: 
+						- Path=/users/1
+					filters:
+						- AddRequestHeader=X-Request-Foo, Bar
+```
+
+```shell
+# 一个路由规则由:
+	# id、uri、断言集合、过滤器集合组成
+	
+# 上述意思是，当 /users/1 请求进入 Gateway 时，过滤器添加请求头信息，并转发到 uri 的位置
+```
+
+### SpringCloud Gateway 架构剖析
+
+![UTOOLS1577340681325.png](https://i.loli.net/2019/12/26/IuVj1qZztQ6bHOf.png)
+
+```shell
+# Gateway Client:
+	# 发起请求的客户端
+	
+# Proxied Service:
+	# 网关代理的微服务
+	
+# Gateway HandlerMapping:
+	# 判断请求是否符合路由的规则配置
+		# 如果符合，进入 Gateway Web Handler 处理器 ->
+		# 将请求交给过滤器集合进行逻辑处理
+```
+
+### 路由断言工厂详解
+
+```shell
+# Route Predicate Factories:
+	# 符合 Predicate 的条件，就使用该路由的配置，否则就不管。
+	
+# Predicate 是 JDK8 提供的一个函数式编程接口
+```
+
+#### 路由配置的两种形式
+
+##### 路由到指定 URL
+
+```yaml
+# 示例1: 通配
+# 表示访问 GATEWAY_URL/** 会转发到 http://www.baidu.com/**
+# 这段配置不能直接使用，需要和下面的 Predicate 配合使用才行
+spring:
+	cloud:
+		gateway:
+			routes:
+				- id: {唯一标识}
+					uri: http://www.baidu.com
+```
+
+```yaml
+# 示例2: 精确匹配
+# 表示访问 GATEWAY_URL/a/b 会转发到 http://www.baidu.com/a/b
+# 这段配置不能直接使用，需要和下面的 Predicate 配合使用才行
+spring:
+	cloud:
+		gateway:
+			routes:
+				- id: {唯一标识}
+					uri: http://www.baidu.com/a/b
+```
+
+##### 路由到服务发现组件上的微服务
+
+```yaml
+# 示例1: 通配
+# 表示访问 GATEWAY_URL/** 会转发到 user 微服务的 /**
+# 这段配置不能直接使用，需要和下面的 Predicate 配合使用才行
+spring:
+	cloud:
+		gateway:
+			routes:
+				- id: {唯一标识}
+					uri: lb://user
+```
+
+```yaml
+# 示例2: 精确匹配
+# 表示访问 GATEWAY_URL/a/b 会转发到 user 微服务的 /a/b
+# 这段配置不能直接使用，需要和下面的 Predicate 配合使用才行
+spring:
+	cloud:
+		gateway:
+			routes:
+				- id: {唯一标识}
+					uri: lb://user/a/b
+```
+
+#### 断言工厂详解
+
+```shell
+http://www.imooc.com/article/290804
+```
+
+### 过滤器工厂详解
+
+```shell
+http://www.imooc.com/article/290816
+```
+
