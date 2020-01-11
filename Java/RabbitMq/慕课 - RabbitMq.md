@@ -1453,3 +1453,789 @@ public class MyConsumer extends DefaultConsumer {
 }
 ```
 
+### 消费端 ACK 与重回队列
+
+```shell
+# 消费端的手工 ACK 和 NACK
+	# 消费端进行消费的时候，如果由于业务异常我们可以进行日志的记录，然后进行补偿
+	
+	# 如果由于服务器宕机等严重问题，那就需要手工进行 ACK 保障消费端消费成功
+	
+# 消费端的重回队列
+	# 消费端重回队列是为了对没有处理成功的消息，把消息重新投递给 broker
+	
+	# 在实际应用中，都会关闭重回队列，也就是设置为 false
+```
+
+#### 代码
+
+```java
+public class Producer {
+
+	public static void main(String[] args) throws Exception {
+		
+		ConnectionFactory connectionFactory = new ConnectionFactory();
+		connectionFactory.setHost("127.0.0.1");
+		connectionFactory.setPort(5672);
+		connectionFactory.setVirtualHost("/");
+		
+		Connection connection = connectionFactory.newConnection();
+		Channel channel = connection.createChannel();
+		
+		String exchange = "test_ack_exchange";
+		String routingKey = "ack.save";
+
+		for(int i =0; i<5; i ++){
+			
+			Map<String, Object> headers = new HashMap<String, Object>();
+			headers.put("num", i);
+			
+			AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
+					.deliveryMode(2)
+					.contentEncoding("UTF-8")
+					.headers(headers)
+					.build();
+			String msg = "Hello RabbitMQ ACK Message " + i;
+			channel.basicPublish(exchange, routingKey, true, properties, msg.getBytes());
+		}
+		
+	}
+}
+```
+
+```java
+public class Consumer {
+
+	public static void main(String[] args) throws Exception {
+
+		ConnectionFactory connectionFactory = new ConnectionFactory();
+		connectionFactory.setHost("127.0.0.1");
+		connectionFactory.setPort(5672);
+		connectionFactory.setVirtualHost("/");
+		
+		Connection connection = connectionFactory.newConnection();
+		Channel channel = connection.createChannel();
+		
+		String exchangeName = "test_ack_exchange";
+		String queueName = "test_ack_queue";
+		String routingKey = "ack.#";
+		
+		channel.exchangeDeclare(exchangeName, "topic", true, false, null);
+		channel.queueDeclare(queueName, true, false, false, null);
+		channel.queueBind(queueName, exchangeName, routingKey);
+		
+		// 手工签收 必须要关闭 autoAck = false
+		channel.basicConsume(queueName, false, new MyConsumer(channel));
+
+	}
+}
+```
+
+```java
+public class MyConsumer extends DefaultConsumer {
+
+	private Channel channel ;
+	
+	public MyConsumer(Channel channel) {
+		super(channel);
+		this.channel = channel;
+	}
+
+	@Override
+	public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+		System.err.println("-----------consume message----------");
+		System.err.println("body: " + new String(body));
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		if((Integer)properties.getHeaders().get("num") == 0) {
+			channel.basicNack(envelope.getDeliveryTag(), false, true);
+		} else {
+			channel.basicAck(envelope.getDeliveryTag(), false);
+		}
+		
+	}
+
+}
+```
+
+### TTL 队列/消息
+
+```shell
+# TTL 是 Time To Live 的缩写，也就是生存时间
+
+# RabbitMQ 支持消息的过期时间，在消息发送时可以进行指定
+
+# RabbitMQ 支持队列的过期时间，从消息入队列开始计算，只要超过了队列的超时时间配置，消息自动清除
+```
+
+### 死信队列
+
+```shell
+# DLX: Dead-Letter-Exchange
+
+# 利用 DLX，当消息在一个队列中变成 死信 之后
+	# 它能被重新 publish 到另一个 Exchange，这个 Exchange 就是 DLX
+	
+# 消息变成死信有以下几种情况:
+	# 消息被拒绝(basic.reject/basic.nack) 并且 requeue=false
+	# 消息 TTL 过期
+	# 队列达到最大长度
+	
+# DLX 也是一个正常的 Exchange，和一般的 Exchange 没有区别
+	# 它能在任何的队列上被指定，实际上就是设置某个队列的属性
+	
+# 可以监听这个队列中消息做相应的处理，这个特性可以弥补 RabbitMQ3.0 以前支持的 immediate 参数的功能
+
+# 死信队列的设置:
+	# 首先需要设置死信队列的 exchange 和 queue，然后进行绑定:
+		# Exchange: dlx.exchange
+		# Queue: dlx.queue
+		# RoutingKey: #
+		
+	# 然后进行正常声明交换机、队列、绑定
+		# 需要在队列加上一个参数即可:
+			# arguments.put("x-dead-letter-exchange", "dlx.exchange")
+			
+	# 这样消息在过期、requeue、队列在达到最大长度时，消息就可以直接路由到死信队列
+```
+
+#### 代码
+
+```java
+public class Producer {
+	
+	public static void main(String[] args) throws Exception {
+		
+		ConnectionFactory connectionFactory = new ConnectionFactory();
+		connectionFactory.setHost("127.0.0.1");
+		connectionFactory.setPort(5672);
+		connectionFactory.setVirtualHost("/");
+		
+		Connection connection = connectionFactory.newConnection();
+		Channel channel = connection.createChannel();
+		
+		String exchange = "test_dlx_exchange";
+		String routingKey = "dlx.save";
+		
+		String msg = "Hello RabbitMQ DLX Message";
+		
+		for(int i =0; i<1; i ++){
+			
+			AMQP.BasicProperties properties = new AMQP.BasicProperties.Builder()
+					.deliveryMode(2)
+					.contentEncoding("UTF-8")
+					.expiration("10000")
+					.build();
+			channel.basicPublish(exchange, routingKey, true, properties, msg.getBytes());
+		}
+		
+	}
+}
+```
+
+```java
+public class Consumer {
+	
+	public static void main(String[] args) throws Exception {
+		
+		ConnectionFactory connectionFactory = new ConnectionFactory();
+		connectionFactory.setHost("127.0.0.1");
+		connectionFactory.setPort(5672);
+		connectionFactory.setVirtualHost("/");
+		
+		Connection connection = connectionFactory.newConnection();
+		Channel channel = connection.createChannel();
+		
+		// 这就是一个普通的交换机 和 队列 以及路由
+		String exchangeName = "test_dlx_exchange";
+		String routingKey = "dlx.#";
+		String queueName = "test_dlx_queue";
+		
+		channel.exchangeDeclare(exchangeName, "topic", true, false, null);
+		
+		Map<String, Object> agruments = new HashMap<String, Object>();
+		agruments.put("x-dead-letter-exchange", "dlx.exchange");
+		//这个agruments属性，要设置到声明队列上
+		channel.queueDeclare(queueName, true, false, false, agruments);
+		channel.queueBind(queueName, exchangeName, routingKey);
+		channel.basicConsume(queueName, false, new MyConsumer(channel));
+		
+		//要进行死信队列的声明:
+		channel.exchangeDeclare("dlx.exchange", "topic", true, false, null);
+		channel.queueDeclare("dlx.queue", true, false, false, null);
+		channel.queueBind("dlx.queue", "dlx.exchange", "#");
+		QueueingConsumer queueingConsumer = new QueueingConsumer(channel);
+		channel.basicConsume("dlx.queue", false, queueingConsumer);
+		while(true){
+
+			QueueingConsumer.Delivery delivery = queueingConsumer.nextDelivery();
+			String msg = new String(delivery.getBody());
+			System.err.println("死信队列消费消息: " + msg);
+		}
+
+	}
+}
+```
+
+```java
+public class MyConsumer extends DefaultConsumer {
+
+	private Channel channel;
+
+	public MyConsumer(Channel channel) {
+		super(channel);
+		this.channel = channel;
+	}
+
+	@Override
+	public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+		System.err.println("-----------consume message----------");
+		System.err.println("consumerTag: " + consumerTag);
+		System.err.println("envelope: " + envelope);
+		System.err.println("properties: " + properties);
+		System.err.println("body: " + new String(body));
+		channel.basicNack(envelope.getDeliveryTag(), false, false);
+	}
+	
+}
+```
+
+## RabbitMQ 高级整合应用
+
+### RabbitMQ 整合 Spring AMQP 实战
+
+### RabbitAdmin
+
+```shell
+# RabbitAdmin 类可以很好的操作 RabbitMQ，在 Spring 中直接进行注入即可
+
+# 注意: autoStartup 必须要设置为 true，否则 Spring 容器不会加载 RabbitAdmin 类
+
+# RabbitAdmin 底层实现就是从 Spring 容器中获取
+	# Exchange、Bingding、RoutingKey 以及 Queue 的 @Bean 声明
+	
+# 然后使用 RabbitTemplate 的 execute 方法执行对应的声明、修改、删除等一系列 RabbitMQ 基础功能操作
+	# 例如: 添加一个交换机、删除一个绑定、清空一个队列里的消息等等
+```
+
+```java
+@Configuration
+@ComponentScan({"com.example.rabbitmq.*"})
+public class RabbitMQConfig {
+
+    @Bean
+    public ConnectionFactory connectionFactory() {
+        CachingConnectionFactory factory = new CachingConnectionFactory();
+        factory.setAddresses("127.0.0.1:5672");
+        factory.setUsername("guest");
+        factory.setPassword("guest");
+        factory.setVirtualHost("/");
+        return factory;
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        return rabbitTemplate;
+    }
+
+    @Bean
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        RabbitAdmin admin = new RabbitAdmin(connectionFactory);
+        admin.setAutoStartup(true);
+        return admin;
+    }
+
+}
+```
+
+```java
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class RabbitmqApplicationTest {
+
+    @Autowired
+    private RabbitAdmin rabbitAdmin;
+    
+    @Test
+    public void testAdmin() throws Exception {
+        rabbitAdmin.declareExchange(new DirectExchange("spring.test.direct3", false, false));
+    }
+  
+  	@Test
+    public void testBindingBuilder() throws Exception{
+        rabbitAdmin.declareExchange(new DirectExchange("spring.test.topic.exchange", false, false));
+        rabbitAdmin.declareQueue(new Queue("spring.test.topic.queue", false));
+        rabbitAdmin.declareBinding(
+                BindingBuilder
+                        .bind(new Queue("spring.test.topic.queue", false))
+                        .to(new TopicExchange("spring.test.topic.exchange", false, false))
+                        .with("user.#")
+        );
+    }
+
+}
+```
+
+### SpringAMQP 声明
+
+```shell
+# 在 Rabbit 基础API 里声明一个 Exchange、声明一个绑定、一个队列
+channel.exchangeDeclare()
+channel.queueDeclare()
+channel.queueBind()
+
+# 使用 SpringAMQP 去声明，即 @Bean 方式
+```
+
+```java
+@Bean
+public TopicExchange exchange() {
+  return new TopicExchange("topic", true, false);
+}
+
+@Bean
+public Queue queue() {
+  return new Queue("queue", true);
+}
+
+@Bean
+public Binding binding() {
+  return BindingBuilder.bind(queue()).to(exchange()).with("spring.*");
+}
+```
+
+```java
+// 举例
+/**
+     * 针对消费者配置
+     * 1. 设置交换机类型
+     * 2. 将队列绑定到交换机
+     *  FanoutExchange: 将消息发布到所有的绑定队列，无 RoutingKey 的概念
+     *  HeadersExchange: 通过添加属性 Key-Value 匹配
+     *  DirectExchange: 按照 RoutingKey 分发到指定队列
+     *  TopicExchange: 多关键字匹配
+     */
+    @Bean
+    public TopicExchange topicExchange() {
+        return new TopicExchange("swordsman_topic_exchange", true, false);
+    }
+
+    @Bean
+    public Queue topicSpringQueue() {
+        return new Queue("topic_spring_queue", true);
+    }
+
+    @Bean
+    public Binding topicSpringBinding() {
+        return BindingBuilder.bind(topicSpringQueue()).to(topicExchange()).with("spring.*");
+    }
+
+    @Bean
+    public Queue topicRabbitQueue() {
+        return new Queue("topic_rabbit_queue", true);
+    }
+
+    @Bean
+    public Binding topicRabbitBinding() {
+        return BindingBuilder.bind(topicRabbitQueue()).to(topicExchange()).with("rabbit.*");
+    }
+```
+
+### RabbitTemplate
+
+```shell
+# RabbitTemplate : 即消息模板
+
+# 在于 SpringAMQP 整合的时候进行发送消息的关键类
+
+# 该类提供了丰富的发送消息方法
+	# 包括可靠性投递消息方法、回调监听消息接口 ConfirmCallback、
+	# 返回值确认接口 ReturnCallback 等等..
+	# 同样需要进行注入到 Spring 容器中，然后直接使用
+	
+# 在与 Spring 整合时需要实例化，但是在于 SpringBoot 整合时，在配置文件里添加配置即可
+```
+
+```java
+		@Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Test
+    public void templateTest() {
+        // 创建消息
+        MessageProperties properties = new MessageProperties();
+        properties.getHeaders().put("desc", "信息描述");
+        properties.getHeaders().put("title", "标题");
+        Message message = new Message("Hello RabbitMQ".getBytes(), properties);
+
+        // 发送消息
+        rabbitTemplate.convertAndSend("swordsman_topic_exchange",
+                "spring.amqp",
+                message,
+                (msg) -> {
+                    msg.getMessageProperties().getHeaders().put("ext", "额外消息");
+                    return msg;
+                });
+
+    }
+```
+
+###  SimpleMessageListenerContainer
+
+```shell
+# 简单消息监听容器
+
+# 这个类非常的强大，对于消费者的配置项，这个类都可以满足:
+	# 监听队列（多个队列）、自动启动、自动声明功能
+
+	# 设置事务特性、事务管理器、事务属性、事务容量（并发）、是否开启事务、回滚消息等
+
+	# 设置消费者数量、最小最大数量、批量消费
+
+	# 设置下消息确认和自动确认模式、是否重回队列、异常捕获 handler 函数
+	
+	# 设置消费者标签生成策略、是否独占模式、消费者属性等
+	
+	# 设置监听的监听器、消息转换器等等
+	
+# 注意:
+	# SimpleMessageListenerContainer 可以进行动态设置
+	# 比如在运行中的应用可以动态的修改其消费者数量的大小、接收消息的模式等
+	# 很多基于 RabbitMQ 的自制定化后端管控台在进行动态设置的时候
+		# 也是根据这一特性去实现的
+		
+# SimpleMessageListenerContainer 为什么可以动态感知配置变更？
+```
+
+```java
+ @Bean
+    public SimpleMessageListenerContainer container(ConnectionFactory connectionFactory) {
+        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(connectionFactory);
+        container.setQueues(topicSpringQueue(), topicRabbitQueue());    // 监听的队列
+        container.setConcurrentConsumers(1); // 当前消费者为1个
+        container.setMaxConcurrentConsumers(5); // 最大消费者数量为5个
+        container.setDefaultRequeueRejected(false); // 消息拒绝消费或消费失败 不重回队列
+        container.setAcknowledgeMode(AcknowledgeMode.AUTO); // 设置签收 ACK 策略
+        container.setConsumerTagStrategy(v -> v + "_" + UUID.randomUUID().toString()); // 设置消费端的标签名生成策略
+        container.setMessageListener(msg -> System.out.println("消费者受到消息: " + new String(msg.getBody()) + "ConsumerTag: " + msg.getMessageProperties().getConsumerTag()));  // 设置消费端的消息监听器
+
+        return container;
+    }
+```
+
+###  MessageListenerAdapter
+
+```shell
+# 即消息监听适配器
+
+# 核心属性:
+	# defaultListenerMethod 默认监听方法名称: 用于设置监听方法名称
+	# Delegate 委托对象: 实际真实的委托对象，用于处理消息
+	# queueOrTagToMethodName: 队列标识与方法名称组成的集合
+```
+
+```java
+public class MessageDelegate {
+
+    public void handleMessage(String msg) {
+        System.err.println("默认方法,消息内容为: " + msg);
+    }
+
+}
+```
+
+```java
+ // SimpleMessageListenerContainer 设置
+ MessageListenerAdapter adapter = new MessageListenerAdapter(new MessageDelegate());
+ container.setMessageListener(adapter);
+```
+
+```shell
+# 方法名为什么要写死为 handleMessage 的源码依据:
+
+# 可以自定义修改方法名 (根据源码提供 set 方法)
+public void setDefaultListenerMethod(String defaultListenerMethod) {
+		this.defaultListenerMethod = defaultListenerMethod;
+}
+
+# 也可以添加一个转换器: 从字节数组转换为 String
+	# （当前SpringBoot 版本2.1.9），默认的消息转换器即 SimpleMessageConverter
+	# 已经将其转为 String
+	
+# 队列名称和方法名称也可以进行 一一匹配
+adapter.setQueueOrTagToMethodName(Map<String, String>);
+# 例如:
+map.put("queue1", "method1");
+```
+
+![UTOOLS1578627312430.png](http://yanxuan.nosdn.127.net/bdffce009f6c4fca078c9deb988e0732.png)
+
+### MessageConverter
+
+```shell
+# 消息转换器
+
+# 在发送消息时，正常情况下消息体为二进制的数据方式进行传输
+	# 如果希望内部帮我们进行转换，或者指定自定义的转换器，就需要用到 MessageConverter
+	
+# 自定义常用转换器:
+	# 一般来讲都要实现这个接口 MessageConverter
+	# 重下下面两个方法:
+		# toMessage: Java 对象转换为 Message
+		# fromMessage: Message 对象转换为 Java 对象
+		
+# 常用转换器:
+	# Jackson2jsonMessageConverter: 进行 Java 对象与 JSON 对象的转换
+	# DefaultJackson2JavaTypeMapper: 映射器，可以进行 Java 对象的映射关系
+	
+# 自定义二进制转换器:
+	# 比如 图片、PDF、PPT、流媒体
+	
+# 全局转换器:
+	# 往里面加各种各样的转换器就好了
+ContentTypeDelegatingMessageConverter
+```
+
+```shell
+# 此处代码略...（感觉没有太大记录的必要）
+```
+
+![UTOOLS1578648715437.png](http://yanxuan.nosdn.127.net/ffc101bba52e3664274774fc6afc4f0c.png)
+
+## RabbitMQ 与 SpringBoot2.0 整合实战
+
+### 依赖
+
+```xml
+<dependency>
+  <groupId>org.springframework.boot</groupId>
+  <artifactId>spring-boot-starter-amqp</artifactId>
+</dependency>
+```
+
+### 生产端
+
+#### 配置
+
+```yaml
+spring:
+  rabbitmq:
+    addresses: 127.0.0.1:5672 # 地址
+    username: guest	# 用户名
+    password: guest # 密码
+    virtual-host: / # 虚拟主机
+    connection-timeout: 15000 # 连接超时时间
+    # 实现一个监听器用于监听 Broker 端给我们返回的确认请求
+    # RabbitTemplate.ConfirmCallback
+    publisher-confirms: true	
+    # 保障消息对 Broker 端是可达的，如果出现路由键不可达的情况
+    # 则使用监听器对不可达的消息进行后续的处理，保证消息的路由成功
+    publisher-returns: true
+    # 注意: 在发送消息的时候对 template 进行配置 mandatory 为 true 保证监听有效
+    template:
+      mandatory: true
+ 
+# 生产端还可以配置其他属性，比如发送重试，超时时间，次数，间隔等
+```
+
+#### 消息发送的代码
+
+```java
+@Component
+public class RabbitSender {
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    /**
+     * 回调函数: confirm 确认
+     * correlationDate : 全局唯一消息凭证
+     * ack : 消息是否签收 : 根据业务自己决定消息成功后修改 Msg 表记录的状态，或者失败的补偿机制
+     * cause : 失败原因
+     */
+    final RabbitTemplate.ConfirmCallback confirmCallback = ((correlationData, ack, cause) -> {
+        System.err.println("correlationDate: " + correlationData);
+        System.err.println("ack: " + ack);
+        System.err.println("cause: " + cause);
+        if (!ack) System.err.println("消息异常处理...");
+    });
+
+    /**
+     * 回调函数: return 返回
+     * message : 消息内容
+     * replyCode : 重试的错误码
+     * replyText : 重试的提示
+     * exchange : 交换机
+     * routingKey : 发送消息的路由
+     */
+    final RabbitTemplate.ReturnCallback returnCallback = (((message, replyCode, replyText, exchange, routingKey) -> {
+        System.err.println("return exchange: " + exchange + ", routingKey: "
+                + routingKey + ", replyCode: " + replyCode + ", replyText: " + replyText
+        + ", message: " + message);
+    }));
+
+    /**
+     * 发送消息: 构建 Message 对象
+     *  可重载方法为发送对象消息，内部由 MessageConverter 进行 JSON 转换
+     * @param message   : 消息体
+     * @param properties    : 消息属性
+     */
+    public void send(Object message, Map<String, Object> properties) {
+        MessageHeaders headers = new MessageHeaders(properties);
+        Message<Object> msg = MessageBuilder.createMessage(message, headers);
+        rabbitTemplate.setConfirmCallback(confirmCallback);
+        rabbitTemplate.setReturnCallback(returnCallback);
+        // 自己生成全局唯一的消息Id
+        CorrelationData data = new CorrelationData("12345");
+
+        rabbitTemplate.convertAndSend("exchangeName","routingKey", msg, data);
+    }
+
+}
+```
+
+### 消费端
+
+#### 消费端的核心配置
+
+```yaml
+spring:
+  rabbitmq:
+    addresses: 127.0.0.1:5672
+    username: guest
+    password: guest
+    virtual-host: /
+    connection-timeout: 15000
+    listener:
+      simple:
+        acknowledge-mode: manual  # 手工签收ack
+        concurrency: 1  # 默认消费限制为1
+        max-concurrency: 5 # 最大消费限制为5
+        
+# 首先配置手工确认模式，用于 ACK 的手工处理
+	# 这样才可以保证消息的可靠性送达
+	# 或者在消费端消费失败的时候可以做到重回队列、根据业务记录日志等处理
+	
+# 可以设置消费端的监听个数和最大个数，用于控制消费端的并发情况
+```
+
+```shell
+# @RabbitListener 注解使用:
+	# 消费端 @RabbitMQListener 注解，在实际工作中非常的好用
+	
+# @RabbitListener 是一个组合注解，里面可以注解配置:
+	# @QueueBinding、@Queue、@Exchange 
+	# 直接通过这个组合注解一次性搞定消费端交换机、队列、绑定、路由、并且配置监听功能等
+```
+
+#### 消费端的代码
+
+```java
+@Component
+public class RabbitReceiver {
+  
+	@RabbitListener(bindings = @QueueBinding(
+			value = @Queue(value = "queue-1", 
+			durable="true"),
+			exchange = @Exchange(value = "exchange-1", 
+			durable="true", 
+			type= "topic", 
+			ignoreDeclarationExceptions = "true"),
+			key = "springboot.*"
+			)
+	)
+	@RabbitHandler
+	public void onMessage(Message message, Channel channel) throws Exception {
+		System.err.println("--------------------------------------");
+		System.err.println("消费端Payload: " + message.getPayload());
+		Long deliveryTag = (Long)message.getHeaders().get(AmqpHeaders.DELIVERY_TAG);
+		//手工ACK
+		channel.basicAck(deliveryTag, false);
+	}
+	
+	/**
+	 * 
+	 * 	spring.rabbitmq.listener.order.queue.name=queue-2
+		spring.rabbitmq.listener.order.queue.durable=true
+		spring.rabbitmq.listener.order.exchange.name=exchange-1
+		spring.rabbitmq.listener.order.exchange.durable=true
+		spring.rabbitmq.listener.order.exchange.type=topic
+		spring.rabbitmq.listener.order.exchange.ignoreDeclarationExceptions=true
+		spring.rabbitmq.listener.order.key=springboot.*
+	 * @param order
+	 * @param channel
+	 * @param headers
+	 * @throws Exception
+	 */
+	@RabbitListener(bindings = @QueueBinding(
+			value = @Queue(value = "${spring.rabbitmq.listener.order.queue.name}", 
+			durable="${spring.rabbitmq.listener.order.queue.durable}"),
+			exchange = @Exchange(value = "${spring.rabbitmq.listener.order.exchange.name}", 
+			durable="${spring.rabbitmq.listener.order.exchange.durable}", 
+			type= "${spring.rabbitmq.listener.order.exchange.type}", 
+			ignoreDeclarationExceptions = "${spring.rabbitmq.listener.order.exchange.ignoreDeclarationExceptions}"),
+			key = "${spring.rabbitmq.listener.order.key}"
+			)
+	)
+	@RabbitHandler
+	public void onOrderMessage(@Payload Order order, 
+			Channel channel, 
+			@Headers Map<String, Object> headers) throws Exception {
+		System.err.println("--------------------------------------");
+		System.err.println("消费端order: " + order.getId());
+		Long deliveryTag = (Long)headers.get(AmqpHeaders.DELIVERY_TAG);
+		//手工ACK
+		channel.basicAck(deliveryTag, false);
+	}
+	
+}
+```
+
+## 略过的章节
+
+```shell
+# RabbitMQ 与 SpringCloud Stream 整合实战
+
+# RabbitMQ 集群架构模式 - 准备模式（Warren)
+
+# RabbitMQ 集群架构模式 - 镜像模式（Mirror）
+
+# RabbitMQ 集群架构模式 - 多活模式（Federation）
+
+# RabbitMQ 集群镜像队列构建实现可靠性存储
+
+# RabbitMQ 集群整合负载均衡构建实现可靠性存储
+
+# RabbitMQ 集群整合负载均衡基础组件 HaProxy
+
+# RabbitMQ 集群整合高可用组件 KeepAlived
+
+# RabbitMQ 集群配置文件详解
+
+# RabbitMQ 集群恢复与故障转移的 5 种解决方案
+
+# RabbitMQ 集群延迟队列插件应用
+
+# BAT、TMD 大厂单元化架构设计衍变之路分享
+
+# SET 化架构设计策略（异地多活架构）
+
+# SET 化架构设计原则
+
+# SET 化消息中间件架构实现
+
+# 一线大厂的 MQ 组件实现思路和架构设计思路
+
+# 基础 MQ 消息组件设计思路（迅速，确认，批量，延迟）
+
+# 基础 MQ 消息组件设计思路（顺序）
+
+# 基础 MQ 消息组件设计思路（事务）
+
+# 消息幂等性保障 - 消息路由规则架构设计思路
+```
+
