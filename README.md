@@ -1,26 +1,54 @@
 # AgeFades-Note
-**以下笔记均基于 Docker 容器化服务**
+## 概述
+
+```shell
+# 天行健，君子以自强不息。
+
+# 只有不断的学习才能不被时代淘汰。
+
+# 记录AgeFades 成长历程。
+```
 
 ## Java
 
-​	偏向于 SpringBoot + SpringCloud 新一代微服务学习。
+```shell
+# 重点: SpringBoot 整合各大流行框架、项目的架构实战经验
+
+# 开阔视野、对各项 Java圈子技术的学习与记录。
+```
 
 ## 前端
 
-​	偏向于 Vue + Node 的全栈学习。
+```shell
+# 重点: 对当下流行的 Vue + React 的学习记录
+
+# 目的: 为了更好了解前端同事行为，完成工作任务需求。
+```
 
 ## 运维
 
-​	偏向于服务器安防渗透学习。
+```shell
+# 基于CentOS 的基础服务搭建、Docker 容器化技术以及 K8S 服务网格化技术的学习记录。
+
+# 常见服务如 Nginx、Iptable 规则、安全防范等等...
+```
 
 ## 数据库
 
-​	偏向于常用 NoSQL，MySQL 学习。
+```shell
+# MySQL 关系型数据库
+
+# Redis、Mongo、ES... 常用NoSQL
+```
 
 ## 大数据
 
-​	还是门外汉。
+```shell
+# shell 编程、Hadoop 基本体系...
+```
 
 ## 数据结构和算法
 
-​	偏向于基于 Java 语言各种数据结构 CRUD 的时间复杂度，对各种算法解决问题的学习。
+```shell
+# 基于Java 语言对 LeetCode 刷题以及数据结构学习记录
+```
