@@ -1691,5 +1691,149 @@ public static ByteBuf copiedBuffer( CharSequence string, Charset charset ) :
 # 当 Netty 发送或者接收一个消息的时候，就会发生一次数据转换。
 
 # Netty 提供了一系列使用的编解码器，都实现了 Handler 接口并重写 channelRead 方法
+
+# 以入栈为例:
+	# 每个从入栈 Channel 读取的消息，这个方法会被调用。
+	# 随后，它将调用由解码器所提供的 decode() 方法进行解码，
+	# 并将已经解码的字节转发给 ChannelPipeline 中的下一个 ChannelInboundHandler
+```
+
+### 解码器-ByteToMessageDecoder
+
+#### 关系继承图
+
+![UTOOLS1581385516387.png](http://yanxuan.nosdn.127.net/e3461543f4d7c87aa9a774cfa9a0cfa1.png)
+
+```shell
+# 由于不可能知道远程节点是否会一次性发送一个完整的信息
+	# tcp 可能出现粘包拆包的问题，这个类会对入栈数据进行缓冲，知道它准备好被处理。
+```
+
+#### 实例分析
+
+```java
+public class ToIntegerDecoder extends ByteToMessageDecoder {
+  @Override
+  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    if (in.readableBytes() >= 4) {
+      out.add(in.readInt());
+    }
+  }
+}
+```
+
+```shell
+# 说明:
+	# 这个例子，每次入栈从 ByteBuf 中读取4字节，将其解码为一个int
+		# 然后将它添加到下一个List 中。
+	# 当没有更多元素可以被添加到该 List 中时，
+		# 它的内容会被发送到下一个 ChannelInboundHandler。
+	# int 在被添加到 List 中时，会被自动装箱为 Integer。
+	# 在调用 readInt() 方法前，必须验证所输入的ByteBuf 是否有足够的数据
+```
+
+#### Decode 执行分析图
+
+![UTOOLS1581385890513.png](http://yanxuan.nosdn.127.net/6bb3f8c9698633a1986764a5771f219c.png)
+
+### Netty 的 handler 链的调用机制
+
+![UTOOLS1581385959531.png](http://yanxuan.nosdn.127.net/0cc6247b688f89767538de72897e528e.png)
+
+```shell
+# 不论编码器 handler 还是解码器 handler
+	# 接收的消息类型必须与待处理的消息类型一致，否则该 handler 不会被执行
+	
+# 在解码器进行数据解码时，需要判断缓冲区(ByteBuf) 的数据是否足够
+	# 否则接收到的结果和期望结果可能不一致
+```
+
+### 解码器 ReplayingDecoder
+
+```shell
+# ReplayingDecoder 扩展了 ByteToMessageDecoder 类
+
+# 使用这个类，不必调用 readableBytes() 方法
+
+# 参数 S 指定了用户状态管理的类型，其中 Void 代表不需要状态管理
+```
+
+#### 应用实例
+
+```java
+public class MyByteToLongDecoder2 extends ReplayingDecoder<Void> {
+  @Override
+  protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+    // 在 ReplayingDecoder 不需要判断数据是否足够读取，内部会进行处理判断
+    out.add(in.readLong());
+  }
+}
+```
+
+```shell
+# 并不是所有的 ByteBuf 操作都被支持，如果调用了一个不被支持的方法，
+	# 将会抛出 UnsupportedOperationException
+	
+# ReplayingDecoder 在某些情况下可能稍慢于 ByteToMessageDecoder,
+	# 例如网络缓慢并且消息格式复杂时，消息会被拆成了多个碎片，速度变慢。
+```
+
+### 其他编解码器
+
+#### 其他解码器
+
+```shell
+# LineBasedFrameDecoder:
+	# 该类在 Netty 内部也有使用，它使用行位控制字符(\n 或者 \r\n ) 作为分隔符来解析数据。
+	
+# DelimiterBasedFrameDecoder:
+	# 使用自定义的特殊字符作为消息的分隔符。
+	
+# HttpObjectDecoder:
+	# 一个 HTTP 数据的解码器。
+	
+# LengthFieldBasedFrameDecoder:
+	# 通过指定长度来标识整包消息，这样就可以自动的处理粘包和半包消息。
+```
+
+#### 其他编码器
+
+![UTOOLS1581387311350.png](http://yanxuan.nosdn.127.net/56e9cb9939d57566e6ff3eeecad116a0.png)
+
+## TCP 粘包和拆包及解决方案
+
+### TCP 粘包和拆包基本介绍
+
+```shell
+# TCP 是面向连接的，面向流的，提供高可靠性服务。
+	# 收发两端都要有一一成对的 socket
+
+# 因此，发送端为了将多个发给接收端的包，更有效的发送给对方
+	# 使用了优化方法(Nagle 算法)
+	# 将多次间隔较小且数据量小的数据，合并成一个大的数据块，然后进行封包。
+	# 这样虽然提高了效率，但是接收端就难于分辨出完整的数据包了。
+	# 因为面向流的通信是无消息保护边界的。
+	
+# 由于 TCP 无消息保护边界，需要在接收端处理消息边界问题。
+	# 也就是所谓的 粘包、拆包问题。
+```
+
+#### 图解拆包粘包
+
+![UTOOLS1581390762353.png](http://yanxuan.nosdn.127.net/f7f31d5a08b6e56d1f8692f3159f7b0c.png)
+
+```shell
+# 假设客户端分别发送了两个数据包 D1 和 D2 给客户端，
+	# 由于服务端一次读取到字节数是不确定的，故可能存在以下四种情况:
+		# 服务端分两次读取D1、D2，没有粘包和拆包
+		# 服务端一次接收到了两个数据包，D1 和 D2 粘合在一起，称之为 TCP 粘包
+		# 两次读取，第一次完整的D1和部分D2，第二次部分 D2，称之为 TCP 拆包
+		# 两次读取，第一次部分D1，第二次部分D1和完整D2，称之为 TCP 拆包
+```
+
+### TCP 粘包和拆包解决方案
+
+```shell
+# 使用自定义
 ```
 
