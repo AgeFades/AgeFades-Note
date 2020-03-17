@@ -114,9 +114,183 @@ eureka:
 
 ![UTOOLS1583463177265.png](http://yanxuan.nosdn.127.net/8ec3afd579eeadcc8ba219f6c0673fd7.png)
 
-### 集群 Eureka 构建步骤
+```shell
+# 保护模式主要哦用于一组客户端和 Eureka Server 之间存在网络分区场景下的保护。
 
+# 一旦进入保护模式，Eureka Server 将会尝试保护其服务注册表中的信息，
+	# 也就是说不会注销任何微服务。
+	
+# 就是收某一时刻，某个或某些微服务不可用了，Eureka 不会立即清理，依旧会保留该服务信息。
+
+# 属于 CAP 里的 AP 分支，高可用思想。
+
+# 当 EurekaServer 节点在短时间内丢失过多客户端时，就会进入自我保护模式。
+
+# 主要就是应对网络异常的保护机制。
 ```
 
+##### 关闭自我保护机制
+
+```yaml
+eureka:
+	server:
+		# 关闭自我保护机制，保证不可用服务被及时剔除
+		enable-self-preservation: false
+		# 客户端向服务端发送心跳的时间间隔，单位为秒，默认 30S
+		eviction-interval-timer-in-seconds: 1
+		# Eureka 服务端收到最后一次心跳后等待时间上限，超时将剔除服务
+		lease-expireation-duration-in-seconds: 2
+```
+
+### 集群 Eureka 构建步骤
+
+#### Eureka 集群原理说明
+
+![UTOOLS1583476014198.png](http://yanxuan.nosdn.127.net/6d249eb1dc114446a1f573afe847d8a4.png)
+
+```shell
+# 微服务 RPC 远程服务调用最核心的就是服务的注册与发现（即: 注册中心）
+
+# 为了防止单点故障，所以一定要搭建注册中心集群，实现负载均衡 + 故障容错
+
+# Eureka 集群原理: 互相注册、相互守望
+```
+
+#### Eureka 集群环境构建步骤
+
+```yaml
+# 主要就是修改 application.yml
+server:
+	port: 7001
+	
+eureka:
+	instance:
+		hostname: eureka1.com # eureka 第一个实例所在域名
+	client:
+		register-with-eureka: false
+		fetch-registry: false
+		service-url:
+			defaultZone: http://eureka2.com/eureka/ # 互相注册，eureka 第二个实例所在域名
+```
+
+```yaml
+server:
+	port: 7001
+	
+eureka:
+	instance:
+		hostname: eureka2.com # eureka 第一个实例所在域名
+	client:
+		register-with-eureka: false
+		fetch-registry: false
+		service-url:
+			defaultZone: http://eureka1.com/eureka/ # 互相注册，eureka 第二个实例所在域名
+```
+
+#### Eureka 集群下的服务注册
+
+```yaml
+# 主要就是修改 yaml
+eureka:
+	client:
+		register-with-eureka: true
+		fetchRegistry: true
+		service-url:
+			defaultZone: http://eureka1.com/eureka/,http://eureka2.com/eureka
+```
+
+#### @LoadBalanced
+
+```java
+// 使用 @LoadBalanced 开启 RestTemplate 的负载均衡功能
+// Ribbon 和 Eureka 整合后消费者可以直接调用服务而不用再关心地址和端口号。
+@LoadBalanced
+@Bean
+public RestTemplate restTemplate() {
+  return new RestTemplate();
+}
+```
+
+### Actuator 微服务信息完善
+
+```yaml
+# 修改 yaml
+eureka:
+	instance-id: payment1 # 修改服务名称
+	prefer-ip-address: true # 访问路径可显示 IP 地址
+	client:
+		register-with-eureka: true
+		fetchRegistry: true
+		service-url:
+			defaultZone: http://eureka1.com/eureka/,http://eureka2.com/eureka	
+```
+
+### 服务发现 Discovery
+
+```shell
+# 对于注册进 eureka 里面的微服务，可以通过服务发现来获得该服务的信息。
+```
+
+```java
+// 启动类上加注解
+@EnableDiscovery
+```
+
+```java
+// 控制器上加端点
+@Resource
+private DiscoveryClient discoveryClient;
+
+@GetMapping("discovery")
+public Object discovery() {
+  // 获取服务中心中的服务列表
+  List<String> service = discoveryClient.getService();
+  service.forEach(e -> log.info("服务中心中的服务: {}", e));
+  
+  // 获取 xx 服务下的各实例对象
+  List<ServiceInstance> instances = discoveryClient.getInstances("PAYMENT");
+  instances.forEach(i -> 
+                    log.info("服务ID: {}, IP: {}, 端口: {}, URI: {}", 
+                            i.getServiceId(), i.getHost(), 
+                            i.getPort(), i.getUri())
+                   );
+  
+  return discoveryClient;
+}
+```
+
+## Zookeeper 注册中心
+
+### 简介
+
+```shell
+# ZK 是一个分布式协调工具，可以实现注册中心功能
+```
+
+### 服务注册进 ZK
+
+```xml
+<dependency>
+	<groupId>org.springframework.cloud</groupId>
+  <artifactId>spring-cloud-starter-zookeeper-discovery</artifactId>
+</dependency>
+```
+
+```yaml
+spring:
+	cloud:
+		zookeeper:
+			connect-string: localhost:2181
+```
+
+```java
+// 启动类上加注解
+@EnabelDiscoveryClient
+```
+
+## Consul
+
+```shell
+# 略
 ```
 
