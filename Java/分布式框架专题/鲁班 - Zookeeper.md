@@ -369,6 +369,678 @@ stat ["节点路径"] watch
 ### acl 权限设置
 
 ```shell
-# ACL 全程为
+# Access Control List : 访问控制列表
+
+# 用于控制资源的访问权限。
+
+# zk 使用 acl 来控制对其 znode 的访问。
+
+# 基于 scheme:id:permission 的方式进行权限控制。
+	# scheme 表示授权模式
+	# id 模式对应值
+	# permission 即具体的增删改权限位
+```
+
+#### scheme 认证模型
+
+```shell
+# world : 开放，全可以访问（默认设置）。
+
+# ip : 限定客户端 ip 访问。
+
+# auth : 用户密码认证模式，只有在会话中添加了认证才可以访问，明文密码。
+
+# digest : 与 auth 类似，用 sha-1 + base64 加密后的密码，实际使用中 digest 更常见。
+```
+
+#### permission 权限位
+
+| 权限位 | 权限   | 描述                             |
+| ------ | ------ | -------------------------------- |
+| c      | create | 可以创建子节点                   |
+| d      | delete | 可以删除子节点（仅下一级节点）   |
+| r      | read   | 可以读取节点数据及显示子节点列表 |
+| w      | write  | 可以设置节点数据                 |
+| a      | admin  | 可以设置节点访问控制列表权限     |
+
+#### acl 相关命令
+
+| 命令    | 使用方式              | 描述          |
+| ------- | --------------------- | ------------- |
+| getAcl  | getAcl<path>          | 读取 acl 权限 |
+| setAcl  | setAcl<path><acl>     | 设置 acl 权限 |
+| addauth | addauth<scheme><auth> | 添加认证用户  |
+
+![UTOOLS1584685110104.png](http://yanxuan.nosdn.127.net/140c9f173a1bbc8f46e36e59ebf26a27.png)
+
+![UTOOLS1584685312119.png](http://yanxuan.nosdn.127.net/222a78b3eeb21b04f1727fd60d05ce78.png)
+
+![UTOOLS1584685323614.png](http://yanxuan.nosdn.127.net/38a37a864e1b5a2efadceeb46ea6017a.png)
+
+![UTOOLS1584685432951.png](http://yanxuan.nosdn.127.net/01e94d8ae22d844afc1088639b283eb1.png)
+
+![UTOOLS1584685658676.png](http://yanxuan.nosdn.127.net/ba0986790714ca0446576c5967150e88.png)
+
+## zk 客户端
+
+```shell
+# zk 提供了 java 和 c 两种语言的客户端。
+```
+
+#### gav
+
+```xml
+<dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+            <version>3.5.5</version>
+</dependency>
+```
+
+#### 初始连接
+
+```shell
+# 常规的客户端类是: org.apache.zookeeper.ZooKeeper。
+
+# 实例化该类之后将会自动与集群建立连接。
+```
+
+```shell
+# 构造参数:
+
+# connectString:
+	# 连接串，包含 ip + port
+	# 集群使用逗号隔开
+	# 192.168.0.1:2181,192.168.0.2:2181
+	
+# sessionTimeout:
+	# 会话超时时间
+	# 该值不能超过服务端所设置的 minSessionTimeout 和 maxSessionTimeout
+	
+# watcher:
+	# 会话监听器，服务端事件将会触发该监听
+	
+# sessionId:
+	# 自定义会话ID
+	
+# sessionPasswd:
+	# 会话密码
+	
+# canBeReadOnly:
+	# 该连接是否为只读的
+
+# hostProvider:
+	# 服务端地址提供者
+	# 提示客户端如何选择某个服务来调用
+	# 默认采用 StaticHostProvider 实现
+```
+
+```java
+@Before
+public void init() throws Exception {
+  String conn = "127.0.0.1:2181";
+  Zookeeper zk = new Zookeeper(conn,...);
+}
+```
+
+#### 创建、查看节点
+
+```shell
+# crate() : 创建节点
+
+# getData() : 查看节点
+
+# getChildren() : 查看子节点
+```
+
+#### 监听节点
+
+```shell
+# getData() 和 getChildren() 可分别设置监听数据变化和子节点变化。
+
+# 通过设置 watch 为 true。
+
+# 当前事件触发时会调用 zk 构建函数中 Watcher.process() 方法。
+
+# 也可以添加 watcher 参数实现自定义监听，一般都是这么干的。
+
+# 注意: 所有的监听都是一次性的，如果要持续监听需要触发后再添加一次监听。
+```
+
+#### zkClient
+
+```shell
+# zkClient 是在 zk 客户端基础之上封装的。
+
+# 可以设置持久监听、或删除某个监听。
+
+# 可以插入 java 对象，自动进行序列化和反序列化
+
+# 简化了基本的 CRUD
+```
+
+```xml
+<dependency>
+            <groupId>com.101tec</groupId>
+            <artifactId>zkclient</artifactId>
+            <version>0.11</version>
+</dependency>
+```
+
+## zk 集群
+
+```shell
+# zk 集群的目的是为了保证系统的性能、承载更多的客户端连接。
+
+# 集群功能:
+	# 读写分离: 提高承载，保证性能。
+	# 主从自动切换: 提高服务容错性，避免单点故障。
+```
+
+```shell
+# 半数以上运行机制说明:
+
+# 集群至少需要三台服务器，并且强烈建议使用奇数个服务器。
+
+# 因为 zk 通过判断大多数节点的存活，来判断整个服务是否可用。
+
+# 3个节点，挂掉两个表示整个集群挂掉，4个也是挂掉两个表示整个集群挂掉。
+```
+
+### 集群部署
+
+```shell
+# 伪集群搭建，实际中改变 ip，每个实例放入不同机器就好。
+
+# 进入 zk 目录
+cd {zk_home}
+
+# 创建文件目录
+mkdir data
+
+mkdir data/1
+
+mkdir data/2
+
+mkdir data/3
+
+# 创建 pid 文件
+echo 1 > data/1/myid
+
+echo 2 > data/2/myid
+
+echo 3 > data/3/myid
+
+# 编写配置文件
+vim conf/zoo1.cfg
+
+--- 配置文件 ---
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=data/1
+clientPort=2181	# 与客户端通信的端口号
+# 集群配置
+server.1=127.0.0.1:2887:3887 # 与子节点通信的端口号和选举的端口号
+server.2=127.0.0.1:2888:3888
+server.3=127.0.0.1:2889:3889
+--- 配置文件 ---
+
+# cv zoo1 的配置文件
+cp conf/zoo1.cfg conf/zoo2.cfg
+
+cp conf/zoo1.cfg conf/zoo3.cfg
+
+# 修改其他两个节点的配置文件
+vim conf/zoo2.cfg
+
+--- 配置文件 ---
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=data/2
+clientPort=2182
+# 集群配置
+server.1=127.0.0.1:2887:3887
+server.2=127.0.0.1:2888:3888
+server.3=127.0.0.1:2889:3889
+--- 配置文件 ---
+
+vim conf/zoo3.cfg
+
+--- 配置文件 ---
+tickTime=2000
+initLimit=10
+syncLimit=5
+dataDir=data/3
+clientPort=2183
+# 集群配置
+server.1=127.0.0.1:2887:3887
+server.2=127.0.0.1:2888:3888
+server.3=127.0.0.1:2889:3889
+--- 配置文件 ---
+
+# 启动节点，如果只启动一个节点，根据半数以上运行原则，整个集群是不可用的。
+./bin/zkServer.sh start conf/zoo1.cfg
+
+./bin/zkServer.sh start conf/zoo2.cfg
+
+./bin/zkServer.sh start conf/zoo3.cfg
+
+# 连接节点，任意选择连接节点数
+./bin/zkCli.sh -server 127.0.0.1:2181
+
+./bin/zkCli.sh -server 127.0.0.1:2181,127.0.0.1:2182
+
+./bin/zkCli.sh -server 127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183
+
+# 测试数据同步
+
+	# 在 2181 节点创建 znode
+	create -e -s /test "集群测试"
+	
+	# 在 2182 节点查看 znode
+	ls /
+
+```
+
+![UTOOLS1584931510791.png](http://yanxuan.nosdn.127.net/337f1fa43748884bd3c6c8a1951e516c.png)
+
+![UTOOLS1584932585058.png](http://yanxuan.nosdn.127.net/376a20b437f5352ec38de98332f89726.png)
+
+![UTOOLS1584932596370.png](http://yanxuan.nosdn.127.net/39566df992335d64ad304dd816c6743b.png)
+
+### 集群角色
+
+```shell
+# zk 集群共有三种角色。
+
+# leader:
+	# 主节点，用于写入数据。
+	# 通过选举产生，如果宕机将会选举新的主节点。
+	
+# follower:
+	# 子节点，用于实现数据的读取。
+	# 主节点的备选节点，拥有投票权。
+	
+# observer:
+	# 观察节点，用于读取数据。
+	# 没有投票权，不能选为主节点。
+	# 计算集群可用状态时不会将 observer 计算入内。
+```
+
+```shell
+# 查看节点角色
+./bin/zkServer.sh status conf/zoo1.cfg
+
+./bin/zkServer.sh status conf/zoo2.cfg
+
+./bin/zkServer.sh status conf/zoo3.cfg
+```
+
+![UTOOLS1584933589121.png](http://yanxuan.nosdn.127.net/a34f915690e86de14d1c29b082f83078.png)
+
+![UTOOLS1584933657546.png](http://yanxuan.nosdn.127.net/15efa063c7019387435a790663c1d2af.png)
+
+### 选举机制
+
+```shell
+# 如果是三个节点新建的集群，第一次 Leader 总是第二个节点。
+
+# 投票机制说明:
+	# 第一轮投票全部投给自己
+	# 第二轮投票给 myid 比自己大的相邻节点（不是同时，是一个一个的触发）
+	# 如果得票超过半数，选举结束
+	# 注释（当节点1 投票给节点2 时，此时节点2 已经2票了，自动当选，而不会再投票给节点 3）
+```
+
+![图片](https://uploader.shimo.im/f/ChMbWt0DhF4NL7nA.png!thumbnail)
+
+### 选举触发
+
+```shell
+# 当集群中出现以下两种情况，就会进行 Leader 的选举。
+	# 服务节点初始化完毕。
+	
+	# 半数以上的节点无法和 Leader 建立连接。
+	
+	
+# 节点初始启动时，会在集群中寻找 Leader。
+	# 找到则建立连接，自身状态变为 follower 或 observer。
+	
+	# 如果没有找到 Leader，当前节点状态将变化 looking，进入选举流程。
+	
+	# 集群运行期间，follower 宕机只要不超过半数，就不影响集群正常运行。
+	
+	# 但 leader 宕机，将暂停对外服务，所有 follower 进入 looking，进入选举流程，
+```
+
+### 数据同步
+
+```shell
+# zk 的数据同步是为了保证各节点中数据的一致性。
+
+# 同步时涉及两个流程:
+	# 正常的客户端数据提交。
+	
+	# 集群某个节点宕机在恢复后的数据同步。
+```
+
+#### 客户端写入请求
+
+```shell
+# Leader 接收客户端写请求，并同步给各个子节点。
+```
+
+![图片](https://uploader.shimo.im/f/k2Dqe4W0OCoumzf3.png!thumbnail)
+
+```shell
+# 但实际情况中，客户端可能并不知道哪个节点是 Leader。
+
+# 可能写的请求发给 follower，再由它转发给 Leader 进行同步处理。
+```
+
+![图片](https://uploader.shimo.im/f/zQHJd478VV8GoCaK.png!thumbnail)
+
+```shell
+# 客户端写入流程说明:
+
+# 1. 客户端向 zk server 发送写请求，如果该 server 不是 leader，则会将该写请求转发给 leader，leader 再将请求事务以 proposal 形式分发给 follower。
+
+# 2. 当 follower 收到 leader 的 proposal 时，根据接收的先后顺序处理 proposal。
+
+# 3. 当 leader 收到 follower 针对某个 proposal 过半的 ack 后，则发起事务提交，重新发起一个 commit 的 proposal。
+
+# 4. follower 收到 commit 的 proposal 后，记录事务提交，并把数据更新到内存数据库。
+
+# 5. 当 写 成功后，反馈给 client。
+```
+
+#### 服务节点初始化同步
+
+```shell
+# 在集群运行过程当中，如果有一个 follower 节点宕机，集群正常运行，当 leader 收到新的客户端请求时，无法同步给宕机的节点，造成了数据不一致的问题。
+
+# zk 为了解决这个问题，在节点启动时，第一件事就是找当前的 Leader，比对数据是否一致。
+
+# 不一致，则开始同步，同步完成之后再进行对外提供服务。
+
+# zk 利用 ZXID 事务ID 来进行数据的比对。
+```
+
+##### ZXID
+
+```shell
+# ZXID 是一个长度 64 位的数字。
+
+# 其中低 32 位是按照数字递增，任何数据的变更都会导致其简单加1。
+
+# 高 32 位是 leader 周期编号，每当选举出一个新的 leader 时，新的 leader 就从本地事务日志中取出 ZXID，然后解析出高 32 为的周期编号，进行加1，再将低 32 位的全部设置成0。
+
+# 这样就保证了每次新选举 leader 后，ZXID 的唯一性且递增。
+```
+
+### 四字运维命令
+
+```shell
+# zk 响应少量命令，每个命令由四个字母组成。
+
+# 可通过 telnet 或 nc 向 zk 发出命令。
+
+# 这些命令默认是关闭的，需要配置 4lw.commands.whitelist 来打开。
+	# 打开指定命令:
+		# 4lw.commands.whitelist=stat, ruok, conf, isro
+		
+	# 打开全部:
+		# 4lw.commands.whitelist=*
+```
+
+![UTOOLS1584943667654.png](http://yanxuan.nosdn.127.net/8b69136f656e74c1a78cd5fd60fbdb95.png)
+
+![UTOOLS1584943759830.png](http://yanxuan.nosdn.127.net/1b146b7f2965af994e3851074fa4b381.png)
+
+```shell
+# 如果没有 nc 命令的，安装
+yum install -y nc
+
+# 查看服务器及客户端连接状态
+echo stat|nc 127.0.0.1 2181
+```
+
+![UTOOLS1584943843683.png](http://yanxuan.nosdn.127.net/944a76bea6802b4fc663bc5fba24b839.png)
+
+## zk 使用场景
+
+### 分布式集群管理
+
+#### 分布式集群管理的需求
+
+```shell
+# 主动查看线上服务节点
+
+# 查看服务节点资源使用情况
+
+# 服务离线通知
+
+# 服务资源（CPU、内存、硬盘）超出阈值通知
+```
+
+#### 架构设计
+
+![图片](https://uploader.shimo.im/f/5cdojbpemNQGhLaK.png!thumbnail)
+
+```shell
+# 利用 zk 的临时节点，watch 监听解决上述需求。
+```
+
+#### 节点结构
+
+```shell
+swordsman-manager # 根节点
+	server00001:<json> # 服务节点1，临时序号节点
+	server00002:<json> # 服务节点2，临时序号节点
+	server....n:<json> # 服务节点n，临时序号节点
+```
+
+#### 核心代码
+
+```java
+/**
+ * 数据监控
+ * 
+ * @Author DuChao
+ * @Date 2020/3/24 2:42 下午
+ */
+public class Agent {
+
+    private static Agent instance = new Agent();
+    private String server = "127.0.0.1:2181";
+    private ZkClient zkClient;
+    private static final String rootPath = "/swordsman-manger";
+    private static final String servicePath = rootPath + "/service";
+    private String nodePath; // /swordsman-manger/service0000001 当前节点路径
+    private Thread stateThread;
+
+    public static Agent getInstance() { return instance; }
+
+    private Agent() {}
+
+    // javaagent 数据监控
+    public static void premain(String args, Instrumentation instrumentation) {
+        Agent.getInstance().init();
+    }
+
+    // 初始化工作
+    public void init() {
+        zkClient = new ZkClient(server, 5000, 10000);
+        System.out.println("zk 连接成功! " + server);
+
+        // 创建根节点
+        buildRoot();
+
+        // 创建临时节点
+        createServerNode();
+
+        // 启动更新的线程
+        stateThread = new Thread(() -> {
+            while (true) {
+                // 更新节点数据
+                updateServerNode();
+                try {
+                    TimeUnit.SECONDS.sleep(5000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, "zk-state-Thead");
+        stateThread.setDaemon(true);
+        stateThread.start();
+
+    }
+
+    private void updateServerNode() {
+        zkClient.writeData(nodePath, getOsInfo());
+    }
+
+    private void createServerNode() {
+        nodePath = zkClient.createEphemeralSequential(servicePath, getOsInfo());
+        System.out.println("创建节点: " + nodePath);
+    }
+
+    // 获取系统信息
+    private Object getOsInfo() {
+        OsBean bean = new OsBean();
+        bean.setLastUpdateTime(DateUtil.now());
+        bean.setIp(getLocalIp());
+        bean.setCpu(CPUMonitorCalc.getInstance().getProcessCpu());
+
+        MemoryUsage memoryUsage = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+        bean.setUsableMemorySize(memoryUsage.getMax() / 1024 / 1024);
+        bean.setUsedMemorySize(memoryUsage.getUsed() / 1024 / 1024);
+        bean.setPid(ManagementFactory.getRuntimeMXBean().getName());
+
+        return JSONUtil.toJsonStr(bean);
+    }
+
+    // 获取本地 Ip
+    public static String getLocalIp() {
+        InetAddress addr = null;
+        try {
+            addr = InetAddress.getLocalHost();
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+        return addr.getHostAddress();
+    }
+
+
+    private void buildRoot() {
+        // 如果根节点不存在
+        if (!zkClient.exists(rootPath)) {
+            zkClient.createPersistent(rootPath);
+        }
+    }
+
+}
+```
+
+```java
+@Controller
+public class ZkController implements InitializingBean {
+
+    @Value("${zk:127.0.0.1:2181}")
+    private String server;
+    private ZkClient zkClient;
+    private static final String rootPath = "/swordsman-manger";
+    Map<String, OsBean> map = new HashMap<>();
+
+    @RequestMapping("/list")
+    public String list(Model model) {
+        model.addAttribute("items", getCurrentOsBeans());
+        return "list";
+    }
+
+    // 获取当前节点列表信息
+    private Object getCurrentOsBeans() {
+        List<OsBean> items = zkClient.getChildren(rootPath)
+                .stream()
+                .map(v -> rootPath + "/" + v)
+                .map(v -> convert(zkClient.readData(v)))
+                .collect(Collectors.toList());
+        return items;
+    }
+
+    private OsBean convert(String json) {
+        return JSONUtil.toBean(json, OsBean.class);
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        zkClient = new ZkClient(server, 5000, 10000);
+        initSubscribeListener();
+    }
+
+    // 初始化订阅
+    private void initSubscribeListener() {
+        // 解除所有监听
+        zkClient.unsubscribeAll();
+        // 获取所有子节点
+        zkClient.getChildren(rootPath)
+                .stream()
+                .map(v -> rootPath + "/" + v) // 得到子节点的完整路径
+                .forEach(v -> zkClient.subscribeDataChanges(v, new DataChanges())); // 监听数据变更
+        // 监听子节点的变更: 增加、删除
+        zkClient.subscribeChildChanges(rootPath, (parentPath, currentChilds) -> initSubscribeListener());
+    }
+
+    // 子节点数据变化
+    private class DataChanges implements IZkDataListener {
+
+        @Override
+        public void handleDataChange(String dataPath, Object data) throws Exception {
+            OsBean bean = convert((String) data);
+            map.put(dataPath, bean);
+            doFilter(bean);
+        }
+
+        @Override
+        public void handleDataDeleted(String dataPath) throws Exception {
+            if (map.containsKey(dataPath)) {
+                OsBean bean = map.get(dataPath);
+                System.err.println("服务已下线:" + bean);
+                map.remove(dataPath);
+            }
+        }
+    }
+
+    // 警告过滤
+    private void doFilter(OsBean bean) {
+        // cpu 超过10% 报警
+        if (bean.getCpu() > 10) {
+            System.err.println("CPU 报警..." + bean.getCpu());
+        }
+    }
+
+}
+```
+
+#### 实现效果
+
+![UTOOLS1585038068290.png](http://yanxuan.nosdn.127.net/34a835545ea0e4956e0ad1162abdfcad.png)
+
+### 分布式注册中心
+
+```shell
+# 在单体服务中，通常是多个服务端调用一个客户端，只要在客户端写死唯一服务地址即可。
+
+# 当升级到分布式系统后，服务端节点变多，写死配置就不可靠了。
+
+# 所以此时需要一个中间服务，专门用于帮助客户端发现服务节点，即服务发现。
+```
+
+![图片](https://uploader.shimo.im/f/l1l3j9Jxt4AsAxTT.png!thumbnail)
+
+```shell
+
 ```
 
