@@ -1041,6 +1041,747 @@ public class ZkController implements InitializingBean {
 ![图片](https://uploader.shimo.im/f/l1l3j9Jxt4AsAxTT.png!thumbnail)
 
 ```shell
+# 一个完整的注册中心涵盖以下功能特性:
+	# 服务注册: 服务提供者上线时，将自提供的服务提交给注册中心。
+	
+	# 服务注销: 通知注册中心，服务提供者下线。
+	
+	# 服务订阅: 动态实时接收服务变更消息。
+	
+	# 可靠: 注册服务本身是集群的，数据冗余存储，避免单点故障、数据丢失。
+	
+	# 容错: 当服务提供者出现宕机、断电等极端情况时，注册中心能够动态感知并通知客户端 服务提供者的状态。
+```
 
+#### dubbo 对 zk 的使用
+
+```shell
+# 阿里开源的 dubbo 基于 Java 的 RPC 框架。
+
+# 其中必不可少的注册中心，官方推荐使用 zk 作为注册中心服务。
+```
+
+![图片](https://uploader.shimo.im/f/fn7EPT7reCAxHBkx.png!thumbnail)
+
+#### dubbo 在 zk 中的存储结构
+
+![图片](https://uploader.shimo.im/f/inAfwBuh1eEEw1Dj.png!thumbnail)
+
+##### 节点说明
+
+| 类别    | 属性     | 说明                                                         |
+| ------- | -------- | ------------------------------------------------------------ |
+| Root    | 持久节点 | 根节点名称，默认是"dubbo"                                    |
+| Service | 持久节点 | 服务名称，完整的服务类名                                     |
+| Type    | 持久节点 | 可选值: providers(提供者)、consumers(消费者)、configurators(动态配置)、routers(路由) |
+| URL     | 临时节点 | Url 名称包含服务提供者的 IP 端口及配置等信息。               |
+
+#### 流程说明
+
+```shell
+# 服务提供者启动时，向 /dubbo/com.foo.BarService/providers 目录写下自己的 URL 地址
+
+# 服务消费者启动时，订阅 /dubbo/com.foo.BarService/providers 目录下的提供者 URL 地址，并向 /dubbo/com.foo.BarService/consumers 目录下写入自己的 URL 地址。
+
+# 监控中心启动时，订阅 /dubbo/com.foo.BarService 目录下的所有提供者和消费者 URL 地址。
+```
+
+#### 核心代码
+
+```java
+/**
+ * dubbo 服务端
+ *
+ * @Author DuChao
+ * @Date 2020/3/25 4:10 下午
+ */
+public class Server {
+    public void openServer(int port) {
+        // 构建应用
+        ApplicationConfig config = new ApplicationConfig();
+        config.setName("simple-app");
+
+        // 通信协议
+        ProtocolConfig protocolConfig = new ProtocolConfig("dubbo", port);
+        protocolConfig.setThreads(200);
+
+        ServiceConfig<UserService> serviceConfig = new ServiceConfig();
+        serviceConfig.setApplication(config);
+        serviceConfig.setProtocol(protocolConfig);
+        serviceConfig.setRegistry(new RegistryConfig("zookeeper://127.0.0.1:2181"));
+        serviceConfig.setInterface(UserService.class);
+        UserServiceImpl ref = new UserServiceImpl();
+        serviceConfig.setRef(ref);
+
+        // 开始提供服务
+        serviceConfig.export();
+        System.out.println("服务已开启!端口:"+serviceConfig.getExportedUrls().get(0).getPort());
+        ref.setPort(serviceConfig.getExportedUrls().get(0).getPort());
+    }
+
+    public static void main(String[] args) throws IOException {
+        new Server().openServer(-1);
+        System.in.read();
+    }
+}
+
+```
+
+```java
+/**
+ * dubbo 客户端
+ *
+ * @Author DuChao
+ * @Date 2020/3/25 11:16 上午
+ */
+public class Client {
+
+    UserService service;
+
+    /**
+     * 服务远程调用 RPC
+     * @return
+     */
+    public UserService buildService() {
+        ApplicationConfig config = new ApplicationConfig("swordsman-app");
+        // 构建引用对象
+        ReferenceConfig<UserService> reference = new ReferenceConfig<>();
+        reference.setApplication(config);
+        reference.setInterface(UserService.class);
+        reference.setRegistry(new RegistryConfig("zookeeper://127.0.0.1:2181"));
+        reference.setTimeout(5000);
+        service = reference.get();
+        System.out.println("service 赋值成功");
+        return service;
+    }
+
+    public static void main(String[] args) throws IOException {
+        Client client1 = new Client();
+        client1.buildService();
+        String cmd;
+        while (!(cmd = read()).equals("exit")) {
+            UserVo u = client1.service.getUser(Integer.parseInt(cmd));
+            System.out.println(u);
+        }
+    }
+
+
+    private static String read() throws IOException {
+        byte[] b = new byte[1024];
+        int size = System.in.read(b);
+        return new String(b, 0, size).trim();
+    }
+}
+```
+
+##### 实现效果
+
+![UTOOLS1585123941366.png](http://yanxuan.nosdn.127.net/467cbfa200fb1e5bf510c2a7a7dcc5f8.png)
+
+![UTOOLS1585123985227.png](http://yanxuan.nosdn.127.net/d3f93d86881d9491a47e81efd2b644e6.png)
+
+### 分布式 JOB
+
+#### 分布式 JOB 的需求
+
+```shell
+# 多个服务节点只允许其中一个主节点运行 JOB 任务
+
+# 当主节点挂掉后能自动切换主节点，继续执行 JOB 任务
+```
+
+#### 架构设计
+
+![图片](https://uploader.shimo.im/f/cGX66wOXVq0FAeqc.png!thumbnail)
+
+#### 核心代码
+
+```java
+public class MasterResolve {
+
+    private String server = "127.0.0.1:2181";
+    private ZkClient zkClient;
+    private static final String rootPath = "/swordsman-master";
+    private static final String serverPath = rootPath + "/service";
+    private String nodePath;
+    private volatile boolean master = false;
+    private static volatile MasterResolve resolve;
+
+    private MasterResolve() {
+        zkClient = new ZkClient(server, 2000, 5000);
+        buildRoot();
+        createServerNode();
+    }
+
+    public static MasterResolve getInstance() {
+        if (resolve == null) {
+            synchronized (MasterResolve.class) {
+                if (resolve == null) {
+                    resolve = new MasterResolve();
+                }
+            }
+        }
+        return resolve;
+    }
+
+    // 构建根节点
+    private void buildRoot() {
+        if (!zkClient.exists(rootPath)) zkClient.createPersistent(rootPath);
+    }
+
+    // 创建服务节点
+    private void createServerNode() {
+        nodePath = zkClient.createEphemeralSequential(serverPath, "slave");
+        System.out.println("创建服务节点: " + nodePath);
+        initMaster();
+        initListener();
+    }
+
+    private void initListener() {
+        zkClient.subscribeChildChanges(rootPath, (parentPath, currentChild) -> doElection());
+    }
+
+    // Master 初始化
+    private void initMaster() {
+        // 遍历服务节点，判断是否存在 Master 节点
+        boolean existMaster = zkClient.getChildren(rootPath)
+                .stream()
+                .map(v -> rootPath + "/" + v)
+                .map(v -> zkClient.readData(v))
+                .anyMatch(v -> "master".equals(v));
+        // 如果不存在，进行选举
+        if (!existMaster) doElection();
+    }
+
+    // 选举
+    private void doElection() {
+        // 遍历服务节点，封装 Map
+        Map<String, Object> childDate = zkClient.getChildren(rootPath)
+                .stream()
+                .map(v -> rootPath + "/" + v)
+                .collect(Collectors.toMap(v -> v, v -> zkClient.readData(v)));
+
+        childDate.keySet()
+                .stream()
+                .sorted()
+                .findFirst()
+                .ifPresent(v -> {
+                    // 如果临时服务节点序号最小值为当前节点
+                    if (v.equals(nodePath)) {
+                        zkClient.writeData(nodePath, "master");
+                        master = true;
+                        System.out.println("当前节点当选 Master: " + nodePath);
+                    }
+
+                });
+
+    }
+
+    // 判断当前节点是否为 Master 节点
+    public static boolean isMaster() {
+        return getInstance().master;
+    }
+
+}
+```
+
+```java
+public class MasterResolveTest {
+    
+    @Test
+    public void MasterTest() throws InterruptedException {
+        MasterResolve instance = MasterResolve.getInstance();
+        System.out.println("master:" + MasterResolve.isMaster());
+        Thread.sleep(Long.MAX_VALUE);
+    }
+
+    @Test
+    public void MasterTest2() throws InterruptedException {
+        MasterResolve instance = MasterResolve.getInstance();
+        System.out.println("master:" + MasterResolve.isMaster());
+        Thread.sleep(Long.MAX_VALUE);
+    }
+
+}
+```
+
+#### 演示效果
+
+![UTOOLS1585192704023.png](http://yanxuan.nosdn.127.net/3385ebc96db4e96058448df7903ca72a.png)
+
+![UTOOLS1585192717601.png](http://yanxuan.nosdn.127.net/9b4a68abb40ccfd5df28202c8b57d807.png)
+
+### 分布式锁
+
+#### 锁的基本概念
+
+```shell
+# 开发中，通过 锁 可以实现在多个线程或多个进程间在争抢资源时，能够合理分配资源的所有权。
+
+# 单体应用中我们可以通过 synchronized 或 reentrantLock 来实现锁。
+
+# 但在分布式系统中，需要借助第三组件来实现。
+
+# 简单的做法是使用 关系型数据库 的行级锁来实现不同进程间的护互斥。
+
+# 为了提高性能，可以采用如 redis、zookeeper 等组件实现分布式锁。
+```
+
+##### 只读锁
+
+```shell
+# 当一个线程获得只读锁之后，其他线程也可以获得只读锁。
+
+# 但其只允许读取，在共享锁全部释放之前，其它方不能获得写锁。
+```
+
+##### 读写锁
+
+```shell
+# 获得读写锁后，可以进行数据的读写，在其释放之前，其他线程不能获得任何锁。
+```
+
+#### 锁的获取
+
+```shell
+# 某银行账号，可以同时进行账户信息的读取，但读取期间不能修改账户数据，账号 ID 为888.
+
+# 获取读锁流程如下:
+```
+
+![图片](https://uploader.shimo.im/f/BFpx2XQYWf8ruFUt.png!thumbnail)
+
+```shell
+# 基于资源ID 创建临时序号读锁节点
+/lock/888-R000001 read
+
+# 获取 /lock 下所有子节点，判断其最小的节点是否为读锁，如果是则获锁成功。
+
+# 最小节点不是读锁，则阻塞等待，添加 /lock 子节点变更监听。
+
+# 当节点变更监听触发，执行第二步。
+```
+
+##### 数据结构
+
+![图片](https://uploader.shimo.im/f/hgOxo7b5SPIdcXS1.png!thumbnail)
+
+```shell
+# 获得写锁流程如下:
+
+# 基于资源ID 创建临时序号写锁节点。
+/lock/888-W000002 write
+
+# 获取 /lock 下所有子节点，判断其最小的节点是否为自己，如果是则获锁成功。
+
+# 最小节点不是自己，则阻塞等待，添加 /lock 子节点变更监听。
+
+# 当节点变更监听触发，执行第二步。
+```
+
+#### 释放锁
+
+```shell
+# 读取完毕后，手动删除临时节点。
+
+# 如果获取期间宕机，则会在会话失效后自动删除。
+```
+
+#### 羊群效应
+
+```shell
+# 在等待锁获得期间，所有等待节点都在监听 Lock 节点。
+
+# 一旦 lock 节点变更所有等待节点都会被触发。
+
+# 然后同时反复查 lock 的子节点。
+
+# 如果等待比例过大，会使 zk 承受非常大的流量压力。
+```
+
+![图片](https://uploader.shimo.im/f/VsMAGsJSxhAOKnia.png!thumbnail)
+
+```shell
+# 为了改善这种情况，可以采用监听链表的方式，每个等待节点只监听前一个节点。
+
+# 那么只有前一个节点释放锁的时候，才会被触发通知，这样就形成了一个 监听链表。
+```
+
+![图片](https://uploader.shimo.im/f/JgVYw2L6xJcny6CN.png!thumbnail)
+
+#### 核心代码
+
+```java
+@Date
+public class Lock {
+    private String lockId;
+    private String path;
+    private boolean active;
+}
+```
+
+```java
+public class ZookeeperLock {
+    private String server = "127.0.0.1:2181";
+    private ZkClient zkClient;
+    private static final String rootPath = "/swordsman-lock";
+
+    public ZookeeperLock() {
+        zkClient = new ZkClient(server, 5000, 20000);
+        buildRoot();
+    }
+
+    // 构建根节点
+    public void buildRoot() {
+        if (!zkClient.exists(rootPath)) {
+            zkClient.createPersistent(rootPath);
+        }
+    }
+
+    // 获取锁
+    public Lock lock(String lockId, long timeout) {
+        // 创建临时节点
+        Lock lockNode = createLockNode(lockId);
+        lockNode = tryActiveLock(lockNode);// 尝试激活锁
+        if (!lockNode.isActive()) {
+            try {
+                synchronized (lockNode) {
+                    lockNode.wait(timeout); // 线程锁住
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        if (!lockNode.isActive()) {
+            throw new RuntimeException("get lock timeout");
+        }
+        return lockNode;
+    }
+
+    // 释放锁
+    public void unlock(Lock lock) {
+        if (lock.isActive()) {
+            zkClient.delete(lock.getPath());
+        }
+    }
+
+    // 尝试激活锁
+    private Lock tryActiveLock(Lock lockNode) {
+
+        // 获取根节点下面所有的子节点
+        List<String> list = zkClient.getChildren(rootPath)
+                .stream()
+                .sorted()
+                .map(p -> rootPath + "/" + p)
+                .collect(Collectors.toList());      // 判断当前是否为最小节点
+
+        String firstNodePath = list.get(0);
+        // 最小节点是不是当前节点
+        if (firstNodePath.equals(lockNode.getPath())) {
+            lockNode.setActive(true);
+        } else {
+            String upNodePath = list.get(list.indexOf(lockNode.getPath()) - 1);
+            zkClient.subscribeDataChanges(upNodePath, new IZkDataListener() {
+                @Override
+                public void handleDataChange(String dataPath, Object data) throws Exception {
+
+                }
+
+                @Override
+                public void handleDataDeleted(String dataPath) throws Exception {
+                    // 事件处理 与心跳 在同一个线程，如果Debug时占用太多时间，将导致本节点被删除，从而影响锁逻辑。
+                    System.out.println("节点删除:" + dataPath);
+                    Lock lock = tryActiveLock(lockNode);
+                    synchronized (lockNode) {
+                        if (lock.isActive()) {
+                            lockNode.notify(); // 释放了
+                        }
+                    }
+                    zkClient.unsubscribeDataChanges(upNodePath, this);
+                }
+            });
+        }
+        return lockNode;
+    }
+
+
+    public Lock createLockNode(String lockId) {
+        String nodePath = zkClient.createEphemeralSequential(rootPath + "/" + lockId, "w");
+        return new Lock(lockId, nodePath);
+    }
+}
+```
+
+```java
+public class LockTest {
+    ZookeeperLock zookeeperLock;
+
+    @Before
+    public void init() {
+        zookeeperLock = new ZookeeperLock();
+    }
+
+    @Test
+    public void getLockTest() throws InterruptedException {
+        Lock lock = zookeeperLock.lock("swordsman", 60 * 1000);
+        System.out.println("成功获取锁");
+        Thread.sleep(Long.MAX_VALUE);
+        assert lock != null;
+    }
+
+
+    @Test
+    public void run() throws InterruptedException, IOException {
+        // 写数字 0+100 =100
+        File file = new File("/Users/apple/Downloads/lock.txt");
+        if (!file.exists()) {
+            file.createNewFile();
+        }
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        for (int i = 0; i < 100; i++) {// 1000 个线程存在问题
+            executorService.submit(() -> {
+                Lock lock = zookeeperLock.lock("lock", 60 * 1000);
+                try {
+                    String firstLine = Files.lines(file.toPath()).findFirst().orElse("0");
+                    int count = Integer.parseInt(firstLine);
+                    count++;
+                    Files.write(file.toPath(), String.valueOf(count).getBytes());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    zookeeperLock.unlock(lock);
+                }
+            });
+        }
+        executorService.shutdown();
+        executorService.awaitTermination(10, TimeUnit.SECONDS);
+        String firstLine = Files.lines(file.toPath()).findFirst().orElse("0");
+        System.out.println(firstLine);
+    }
+
+}
+```
+
+## zk ZAB 一致性协议核心源码剖析
+
+### 源码目录结构
+
+![UTOOLS1585531428889.png](http://yanxuan.nosdn.127.net/e2f4d5be52b427dcfa2206b2b5a7cc90.png)
+
+```shell
+# zookeeper-recipes : 示例源码
+
+# zookeeper-client : C 语言客户端
+
+# zookeeper-server : 主题源码
+```
+
+### 启动宏观流程图
+
+![图片](https://uploader.shimo.im/f/jMRsPEAEi4EeYUO4.png!thumbnail)
+
+### 单机启动 Main
+
+```shell
+# 服务端: ZookeeperServerMain
+
+# 客户端: ZookeeperMain
+```
+
+### 集群启动详细流程
+
+#### 代码堆栈
+
+```java
+>QuorumPeerMain # initializeAndRun // 启动工程
+  >QuorumPeerConfig # parse // 加载 config 配置
+  	>QuorumPeerConfig # parseProperties // 解析 config 配置
+  
+  >new DatadirCleanupManager // 构造一个数据清除管理器
+  	>DatatdirCleanupManager # start // 启动定时任务，清除过期的快照
+  
+  >QuorumPeerConfig # isDistributed // 判断是否为集群模式
+  	>QuormPeerMain # runFromConfig // 集群启动，读取配置文件
+  		>ServerCnxnFactory # createFactory // 创建对外服务，默认为 NIO，推荐 Netty
+  		>ServerCnxnFactory # configure // 配置参数
+  
+  >QuormPeerMain # getQuorumPeer // 维护集群之间通信
+  	>QuormPeer # setTxnFactory // 构建日志、快照文件管理器
+  	>QuormPeer # new ZKDatabase // 创建内存数据库，参数就是上面创建的文件对象
+  	>QuormPeer # start // 启动集群服务、同时管理线程
+  		>QuormPeer # loadDataBase // 从快照、日志文件中，加载节点并填充到 datsTree 中
+  		>QuormPeer # startServerCnxnFactory // 启动Netty或NIO服务，对外开放端口2181...
+  		>AdminServer # start // 启动管理服务，Netty Http 服务，默认端口 8080(Jetty)
+  		>QuorumPeer # startLeaderElection // 开始执行选举流程
+  		>Quorumpeer.join() // 防止主线程退出
+```
+
+![UTOOLS1585533528247.png](http://yanxuan.nosdn.127.net/d059c4f34e619384a84c48b07b25d8b3.png)
+
+![UTOOLS1585533685107.png](http://yanxuan.nosdn.127.net/068148dd342f24201882be4dc83765d6.png)
+
+![UTOOLS1585533760165.png](http://yanxuan.nosdn.127.net/e905490d8443bb165d71fd46e228025d.png)
+
+![UTOOLS1585533883556.png](http://yanxuan.nosdn.127.net/6e279d7a5ab463b93663c62dda5935bb.png)
+
+![UTOOLS1585534417219.png](http://yanxuan.nosdn.127.net/8688b169464294fa679d5b6a39e94264.png)
+
+![UTOOLS1585535310946.png](http://yanxuan.nosdn.127.net/56a677a0ee8764f625c581fcfc0330ee.png)
+
+![UTOOLS1585535926324.png](http://yanxuan.nosdn.127.net/957a3a1a0dbbf727e45af42c5a263044.png)
+
+![UTOOLS1585536135112.png](http://yanxuan.nosdn.127.net/f983e3c13c11cec217020df0803a31c3.png)
+
+![UTOOLS1585536409389.png](http://yanxuan.nosdn.127.net/b344e1fc0690b6cc6d37ae22cd1327bb.png)
+
+![UTOOLS1585536917441.png](http://yanxuan.nosdn.127.net/ce9d44ec300024eb3af8a4260d5f0278.png)
+
+![UTOOLS1585538061912.png](http://yanxuan.nosdn.127.net/1e47a0cdd82c8df11204df7bf4578544.png)
+
+![UTOOLS1585538231076.png](http://yanxuan.nosdn.127.net/79f42a46583e277b227def267cfa4096.png)
+
+![UTOOLS1585538379960.png](http://yanxuan.nosdn.127.net/b957b58f9154cc2fb1316a18ede62aef.png)
+
+![UTOOLS1585538856156.png](http://yanxuan.nosdn.127.net/89b12636a81e461080199ce0dcbf1992.png)
+
+### Netty 服务启动流程
+
+#### 服务 UML 类图
+
+![图片](https://uploader.shimo.im/f/EcKT09vDArApxofJ.png!thumbnail)
+
+```shell
+# 设置 Netty 启动参数（JVM 层面）
+-Dzookeeper.serverCnxnFactory=org.apache.zookeeper.server.NettyServerCnxnFactory
+```
+
+#### 初始化核心代码
+
+```java
+// 初始化管道流 
+// channelHandler 是一个内部类是具体的消息处理器。
+protected void initChannel(SocketChannel ch) throws Exception {
+    ChannelPipeline pipeline = ch.pipeline();
+    if (secure) {
+        initSSL(pipeline);
+    }
+    pipeline.addLast("servercnxnfactory", channelHandler);
+}
+```
+
+![UTOOLS1585551789535.png](http://yanxuan.nosdn.127.net/a8b8f00c8c42febc9f584b5f998f6764.png)
+
+![UTOOLS1585552205603.png](http://yanxuan.nosdn.127.net/2cc70a304b8268357fb7a22c58cc607d.png)
+
+![UTOOLS1585552291570.png](http://yanxuan.nosdn.127.net/d6daf7167d11aee5e328e8771e1dfabf.png)
+
+![UTOOLS1585552445575.png](http://yanxuan.nosdn.127.net/61944c8d9ea651a06d763720d9fe22ff.png)
+
+#### ChannelHandler 类结构
+
+![图片](https://uploader.shimo.im/f/gPK2V2aI7osRieAJ.png!thumbnail)
+
+#### 代码堆栈
+
+```java
+>NettyServerCnxnFactory # NettyServerCnxnFactory // 初始化 netty 服务工厂
+  >NettyUtils.newNioOrEpollEventLoopGroup // 创建客户端接收线程组
+  >NettyUtils.newNioOrEpollEventLoopGroup // 创建工作线程组
+  >ServerBootstrap # childHandler // 添加管道流
+ 
+>NettyServerCnxnFactory # start // 绑定端口，并启动 Netty 服务
+```
+
+#### 创建连接
+
+```shell
+# 客户端新建连接，进入方法创建 NettyServerCnxn 对象，并添加至 cnxns 队列
+```
+
+##### 执行堆栈
+
+```java
+>CnxnChannelHandler # channelActive // 激活连接
+  >new NettyServerCnxn // 构建连接器
+  >NettyServerCnxnFactory # addCnxn // 添加至连接器，并根据客户端 IP 进行分组
+  	>ipMap.get(addr) // 基于 IP 进行分组
+```
+
+#### 读取消息
+
+##### 执行堆栈
+
+```java
+>CnxnChannelHandler # channelRead	// Netty 接收消息
+  >NettyServerCnxn # processMessage // 处理消息
+  	>NettyServerCnxn # receiveMessage // 接收消息
+  		>ZooKeeperServer # processPacket // 处理消息包
+  			>org.apache.zookeeper.server.Request // 封装 request 对象
+  				>org.apache.zookeeper.server.ZooKeeperServer # submitRequest // 提交request  
+  					>org.apache.zookeeper.server.RequestProcessor # processRequest // 处理请求
+```
+
+### 快照与事物日志存储结构
+
+#### 概要
+
+```shell
+# zk 数据存内存中，即 zkDataBase 中。
+
+# 同时所有对 zk 数据的变更都会记录到事物日志中，
+	# 当写入到一定的次数就会进行一次快照的生成，以保证数据的备份，
+	# 其后缀就是 ZXID (唯一事物ID)。
+	
+# 事物日志:
+	# 每次增删改的记录日志都会保存在文件当中。
+	
+# 快照日志:
+	# 存储了在指定时间节点下的所有的数据。
+```
+
+#### 存储结构
+
+```shell
+# zkDataBase 是 zk 数据库基类，所有节点都会保存在该类当中。
+
+# 对 zk 进行任何的数据变更都会基于该类进行。
+
+# zk 数据的存储是通过 DataTree 对象进行，其用了一个 map 来进行存储。
+```
+
+![图片](https://uploader.shimo.im/f/BUY4rHoJl5MEyCuu.png!thumbnail)
+
+![图片](https://uploader.shimo.im/f/emgG6FGmkYM7Kb6i.png!thumbnail)
+
+#### 读取快照日志
+
+```shell
+# org.apache.zookeeper.server.SnapshotFormatter
+```
+
+#### 读取事物日志
+
+```shell
+# org.apache.zookeeper.server.logFormatter
+```
+
+#### 快照相关配置
+
+| dataLogDir                | 事物日志目录                                                 |
+| ------------------------- | ------------------------------------------------------------ |
+| zookeeper.preAllocSize    | 预先开辟磁盘空间，用于后续写入事务日志，默认64M              |
+| zookeeper.snapCount       | 每进行snapCount 次事务日志输出后，触发一次快照，默认是100,000 |
+| autopurge.snapRetainCount | 自动清除时，保留的快照数                                     |
+| autopurge.purgeInterval   | 清除时间间隔，单位为小时，-1 表示不自动清除                  |
+
+#### 快照装载流程
+
+```java
+>ZookeeperServer # loadData // 加载数据
+  >FileTxnSnapLog # restore // 恢复数据
+  	>FileSnap # deserialize // 反序列化数据
+  		>FileSnap # findNValidSnapshots // 查找有效的快照
+  			>Util # sortDataDir // 基于后缀排序文件
+  				>persistence.Util # isValidSnapshot // 验证是否有效快照文件
 ```
 
