@@ -1,4 +1,4 @@
-# 诸葛 - MySQL 索引
+# 诸葛 - MySQL 索引及Explain
 
 ## 索引的本质
 
@@ -397,5 +397,313 @@ FROM
 	# system > const > eq_ref > ref > range > index > ALL
 	
 # 一般来说，得保证查询达到 range 级别，最好达到 ref
+```
+
+#### possible_keys
+
+```shell
+# 显示查询可能使用哪些索引来查找。
+
+# explain 有时可能出现 possible_keys 有值，而 key 显示 NULL 的情况，
+	# 可能是因为表中数据不多，mysql 认为索引对此查询帮助不大，所以直接选择全表扫描。
+	
+# 如果该列时 NULL，可以通过检查 where 子句看是否可以创建一个适当的索引来提高查询性能，
+	# 然后再用 explain 查看效果。
+```
+
+#### key
+
+```shell
+# 显示 mysql 实际采用哪个索引来优化该 SQL。
+
+# NULL 表示没有使用索引。
+
+# 可以使用 force index 强制指定 possible_key 中的索引，
+	# 或者使用 ignore index 忽略。
+```
+
+#### key_len
+
+```shell
+# 显示 sql 在索引里使用的字节数，通过该值，可以算出具体使用了索引中的哪些列。
+```
+
+```sql
+-- 该 sql 使用了联合索引 idx_flim_actor_id 中的 film_id
+-- 因为每个 int 是4个字节，key_len 是 4，表示只使用到了第一个索引列
+explain select * from film_actor where film_id = 2;
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598514542340.png)
+
+```shell
+# key_len 计算规则:
+	# 字符串:
+		# char(n): n字节长度
+		
+		# varchar(n): 
+			# utf-8: 3n + 2 个字节长度，加的 2 字节用来存储字符串长度
+			
+			# utf8mb4: 4n + 2 个字节长度
+			
+	# 数值类型:
+		# tinyint: 1字节
+		
+		# smallint: 2字节
+		
+		# int: 4字节
+		
+		# bigint: 8字节
+		
+	# 时间类型:
+		# date: 3字节
+		
+		# timestamp: 4字节
+		
+		# datetime: 8字节
+		
+	# 如果字段允许为 NULL，需要 1 字节记录是否为 NULL
+	
+# 索引最大长度时 768 字节，当字符串过长时，
+	# MySQL 会做一个类似左前缀索引的处理，
+	
+	# 将前半部分的字符提取出来做索引。
+```
+
+#### ref
+
+```shell
+# 显示在 key 列记录的索引中，sql 查找数据所用到的列或常量。
+	# 常见的有: const(常量)、字段名(film.id)
+```
+
+#### rows
+
+```shell
+# sql 估计要读取并检测的行数，并不是结果集里的行数，也不一定准确。
+```
+
+#### extra
+
+```shell
+# 显示额外信息，常见重要值如下:
+```
+
+##### Using index
+
+```shell
+# 使用覆盖索引。
+
+# 覆盖索引定义:
+	# sql 执行计划 explain 结果里的 key 有使用索引，
+		# 如果 select 后面查询的字段都可以从这个索引的树中获取，
+	
+		# 这种情况一般就可以说是用到了覆盖索引，
+	
+		# extra 里一般都有 using index。
+	
+	# 覆盖索引一般针对的是辅助索引，
+		# 整个查询结果只通过辅助索引，就能拿到结果，
+		
+		# 不需要再回表到主键索引树中，获取其他字段值
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598515572662.png)
+
+##### Using where
+
+```shell
+# 使用 where 语句来处理结果，并且查询的列未被索引覆盖。
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598515705256.png)
+
+##### Using index condition
+
+```shell
+# 查询的列不完全被索引覆盖，where 条件中是一个前导列的范围。
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598515764603.png)
+
+##### Using temporary
+
+```shell
+# MySQL 需要创建一张临时表来处理查询，
+	# 这种情况一般是需要优化的，首先是想到用索引来优化。
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598515855377.png)
+
+##### Using filesort
+
+```shell
+# 使用文件排序，
+	# 文件较小时，加载到内存中进行排序，否则需要在磁盘完成排序，
+	
+	# 这种情况一般是需要优化的，首先是想到用索引来优化。
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598515982832.png)
+
+##### Select tables optimized away
+
+```shell
+# 使用某些聚合函数（比如 max、min）来访问存在索引的某个字段是
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598516075772.png)
+
+## 索引最佳实践
+
+```sql
+CREATE TABLE `employees` (
+`id` int(11) NOT NULL AUTO_INCREMENT,
+`name` varchar(24) NOT NULL DEFAULT '' COMMENT '姓名',
+`age` int(11) NOT NULL DEFAULT '0' COMMENT '年龄',
+`position` varchar(20) NOT NULL DEFAULT '' COMMENT '职位',
+`hire_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '入职时间',
+ PRIMARY KEY (`id`),
+ KEY `idx_name_age_position` (`name`,`age`,`position`) USING BTREE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8 COMMENT='员工记录表';
+
+INSERT INTO employees(name,age,position,hire_time) VALUES('LiLei',22,'manager',NOW())
+INSERT INTO employees(name,age,position,hire_time) 
+VALUES('HanMeimei', 23,'dev',NOW());
+INSERT INTO employees(name,age,position,hire_time) 
+VALUES('Lucy',23,'dev',NOW());
+```
+
+### 全值匹配
+
+```sql
+explain select * from employees where name = 'LiLei';
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598516264773.png)
+
+```sql
+explain select * from employees where name = 'LiLei' and age = 22;
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598516309929.png)
+
+```sql
+explain select * from employees where name = 'LiLei' and age = 22 and position = 'manager';
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598516400523.png)
+
+### 最左前缀法则
+
+```shell
+# 查询 SQL 从索引的最左前列开始，并且不跳过索引中的列。
+```
+
+```sql
+-- 走 name 和 age 两个字段索引
+explain select * from employees where name = 'Bill' and age = 31;
+
+-- 不走索引，因为联合索引树是按序排列，第一个字段无法确认，自然无法确定下面字段的顺序。
+explain select * from employees where age = 30 and position = 'dev';
+
+-- 不走索引，同理
+explain select * from employees where position = 'manager';
+```
+
+### 不在索引列上做任何操作（计算、函数、自动或手动类型转换）
+
+```sql
+-- 不走索引
+explain select * from employees where left(name,3) = 'LiLei';
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598518769951.png)
+
+### 范围查询条件后的条件不走索引
+
+```sql
+-- position 不走索引
+explain select * from employees where name = 'LiLei' and age > 22 and position = 'manager';
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598518964036.png)
+
+### 尽量使用覆盖索引
+
+```sql
+explain select * from employees where name = 'LiLei' and age = 23 and position = "manager";
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598519079953.png)
+
+### 范围条件中使用索引的规则
+
+```shell
+# mysql 在使用不等于 (!= 或 <>)、not in、not exists 时，无法使用索引。
+
+# < 、> 、<= 、>=
+	# mysql 内部优化器会根据检索比例、表的大小等多个因素整体评估是否使用索引。
+```
+
+```sql
+explain select * from employees where name != 'LiLei';
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598520460423.png)
+
+### is null，is not null
+
+```shell
+# 一般情况下都不会走索引
+```
+
+```sql
+explain select * from employees where name is null;
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598520586437.png)
+
+### 模糊查询
+
+```shell
+# like 以通配符 % 开头，索引失效
+```
+
+```sql
+explain select * from employees where name like '%Lei';
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598520821413.png)
+
+### 字符串不加单引号索引失效
+
+```sql
+explain select * from employees where name = 1000;
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598521336546.png)
+
+### 少用 or 或 in
+
+```shell
+# 用 or 或 in 查询时，mysql 内部优化器会根据检索比例、表大小 决定是否使用索引
+```
+
+```sql
+explain select * from employees where name = 'LiLei' or name = 'HanMeimei';
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598521506559.png)
+
+### 索引使用总结
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1598521706878.png)
+
+## ONLY_FULL_GROUP_BY
+
+```sql
+-- 5.7 关闭 only_full_group_by 报错
+set sql_mode = (select replace(@@sql_mode, 'ONLY_FULL_GROUP_BY',''));
 ```
 

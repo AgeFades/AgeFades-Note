@@ -261,3 +261,162 @@ public class Math {
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1597371827038.png)
 
+## JVM 运行情况预估
+
+```shell
+# 用 jstat -gc pid 命令可以得到一些关键数据，
+	# 然后采用之前的一些优化思路， 
+	
+	# 先做一些初始化的 JVM 参数设置。
+	
+	# 比如:
+		# 堆内存大小
+		# 年轻代大小
+		# Eden 和 Survivor 的比例
+		# 老年代的大小
+		# 大对象的阈值
+		# 大龄对象进入老年代的阈值等
+```
+
+### 年轻代对象增长的速率
+
+```shell
+# 用 jstat -gc pid 1000 10（每隔 1s 执行 1次命令，共执行 10 次），
+	# 观察 Eden 区的使用，估算每秒 eden 大概新增多少对象，
+	
+	# 需要在不同的时间（高峰期、平淡期）估算
+```
+
+### Young GC 的触发频率和每次耗时
+
+```shell
+# 知道年轻代对象增长速率后，就能根据 eden 区的大小推算出 Young GC 大概多久触发一次
+
+# Young GC 的平均耗时可以通过 YGCT/YGC 公式算出，
+	# 根据结果，大概就只能知道 系统多久会因为 Young GC 执行而卡顿多长时间。
+```
+
+### 每次Young GC 后有多少对象存活和进入老年代
+
+```shell
+# 上面已经大概知道Young GC 的频率，假设是每分钟一次，
+	# jstat -gc pid 60000 10 (每隔 60s 执行一次命令，共执行 10 次)
+	
+	# 观察每次结果 eden、survivor、old 使用的变化情况，
+	
+	# 在每次 Young GC 后，eden 区使用一般会大幅减少，survivor 和 old 都可能增长，
+	
+	# 这些增长的对象就是每次 Young GC 后存活的对象，
+	
+	# 同时还可以看出每次 Young GC 进 Old 大概多少对象，从而推算出 老年代对象增长速率
+```
+
+### Full GC 的触发频率和每次耗时
+
+```shell
+# 知道了 老年代对象 的增长速率，就可以推算出 Full GC 的触发频率
+
+# Full GC 的每次耗时公式: FGCT/FGC
+```
+
+### 优化思路
+
+```shell
+# 简单来说，尽量让每次 Young GC 后的存活对象，小于 Survivor 区域的 50%，
+
+	# 尽量让对象在年轻代完成 创建 -> GC，从而减少进入老年代，降低 Full GC 频率。
+```
+
+## 频繁 Full GC 案例
+
+### 配置条件
+
+```shell
+# 机器配置: 2核4G
+
+# JVM内存大小: 2G
+
+# 系统运行时间: 7天
+
+# 期间发生的 Full GC 次数和耗时: 500多次，200多秒
+
+# 期间发生的 Young GC 次数耗时: 1W多次，500多秒
+
+# 平均每天 70 多次 Full GC，每次 Full GC 耗时 400ms 左右
+
+# 平均每天 1000 都次 Young GC，每次 Young GC 耗时 50ms 左右
+```
+
+### JVM 参数
+
+```shell
+-Xms1536M -Xmx1536M -Xmn512m -Xss256K -XX:SurvivorRatio=6 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=256M -XX:+UseParNewGC -XX:+UseConcMarkSweepGC 
+-XX:CMSInititatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1597818212122.png)
+
+### 原因分析
+
+```shell
+# 根据前文 对象挪动到老年代 的规则，进行推理，
+
+	# 经过分析，感觉像是由于 动态年龄判断机制 导致 full gc 较为频繁。
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1597818348534.png)
+
+### 第一次参数调优
+
+```shell
+-Xms1536M -Xmx1536M -Xmn1024M -Xss256K -XX:SurvivorRatio=6 -XX:MetaspaceSize=256M -XX:MaxMetaspaceSize=256M -XX:+UseParNewGC -XX:+UseConcMarkSweepGC 
+-XX:CMSInitiatingOccupancyOnly
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1597819292312.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1597819319624.png)
+
+```shell
+# 优化完发现没什么变化，甚至 Full GC 的次数比 Young GC 次数还多了。
+
+# 推测下 Full GC 比 Young GC 还多的原因是什么。
+	# 1. 元空间不足导致的多余的 Full GC
+	
+	# 2. 显示调用 System.gc() 造成多余的 Full GC
+		# 这种一般线上尽量通过 +XX:+DisableExplicitGC 参数禁用，
+		
+		# 如果加上 JVM 启动参数，那么代码中调用 System.gc() 没有任何效果
+		
+	# 3. 老年代空间分配担保机制
+	
+# 大概分析原因之后，我们可以使用 jmap 看下大概是哪些对象大量产生和占据空间
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1597819591826.png)
+
+```shell
+# 发现 User 对象大量产生，接下来需要找到对应的代码确认。
+
+# 如果直接去项目里查，可能会发现很多处创建 User 对象，无法精准定位。
+
+# 使用 jstack 分析定位 cpu 占用率高的代码，定位到具体一直创建大量 User 对象的地方。
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1597819727895.png)
+
+```shell
+# 至此，发现问题所在，解决代码问题即可。
+```
+
+## 内存泄漏是怎么回事
+
+```shell
+# 比如说，JVM 项目自己维护一个静态 HashMap，不断往里面存放缓存数据，
+	# 没考虑到这个 HashMap 的容量释放问题，
+	
+	# 一定时间过后，触发 Full GC，发现无法清除该 HashMap 对象，抛出 OOM
+	
+	# 这就是一种内存泄漏: 对一个永远无法 GC 的对象，不断插入对象数据，而不考虑释放。
+```
+
