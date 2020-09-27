@@ -1,4 +1,4 @@
-# 诸葛 - MySQL 索引及Explain
+#   诸葛 - MySQL 索引及Explain
 
 ## 索引的本质
 

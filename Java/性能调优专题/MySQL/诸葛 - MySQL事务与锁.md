@@ -511,5 +511,136 @@ update account set name = '嘻嘻' where id > 1 and id < 10;
 -- 其他会话则 不能 在该范围内所包含的 所有行记录 以及 中间的间隙 里 插入或修改任何数据
 ```
 
-### 临键锁
+### 临键锁(Next-key Locks)
+
+```shell
+# 临键锁是 行锁与间隙锁 的组合，
+
+# 比如 id 为 (1,10] 的整个区间可以叫做临键锁。
+```
+
+### 无索引行锁会升级为表锁
+
+```shell
+# InnoDB 的 行锁 是 针对索引 加的锁，而非针对记录加的锁，
+	# 如果对 非索引文件 字段更新，行锁就会变成表锁，
+	
+	# 并且 行锁针对索引 不能失效，否则也会从 行锁 升级为 表锁。
+```
+
+### 行锁操作
+
+```sql
+-- lock in share mode(读锁)
+
+-- for update(写锁)
+
+-- 示例sql，其他 session 只能读，其他操作会被阻塞
+select * from account where id = 2 for update;
+```
+
+### 行锁分析
+
+```sql
+-- 检查 InnoDB_rol_lock 状态变量，可以分析系统上的行锁争夺情况
+show status like 'innodb_row_lock%';
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1601195983877.png)
+
+```shell
+Innodb_row_lock_current_waits # 当前正在等待锁定的数量
+
+Innodb_row_lock_time # 从 系统启动到现在 锁定总时间 长度（重要）
+
+Innodb_row_lock_time_avg # 每次等待锁的平均时间（重要）
+
+Innodb_row_lock_time_max # 从 系统启动到现在 等待最长的一次时间
+
+Innodb_row_lock_waits # 从 系统启动到现在 总共等待的次数（重要）
+
+# 当 等待次数 很高，并且 平均等待时长 也不低的时候，
+	# 就需要分析系统中为什么会有这么多等待，
+	
+	# 根据分析结果着手制定优化计划。
+```
+
+### information_schema 系统库 锁相关数据表
+
+```sql
+-- 查看事务
+select * from information_schema.INNODB_TRX;
+
+-- 查看锁5.7
+select * from information_schema.INNODB_LOCKS;
+
+-- 查看锁 8
+select * from `performance_schema`.data_locks;
+
+-- 查看锁等待5.7
+select * from information_schema.INNODB_LOCK_WAITS;
+
+-- 查看锁等待 8 
+select * from `performance_schema`.data_lock_waits;
+
+-- 释放锁 trx_mysql_thread_id 来自 information_schema.INNODB_TRX
+kill trx_mysql_thread_id
+
+-- 查看锁等待详细信息
+show engine innodb status \G;
+```
+
+### 死锁
+
+```sql
+-- Session1
+
+-- 设置隔离级别 可重复读
+SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+-- 1. 查 id=1 并加行写锁
+select * from account where id = 1 for update;
+
+-- 3. 查 id=2 并加行写锁(阻塞)
+select * from account where id = 2 for update;
+```
+
+```sql
+-- Session2
+
+-- 设置隔离级别 可重复读
+SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+
+-- 2. 查 id=2 并加行写锁
+select * from account where id = 2 for update;
+
+-- 4. 查 id=1 并加行写锁(阻塞)
+select * from account where id = 1 for update;
+```
+
+```sql
+-- 查看近期死锁日志信息
+show engine innodb status \G;
+
+-- 大多数情况，MySQL 可以自动检测 死锁 并回滚 产生死锁 的那个事务，但并不是所有场景。
+```
+
+### 锁优化建议
+
+```shell
+# 还是要按照实际业务来
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1601198602433.png)
+
+### 结论
+
+```shell
+# InnoDB 实现了行锁，
+	# 实现方面会比表锁更消耗性能，
+	
+	# 但在整体并发处理能力上，要远远优于 MyISAM 表锁。
+	
+# InnoDB 行锁也可能升级为表锁。
+```
 
