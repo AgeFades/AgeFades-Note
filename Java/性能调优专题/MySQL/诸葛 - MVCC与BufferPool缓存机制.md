@@ -89,6 +89,14 @@
 	# 使得 不同的事务 会根据 数据版本链对比规则 读取同一条数据在版本链上的不同版本数据。
 ```
 
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1602322734499.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1602322754704.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1602322765357.png)
+
+
+
 ## InnoDB 引擎SQL执行的BufferPool缓存机制
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1601277338501.png)

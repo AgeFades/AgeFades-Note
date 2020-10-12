@@ -511,6 +511,19 @@ update account set name = '嘻嘻' where id > 1 and id < 10;
 -- 其他会话则 不能 在该范围内所包含的 所有行记录 以及 中间的间隙 里 插入或修改任何数据
 ```
 
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1602224600613.png)
+
+```sql
+-- 如上图，间隙就有 id 为 (3, 10) (10, 20) (20, 正无穷) 这三个区间。
+
+-- 执行如下 SQL
+update account set name = 'zhangsan' where id > 8 and id < 18;
+
+-- 不提交事务，在另一个 Session 中插入 id = 7 或者 id = 19，发现都无法成功
+-- 这就是 MySQL 在 可重复度隔离级别下 使用 间隙锁 解决部分 幻读 问题的证明。
+-- 因为 id > 8 and id < 18，间隙锁的实际作用范围是 (3, 20]
+```
+
 ### 临键锁(Next-key Locks)
 
 ```shell
