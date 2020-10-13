@@ -95,11 +95,14 @@
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1602322765357.png)
 
-
-
 ## InnoDB 引擎SQL执行的BufferPool缓存机制
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1601277338501.png)
+
+```shell
+# BufferPool 内部也有一套 LRU 算法，
+	# 所有 缓存 都会设计一套 数据淘汰策略
+```
 
 ### 为什么不直接更新磁盘
 
@@ -110,5 +113,11 @@
 	# 然后 顺序写日志文件，同时还能保证各种异常情况下的数据一致性。
 	
 	# 这也是 MySQL 在较高配置的机器上，每秒可以抗下几千QPS的原因。
+	
+# 主要差距就是: 顺序写日志 和 随机写磁盘 的性能巨大差异。
+	# 为什么 db 数据不能顺序写？
+		# 因为 db 数据会涉及到 删除，删除之后可能再插入其他数据，就不是 连续性 的数据。
+		
+		# 而 redo 日志是不会 删除 中间某条数据的。
 ```
 
