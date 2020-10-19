@@ -396,10 +396,267 @@
 
 ### volatile 的可见性
 
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1602836185053.png)
+
+```shell
+# 使用 volatile 修饰的变量，用 javap 查看会发现，
+	# 属性被额外标记为: ACC_VOLATILE
+	
+	# 这个标记会被 JVM 做额外处理
+```
+
+```shell
+# 并不是说，不使用 volatile 或者 synchornized 或者 lock，
+	# 线程之间 对 共享变量的操作就永远互不可见了。
+	
+# volatile 只是保证了及时性，即 happens-before 中的 volatile规则
+```
+
+```shell
+# 关于 volatile 这里的笔记、代码不如周阳老师讲的
+
+# 请参考本项目中 Java/Java底层/周阳 - Java底层上
+```
+
+```java
+import java.util.concurrent.TimeUnit;
+
+public class VolatileDemo {
+
+    public static void main(String[] args) {
+        User user = new User();
+        new Thread(() -> {
+            System.out.println(Thread.currentThread().getName() + "\t come in");
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            user.add();
+            System.out.println(Thread.currentThread().getName() + "\t num value : " + user.num);
+        }, "SyncThread").start();
+
+        while (user.num == 0) {}
+        System.out.println(Thread.currentThread().getName() + "\t over,num value : " + user.num);
+    }
+
+}
+
+class User {
+    volatile int num = 0; // 去掉 volatile 试试
+    void add() {
+        this.num = 60;
+    }
+}
+```
+
 ### volatile 无法保证原子性
+
+```java
+public class VolatileDemo {
+
+    public static void main(String[] args) {
+        User user = new User();
+        for(int i = 1;i <= 20; i++ )
+        {
+            new Thread(() -> {
+                for (int j = 1; j <= 1000; j++) {
+                    user.add();
+                }
+            },String.valueOf(i)).start();
+        }
+        while (Thread.activeCount() > 2){
+            Thread.yield();
+        }
+
+        System.out.println(Thread.currentThread().getName() + "\t over,num value : " + user.num);
+    }
+}
+
+class User {
+    volatile int num = 0;
+    void add() {
+        num++;
+    }
+}
+```
+
+```shell
+# 想解决可以用 synchronized 或 lock 或 atomic
+```
 
 ### volatile 禁止重排优化
 
+```shell
+# volatile 通过 内存屏障（Memory Barrier）实现禁止指令重排。
+```
+
 ### 硬件层的内存屏障
 
+```shell
+# Intel 硬件提供了系列 内存屏障:
+
+1. lfence
+	# Load Barrier 读屏障
+	
+2. sfence
+	# Store Barrier 写屏障
+	
+3. mfence
+	# 全能型屏障，具备 ifence 和 sfence 能力
+	
+4. Lock前缀
+	# 不是一种内存屏障，但能完成类似 内存屏障 的功能。
+	
+	# Lock 会对 CPU总线 和 高速缓存加锁，可以理解为 CPU指令集 的一种锁。
+	
+	# 后面可以跟: ADD、ADC、AND、BTC、BTR、BTS ... 等等指令
+```
+
+```shell
+# 不同硬件实现 内存屏障 的方式不同，JMM 屏蔽了底层硬件差异，
+	# 由 JVM 来为 不同的平台 生成 相应的机器码。
+	
+# JVM 提供 四类内存屏障指令:
+```
+
+| 屏障类型   | 指令示例                   | 说明                                                         |
+| ---------- | -------------------------- | ------------------------------------------------------------ |
+| LoadLoad   | Load1; LoadLoad; Load2     | 保证 load1 的读取操作在 load2 及后续读取操作之前执行         |
+| StoreStore | Store1; StoreStore; Store2 | 在 store2 及其后的写操作执行前，保证 store1 的写操作已刷新到主内存 |
+| LoadStore  | Load1; LoadStore2; Store2; | 在 Store2 及其后的写操作执行前，保证 load1 的读操作已读取结束 |
+| StoreLoad  | Store1; Storeload; Load2   | 保证 store1 的写操作已刷新到主内存之后，load2 及其后的读操作才能执行 |
+
+```shell
+# 内存屏障，又称 内存栅栏，是一个 CPU指令。
+
+# 作用:
+1. 保证特定操作的执行顺序
+
+2. 保证某些变量的内存可见性（volatile 就是利用该特性实现的 内存可见性）
+
+# 因为 编译器和处理器 都能执行 指令重排优化，
+	# 所以在 指令间 插入一条 Memory Barrier 则会告诉 编译器和CPU，
+	
+	# 不管什么指令，都不能和这条 Memory Barrier 指令重排序，
+	
+	# 即: 通过插入内存屏障 禁止在 内存屏障前后的指令执行重排序优化。
+	
+# Memory Barrier 还可以 强制刷出 各种CPU的缓存数据，
+	# 所以，任何CPU上的线程 都能读取到 这些数据的最新版本。
+	
+# 所以，volatile 关键字 实现 可见性、禁止重排优化，就是靠 Memory Barrier。
+```
+
+```java
+public class SingletonDemo {
+    private static volatile SingletonDemo instance; // volatile 防止重排序
+
+    private SingletonDemo() {
+        System.out.println(Thread.currentThread().getName() + "\t get instance");
+    }
+    
+    public static SingletonDemo getInstance() {
+        if (instance == null) {
+            synchronized (SingletonDemo.class) {
+                if (instance == null)
+                    instance = new SingletonDemo();
+            }
+        }
+        return instance;
+    }
+
+    public static void main(String[] args) {
+        for (int i = 1; i <= 10; i++) {
+            new Thread(() -> {
+                getInstance();
+            }, String.valueOf(i)).start();
+        }
+    }
+}
+```
+
+```shell
+# 单例模式 DCL<Double Check Lock 双端检锁机制> 代码
+
+# instance = new SingletonDemo() 是被分成以下 3 步完成
+	# memory = allocate();     分配对象内存空间
+	# instance(memory);        初始化对象
+	# instance = memory;	   设置 instance 指向刚分配的内存地址，此时 instance != null
+	
+	# 步骤2 和 步骤3 不存在数据依赖关系，重排与否的执行结果单线程中是一样的
+	# 这种指令重排是被 Java 允许的
+	# 当 3 在前时，instance 不为 null，但实际上初始化工作还没完成，
+		# 会变成一个返回 null 的getInstance
+```
+
+```shell
+# volatile 只能用于修饰成员变量，如果业务代码中有较多的局部变量需要禁止 指令重排，
+	# 可以使用 JDK1.7 之后出现的 Unsafe 类中 API 手动添加 内存屏障。
+	
+	# 一般不建议使用 Unsafe 类，容易造成内存泄漏。
+	
+	# Unsafe 类是由 启动类加载器(BootStrapClassLoad) 加载的，不能直接 new 出来
+```
+
+```java
+/**
+ * 通过反射获取 Unsafe 类
+ */
+public class UnsafeUtil {
+  
+  public static Unsafe getUnsafe() {
+    
+     try {
+        Field field = Unsafe.class.getDeclaredField("theUnsafe");
+        field.setAccessible(true);
+        return (Unsafe) field.get(null);
+      } catch {
+        e.printStackTrace();
+      }
+      return null;
+  }
+  
+}
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603078034124.png)
+
 ### volatile 内存语义的实现
+
+```shell
+# 为了实现 volatile 内存语义，
+	# JMM 会分别限制 编译器重排序 和 处理器重排序。
+```
+
+#### JMM 针对编译器制定的 volatile 重排规则表
+
+| 第一个操作 | 第二个操作: 普通读写 | 第二个操作: volatile读 | 第二个操作: volatile 写 |
+| ---------- | -------------------- | ---------------------- | ----------------------- |
+| 普通读写   | 可以重排             | 可以重排               | 不可以重排              |
+| volatile读 | 不可以重排           | 不可以重排             | 不可以重排              |
+| volatile写 | 可以重排             | 不可以重排             | 不可以重排              |
+
+#### Java的实现
+
+```shell
+# 编译器在生成字节码时，会在 指令序列 中插入 内存屏障，
+	# 来禁止 特定类型 的处理器重排序。
+	
+# 在每个 volatile 写操作的前面，插入一个 StoreStore 屏障
+
+# 在每个 volatile 写操作的后面，插入一个 StoreLoad 屏障
+
+# 在每个 volatile 读操作的前面，插入一个 LoadLoad 屏障
+
+# 在每个 volatile 写操作的后面，插入一个 LoadStore 屏障
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603079163346.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603079257073.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603079274257.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603079289793.png)
+
