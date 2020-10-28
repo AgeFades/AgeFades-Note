@@ -1,5 +1,49 @@
 # 杨过 - CPU缓存一致性协议MESI
 
+## JVM-JMM-CPU底层全执行流程
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603682815257.png)
+
+## volatile 通过 MESI 实现可见性
+
+```shell
+# volatile 就是通过 MESI 实现可见性。
+
+# volatile 修饰变量，在进行赋值操作时，可查看其 汇编指令 原语:
+```
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603683274224.png)
+
+### lock 在汇编中的意义
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603683313521.png)
+
+```shell
+# 在 修改内存操作 时，使用 LOCK 前缀去调用 加锁的 读-修改-写 操作（原子的）。
+	# 这种机制 用于 多线程系统中 处理器之间进行可靠通讯。
+	
+# 在 Pentium(奔腾处理器) 和 早期的 IS-32 处理器中，
+	# LOCK 前缀会使 处理器执行当前指令时，产生一个 LOCK# 信号，
+	
+	# 这总是引起 显式总线锁定 出现，
+	
+	# 该处理器就在 锁定操作期间 不会响应总线控制请求。
+	
+# 这是由于 早起技术 较为落后，CPU 还没有三级缓存，
+	# 可能只有 一级缓存，或者直接 寄存器 与 主存bus总线 进行交互，
+	
+	# 这时候 lock 语义实际上还是上锁，在 主存bus总线上锁，
+	
+	# 防止 多核cpu 同时对共享变量进行赋值 可能出现的问题。
+	
+# 所以早期 CPU 性能是较为低下的，因为一旦触发 总线锁 机制，
+	# 多核CPU 实际上就变为了 单核CPU。
+```
+
+```shell
+# 基于上述，引出 MESI 多核CPU缓存一致性协议。
+```
+
 ## MESI
 
 ```shell
@@ -7,9 +51,14 @@
 	# 如何保证 缓存内部数据 一致？
 	
 	# 这就引出了 一致性协议 MESI
+	
+# 多核CPU 采用监听机制，监听 主存bus总线，
+	# 共享变量的更改都会被感知到。
 ```
 
 ### MESI协议缓存状态
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603684197118.png)
 
 ```shell
 # MESI 是指 4种状态 的首字母。
@@ -223,6 +272,4 @@
 	
 	# 3. CPU 不会发送任何消息给所处理的 cache line，直到它处理 invalid。
 ```
-
-
 
