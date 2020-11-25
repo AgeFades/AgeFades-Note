@@ -74,6 +74,12 @@ public class Demo {
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1605669944363.png)
 
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1606271086653.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1606273015560.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1606272268212.png)
+
 #### 差异
 
 - `FairSync` 相比 `NonfairSync` 中 `tryAcquire` ，唯一多的就是一行判断 `!hasQueuedPredecessors()`
