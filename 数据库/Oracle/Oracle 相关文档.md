@@ -111,6 +111,15 @@ alter user vosp account unlock;
 
 2. IDEA 刷新 Maven、下载驱动jar包
 
+   1. ```xml
+      <!-- 使用 oracle -->
+      <dependency>
+        <groupId>com.oracle.jdbc</groupId>
+        <artifactId>ojdbc14</artifactId>
+        <version>12.2.0.1</version>
+      </dependency>
+      ```
+
 3. 修改数据库连接配置
 
    1. ```yml

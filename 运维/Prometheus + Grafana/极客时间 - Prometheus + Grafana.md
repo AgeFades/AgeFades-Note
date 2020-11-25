@@ -2,96 +2,64 @@
 
 ## 监控模式分类
 
-```shell
-# 四种主要监控方式:
-1. Metrics
-
-2. Logging
-
-3. Tracing
-
-4. Healthchecks
-```
+- `Metrics`
+- `Logging`
+- `Tracing`
+- `Healthchecks`
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603272160345.png)
 
 ### Logging
 
-```shell
-# 通过日志监控，比如 操作系统日志、Java项目日志、各种服务日志...
-
-# 日志一般分为两种:
-	# 结构化日志 Structured
-		# 例如: { "code": 200, msg: "success", ... }
-		
-	# 非结构化日志 Unstructured
-		# 例如: [WARN] DB error: 500
-```
+- 通过日志监控，比如 操作系统日志、Java项目日志、各种服务日志...
+- 日志一般分为两种:
+  - 结构化日志 Structured
+    - 例如: { "code": 200, msg: "success", ... }
+  - 非结构化日志 Unstructured
+    -  例如: [WARN] DB error: 500
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603272361083.png)
 
 ### Tracing
 
-```shell
-# 调用链模式监控
-
-# 比如:
-	# 客户端发起请求
-	
-	# -> 请求到达Nginx
-
-	# -> 请求到达网关
-	
-	# -> 请求到达具体微服务
-	
-	# -> 服务处理请求
-	
-	# -> 响应网关、响应客户端
-```
+- 调用链模式监控
+- 比如:
+  - 客户端发起请求
+  - -> 请求到达Nginx
+  - -> 请求到达网关
+  - -> 请求到达具体微服务
+  - -> 服务处理请求
+  - -> 响应网关、响应客户端
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603272538462.png)
 
 ### Metrics
 
-```shell
-# 通过 不同时间的离散数据点 进行监控
-
-# 跟 Logging 方式比较相似，
-	# 不同点:
-		# Logging 是文本的形式
-		
-		# Metrics 是 离散数值 的形式，是可以聚合的
-```
+- 通过 不同时间的离散数据点 进行监控
+- 跟 Logging 方式比较相似
+  - 不同点:
+    - Logging 是文本的形式
+    - Metrics 是 离散数值 的形式，是可以聚合的
 
 ### Healthchecks
 
-```shell
-# 健康检查，通过 心跳机制 确认服务是否存活
-
-# 比如: Eureka 就是通过 Healthchecks 检查注册的微服务健康状态。
-```
+- 健康检查，通过 心跳机制 确认服务是否存活
+- 比如: Eureka 就是通过 Healthchecks 检查注册的微服务健康状态。
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603272699197.png)
 
 ### Prometheus 所属分类
 
-```shell
-# Prometheus 包含 Metrics 和 Healthchecks
-```
+- Prometheus 包含 Metrics 和 Healthchecks
 
 ### 分类的比较
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603272845514.png)
 
-```shell
-# CapEx: 搭建监控性能的研发成本
-
-# OpEx: 运维成本
-
-# Reaction: 监控性能、告警能力
-
-# Inverstigation: 出现问题后，帮助排查问题的能力
-```
+- CapEx: 搭建监控性能的研发成本
+- OpEx: 运维成本
+- Reaction: 监控性能、告警能力
+- Inverstigation: 出现问题后，帮助排查问题的能力
 
 ### 分类的适用场景
 
@@ -113,37 +81,23 @@
 
 [Prometheus 官网](https://prometheus.io)
 
-```shell
-# Prometheus 是一款 开源监控工具
-
-# 实质上是一个 时间序列数据库（时序数据库）TSDB
-
-# golang 语言实现
-
-# Soundcloud 研发，源于谷歌 borgmon
-
-# 多维度（标签），拉模式（Pull-based）
-
-# 支持 白盒 & 黑盒 监控，DevOps 友好
-
-# 主要专注点是: Metrics & Altert (监控和告警)，而非 Logging / Tracing
-
-# 社区生态丰富（多语言，各种 exporters）
-
-# 单机性能: 每秒消费百万级时间序列，上千个 targets
-```
+- Prometheus 是一款 开源监控工具
+- 实质上是一个 时间序列数据库（时序数据库）TSDB
+- golang 语言实现
+- Soundcloud 研发，源于谷歌 borgmon
+- 多维度（标签），拉模式（Pull-based）
+- 支持 白盒 & 黑盒 监控，DevOps 友好
+- 主要专注点是: Metrics & Altert (监控和告警)，而非 Logging / Tracing
+- 社区生态丰富（多语言，各种 exporters）
+- 单机性能: 每秒消费百万级时间序列，上千个 targets
 
 ## 时间序列（Time Series）
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603273985183.png)
 
-```shell
-# 数据类型: 时间点 + 数据点
-
-# 多个 时间点 + 数据点 组合，就形成了一个序列。
-
-# 以 时间为横坐标，以 序列为纵坐标，就形成了 时间序列的矩阵。
-```
+- 数据类型: 时间点 + 数据点
+- 多个 时间点 + 数据点 组合，就形成了一个序列。
+- 以 时间为横坐标，以 序列为纵坐标，就形成了 时间序列的矩阵。
 
 ### 时序数据库的流行趋势
 
