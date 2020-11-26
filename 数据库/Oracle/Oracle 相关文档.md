@@ -186,6 +186,14 @@ CREATE TABLESPACE vosp
     
 -- 删除表空间, 变量: 表空间名{vosp}
 DROP TABLESPACE vosp;
+
+-- 删除所有表结构
+SELECT
+	'drop table  "VOSP"."' || table_name || '";' 
+FROM
+	USER_TABLES 
+ORDER BY
+	TABLE_NAME;
 ```
 
 ## 常见问题
