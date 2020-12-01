@@ -134,6 +134,40 @@ alter user vosp account unlock;
 
 4. 到这里应该就启动成功了
 
+## 事务测试
+
+### 未开启事务
+
+```sql
+-- 事务测试
+INSERT INTO TEST("id", "name") VALUES (1, '张三');
+INSERT INTO TEST("id", "name") VALUES (12345678901, '李四');
+INSERT INTO TEST("id", "name") VALUES (3, '王五');
+```
+
+#### 执行结果
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1606791567899.png)
+
+- 未开启事务、不会回滚数据
+
+### 开启事务
+
+```sql
+-- 事务测试
+BEGIN
+INSERT INTO TEST("id", "name") VALUES (1, '张三');
+INSERT INTO TEST("id", "name") VALUES (12345678901, '李四');
+INSERT INTO TEST("id", "name") VALUES (3, '王五');
+END;
+```
+
+#### 执行结果
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1606791688968.png)
+
+- 事务内出现异常、执行失败、数据不会提交
+
 ## 常用SQL
 
 ```sql
@@ -194,6 +228,37 @@ FROM
 	USER_TABLES 
 ORDER BY
 	TABLE_NAME;
+	
+-- 新增字段
+-- 新增单个字段
+alter table 表名 add (字段名 字段类型 默认值 是否为空);
+-- 新增多个字段
+alter table 表名 add (字段名 字段类型 默认值 是否为空, 字段名...);
+
+-- 添加表注释
+comment on table 表名 is '表注释';
+
+-- 添加字段注释
+comment on column 表名.字段名 is '字段注释';
+
+-- 修改字段
+alter table 表名 modify (字段名 字段类型 默认值 是否为空);
+
+-- 删除字段
+alter table 表名 drop (字段名);
+
+-- 字段重命名
+alter table 表名 rename column 旧字段名 to 新字段名;
+
+-- 重命名表
+alter table 表名 rename to 新表名
+
+-- 批量插入，字段名要加 ""，值看类型加 ""
+insert all
+into 表名("字段名1", "字段名2" ...) values ("值1"，"值2" ...)
+into 表名("字段名1", "字段名2" ...) values ("值1"，"值2" ...)
+into 表名("字段名1", "字段名2" ...) values ("值1"，"值2" ...)
+SELECT 1 FROM DUAL;
 ```
 
 ## 常见问题
@@ -213,6 +278,192 @@ ORA-00900: invalid SQL statement
 #### 解决方案
 
 - 使用正确的SQL语法（google or baidu）
+
+### ORA-00902
+
+#### 错误Msg
+
+```shell
+ORA-00902: invalid datatype
+```
+
+#### 错误原因
+
+```sql
+-- 原SQL、非法数据类型
+ALTER TABLE TEST ADD (sex (varchar2(5) null COMMENT '性别');
+```
+
+#### 解决方案
+
+```sql
+-- 修正语法错误，删除 varchar2 前面的错误括号
+ALTER TABLE TEST ADD (sex varchar2(5) null COMMENT '性别');
+```
+
+### ORA-00907
+
+#### 错误Msg
+
+```shell
+ORA-00907: missing right parenthesis
+```
+
+#### 错误原因
+
+```SQL
+-- 原错误、错误提示翻译为 缺失右括号
+-- 实际上，是向已有表添加字段时，不能直接添加注释
+ALTER TABLE TEST ADD (sex varchar2(5) null COMMENT '性别');
+```
+
+#### 解决方案
+
+```sql
+-- 添加字段
+ALTER TABLE TEST ADD (sex varchar2(5) null);
+
+-- 添加注释
+COMMENT ON COLUMN TEST.SEX IS '性别';
+```
+
+### ORA-01451
+
+#### 错误Msg
+
+```shell
+ORA-01451: column to be modified to NULL cannot be modified to NULL
+```
+
+#### 错误原因
+
+- oracle 中不允许将 NULL 字段修改为 NULL 字段
+
+```sql
+-- 原SQL、将 NULL 字段重复修改为 NULL 字段
+ALTER TABLE TEST MODIFY (sex varchar2(10) null);
+```
+
+#### 解决方案
+
+```sql
+-- 去除重复属性修改即可
+ALTER TABLE TEST MODIFY (sex varchar2(10));
+```
+
+### ORA-00905
+
+#### 错误Msg
+
+```shell
+ORA-00905: missing keyword
+```
+
+#### 错误原因
+
+- 缺少关键字
+
+```sql
+-- 错误SQL、缺少 into 关键字
+INSERT ALL
+INSERT TEST(id, name) VALUES (1, '张三')
+INSERT TEST(id, name) VALUES (2, '李四')
+INSERT TEST(id, name) VALUES (3, '王五')
+SELECT 1 FROM DUAL;
+```
+
+#### 解决方案
+
+```sql
+-- 将 insert 改为 into
+INSERT ALL
+INTO TEST(id, name) VALUES (1, '张三')
+INTO TEST(id, name) VALUES (2, '李四')
+INTO TEST(id, name) VALUES (3, '王五')
+SELECT 1 FROM DUAL;
+```
+
+### ORA-00904
+
+#### 错误Msg
+
+```shell
+ORA-00904: "NAME": invalid identifier
+```
+
+#### 错误原因
+
+- oracle 中无效的标志符号
+
+```sql
+-- 原SQL、字段名没有加 ""
+INSERT ALL
+INTO TEST(id, name) VALUES (1, '张三')
+INTO TEST(id, name) VALUES (2, '李四')
+INTO TEST(id, name) VALUES (3, '王五')
+SELECT 1 FROM DUAL;
+```
+
+#### 解决方案
+
+```sql
+-- 字段名加上 ""
+INSERT ALL
+INTO TEST("id", "name") VALUES (1, '张三')
+INTO TEST("id", "name") VALUES (2, '李四')
+INTO TEST("id", "name") VALUES (3, '王五')
+SELECT 1 FROM DUAL;
+```
+
+### ORA-01438
+
+#### 错误Msg
+
+```shell
+ORA-01438: value larger than specified precision allowed for this column
+```
+
+#### 错误原因
+
+- 插入值要比字段设计的最大长度还大
+
+```sql
+-- 原SQL、id 设计为10位Number类型、此处插入 11位
+INSERT INTO TEST("id", "name") VALUES (12345678901, '李四');
+```
+
+#### 解决方案
+
+```sql
+-- 字段值符合字段设计约束
+INSERT INTO TEST("id", "name") VALUES (1, '李四');
+```
+
+### ORA-01740
+
+#### 错误Msg
+
+```shell
+ORA-01740: missing double quote in identifier
+```
+
+#### 错误原因
+
+- 缺失的双引号
+
+```sql
+-- 原SQL、id 字段缺少左引号
+INSERT INTO TEST(id", "name") VALUES (1, '张三');
+```
+
+#### 解决方案
+
+```sql
+-- 补齐 id 字段引号
+INSERT INTO TEST("id", "name") VALUES (1, '张三');
+```
+
+
 
 ## 参考资料
 
