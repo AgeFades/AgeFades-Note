@@ -463,6 +463,35 @@ INSERT INTO TEST(id", "name") VALUES (1, '张三');
 INSERT INTO TEST("id", "name") VALUES (1, '张三');
 ```
 
+## ORA-01788
+
+#### 错误Msg
+
+```shell
+ORA-01788: 此查询块中要求 CONNECT BY 子句
+```
+
+#### 错误原因
+
+- Java + MyBatisPlus + Oracle 中，需要注意表对应实体字段是否为关键字
+
+- ```java
+  /**
+   * 级别。brand 品牌，series 车系
+   */
+  private String level;
+  ```
+
+#### 解决方案
+
+```java
+/**
+ * 级别。brand 品牌，series 车系
+ */
+@TableField(value = "\"LEVEL\"")
+private String level;
+```
+
 
 
 ## 参考资料
