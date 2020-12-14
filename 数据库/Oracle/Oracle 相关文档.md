@@ -492,7 +492,135 @@ ORA-01788: 此查询块中要求 CONNECT BY 子句
 private String level;
 ```
 
+### ORA-00933
 
+#### 错误Msg
+
+```shell
+ORA-00933: SQL 命令未正确结束
+```
+
+#### 错误原因
+
+```xml
+<!-- mybatis.xml 中，oracle sql 结尾都不能携带 ; -->
+<select id="countAllByCustomerId" resultType="java.lang.Integer">
+  	SELECT COUNT(*) FROM VEHICLE WHERE CUSTOMER_ID = #{customerId};
+</select>
+```
+
+#### 解决方案
+
+```xml
+<!-- 删除 sql 结尾的 ; -->
+<select id="countAllByCustomerId" resultType="java.lang.Integer">
+  	SELECT COUNT(*) FROM VEHICLE WHERE CUSTOMER_ID = #{customerId}
+</select>
+```
+
+### 无法转换为内部表示
+
+#### 错误Msg
+
+```shell
+; uncategorized SQLException; SQL state [99999]; error code [17059]; 无法转换为内部表示; nested exception is java.sql.SQLException: 无法转换为内部表示
+```
+
+#### 错误原因
+
+1. 检查数据库类型与Java程序接收类型是否一致
+
+   1. [参考链接]: https://blog.csdn.net/jiangyu1013/article/details/53816632
+
+2. Java 中 Mybatis.xml 里，接收对象没有唯一标位（id）
+
+   1. ```xml
+       <resultMap id="oilMap" type="com.botpy.vosp.client.oil.repository.YearRecord">
+              <id column="year" property="year"/>
+              <collection property="monthRecords" ofType="com.botpy.vosp.client.oil.repository.MonthRecord">
+                  <id property="month" column="month"/>
+                  <collection property="monthRecords" ofType="com.botpy.vosp.client.oil.repository.Record">
+                      <!-- 错误XML，这里没有加 id,导致一致报上面的错  -->
+      								<!-- <id column="id" property="id" javaType="java.lang.Long"/> -->
+                      <result column="name" property="name" jdbcType="VARCHAR"/>
+                      <result column="oilValue" property="oilValue"/>
+                      <result column="recordTime" property="recordTime"/>
+                      <result column="status" property="status"/>
+                  </collection>
+              </collection>
+          </resultMap>
+      ```
+
+#### 解决方案
+
+```xml
+ <resultMap id="oilMap" type="com.botpy.vosp.client.oil.repository.YearRecord">
+        <id column="year" property="year"/>
+        <collection property="monthRecords" ofType="com.botpy.vosp.client.oil.repository.MonthRecord">
+            <id property="month" column="month"/>
+            <collection property="monthRecords" ofType="com.botpy.vosp.client.oil.repository.Record">
+                <!-- 正确XML,加上ID标识位 -->
+								<id column="id" property="id" javaType="java.lang.Long"/>
+                <result column="name" property="name" jdbcType="VARCHAR"/>
+                <result column="oilValue" property="oilValue"/>
+                <result column="recordTime" property="recordTime"/>
+                <result column="status" property="status"/>
+            </collection>
+        </collection>
+    </resultMap>
+```
+
+### 数字溢出
+
+#### 错误Msg
+
+```shell
+Error attempting to get column 'id' from result set.  Cause: java.sql.SQLException: 数字溢出
+```
+
+#### 错误原因
+
+- 数据库中，id 为雪花算法生成，19位，类型为 Number
+
+- Java 中，不指定接收类型，默认与 Number 对应的是 Interger
+
+- [参考链接]: https://www.thinbug.com/q/46642726
+
+- ```xml
+  <resultMap id="oilMap" type="com.botpy.vosp.client.oil.repository.YearRecord">
+          <id column="year" property="year"/>
+          <collection property="monthRecords" ofType="com.botpy.vosp.client.oil.repository.MonthRecord">
+              <id property="month" column="month"/>
+              <collection property="monthRecords" ofType="com.botpy.vosp.client.oil.repository.Record">
+                  <!-- 错误XML,没有指定 id 对应 Long 类型 -->
+  								<id column="id" property="id"/>
+                  <result column="name" property="name" jdbcType="VARCHAR"/>
+                  <result column="oilValue" property="oilValue"/>
+                  <result column="recordTime" property="recordTime"/>
+                  <result column="status" property="status"/>
+              </collection>
+          </collection>
+      </resultMap>
+  ```
+
+#### 解决方案
+
+```xml
+<resultMap id="oilMap" type="com.botpy.vosp.client.oil.repository.YearRecord">
+        <id column="year" property="year"/>
+        <collection property="monthRecords" ofType="com.botpy.vosp.client.oil.repository.MonthRecord">
+            <id property="month" column="month"/>
+            <collection property="monthRecords" ofType="com.botpy.vosp.client.oil.repository.Record">
+                <!-- 正确XML,加上Long类型对应 -->
+								<id column="id" property="id" javaType="java.lang.Long"/>
+                <result column="name" property="name" jdbcType="VARCHAR"/>
+                <result column="oilValue" property="oilValue"/>
+                <result column="recordTime" property="recordTime"/>
+                <result column="status" property="status"/>
+            </collection>
+        </collection>
+    </resultMap>
+```
 
 ## 参考资料
 
