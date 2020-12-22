@@ -6,6 +6,8 @@
 
 [Spring Bean生命周期](https://www.processon.com/view/5f087b1e7d9c087fac03f7b1?fromnew=1)
 
+[Spring源码脑图](https://www.processon.com/view/link/5f5075c763768959e2d109df#map)
+
 ### Spring IOC
 
 ### 概念
