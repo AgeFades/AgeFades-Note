@@ -51,6 +51,22 @@ BlockingQueue<String> blockingQueue = new ArrayBlockingQueue<>();
 - 基于 `ReentrantLock` 保证线程安全
 - 根据 `Condition` 实现队列满时的 `阻塞`
 
+#### 图
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1608101156659.png)
+
+#### 核心代码
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1608100338779.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1608100570056.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1608100649871.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1608100888937.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1608106568445.png)
+
 ### LinkedBlockingQueue
 
 #### 简介
