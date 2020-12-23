@@ -293,6 +293,15 @@ public class Demo implements BeanDefinitionRegistryPostProcessor {
     - ...
     - 均作用于 Bean 生命周期中 初始化
 
+## BeanFactory 和 FactoryBean 的区别
+
+[参考资料](https://juejin.cn/post/6844903967600836621)
+
+- BeanFactory 是 Spring 顶层核心接口，只负责生产Bean、提供Bean容器
+- FactoryBean 本质上还是一个 Bean，也被 BeanFactory 管理
+- 只是对于实现了 FactoryBean 接口的Bean, 在 getBean() 时可以获取更复杂的Bean
+- 返回的是 FactoryBean 接口的 getObject() 的对象实例
+
 ### 
 
 ### 
