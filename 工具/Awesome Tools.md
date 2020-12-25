@@ -1,10 +1,10 @@
-列表中 macOS 下的软件，大部分都能在局域网共享（Botpy-DSM -> share/soft/macOS/APPs）中找到，并且会自动更新。
-以下内容是从 [sunlei/awesome-tools](https://github.com/sunlei/awesome-tools) 同步过来的，请勿手动修改。
+# 工作领导 - Awesome Tools
 
-# Awesome Tools
+ [Awesome List](https://github.com/sindresorhus/awesome#readme)
 
-我常用或收集的工具，持续更新，分享的同时也方便自己查找。
-虽然已经有很多 [Awesome List](https://github.com/sindresorhus/awesome#readme)，但是太多了，找起来很不方便，还是整理一份自己的。
+本人一家工作公司领导整理的 工具集合，觉得非常棒，记录在这
+
+并非本人整理，具体来源详细不做说明，再次感谢原整理人
 
 ## Github
 
