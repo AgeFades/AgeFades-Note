@@ -1,7 +1,5 @@
 # 徐庶 - Spring IOC源码剖析
 
-[invokeBeanFactoryPostProcessors](https://www.processon.com/view/link/5f18298a7d9c0835d38a57c0)
-
 ## IOC容器加载过程源码
 
 ### AnnotationConfigApplicationContext
@@ -14,7 +12,7 @@
 
 ### 源码流程
 
-1. 调用有参构造函数，创建Spring应用上下文，即 IOC 容器
+#### 1. 调用有参构造函数，创建Spring应用上下文，即 IOC 容器
 
 ```java
 /**
@@ -31,7 +29,7 @@ public AnnotationConfigApplicationContext(Class<?>... componentClasses) {
 }
 ```
 
-2. 有参构造调用无参构造
+#### 2. 有参构造调用无参构造
 
 ```java
 /**
@@ -52,7 +50,7 @@ public AnnotationConfigApplicationContext() {
 }
 ```
 
-3. 无参构造调用父类无参构造
+#### 3. 无参构造调用父类无参构造
 
 ```java
 public GenericApplicationContext() {
@@ -67,7 +65,7 @@ public GenericApplicationContext() {
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1608629239769.png)
 
-4. new AnnotatedBeanDefinitionReader(this) 做的事
+#### 4. new AnnotatedBeanDefinitionReader(this) 做的事
 
 ```java
 public AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry) {
@@ -91,7 +89,7 @@ public AnnotatedBeanDefinitionReader(BeanDefinitionRegistry registry, Environmen
 }
 ```
 
-5. 注册内置后置处理器
+#### 5. 注册内置后置处理器
 
 ```java
 public static Set<BeanDefinitionHolder> registerAnnotationConfigProcessors(
@@ -190,7 +188,7 @@ public static Set<BeanDefinitionHolder> registerAnnotationConfigProcessors(
 	}
 ```
 
-6. ClassPathBeanDefinitionScanner 的核心函数
+#### 6. ClassPathBeanDefinitionScanner 的核心函数
 
 ```java
 protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
@@ -239,7 +237,7 @@ protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
 	}
 ```
 
-7. 最重要的 refresh() 方法 -> 实际调用父类AbstractApplicationContext 的 refresh() 实现
+#### 7. 最重要的 refresh() 方法 -> 实际调用父类AbstractApplicationContext 的 refresh() 实现
 
 ```java
 @Override
@@ -308,7 +306,7 @@ public void refresh() throws BeansException, IllegalStateException {
 }
 ```
 
-8. IOC相关之 Bean工厂后置处理器的调用
+#### 8. IOC相关之 Bean工厂后置处理器的调用
 
 ```java
 /**
@@ -335,7 +333,7 @@ protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory b
 	}
 ```
 
-9. invokeBeanFactoryPostProcessors() 调用链中的 ConfigurationClassPostProcessor.processConfigBeanDefinitions()
+#### 9. invokeBeanFactoryPostProcessors() 调用链中的 ConfigurationClassPostProcessor.processConfigBeanDefinitions()
 
 ```java
 /**
@@ -469,7 +467,7 @@ public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
 	}
 ```
 
-10. 调用完Bean工厂后置处理器方法后 -> 注册 Bean后置处理器
+#### 10. 调用完Bean工厂后置处理器方法后 -> 注册 Bean后置处理器
 
 ```java
 /**
@@ -571,7 +569,7 @@ public static void registerBeanPostProcessors(
 }
 ```
 
-11. 注册最终可用的 Bean
+#### 11. 注册最终可用的 Bean
 
 ```java
 protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory beanFactory) {
@@ -636,7 +634,7 @@ protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory b
 	}
 ```
 
-12. 实例化剩余的单实例bean -> DefaultListableBeanFactory.preInstantiateSingletons()
+#### 12. 实例化剩余的单实例bean -> DefaultListableBeanFactory.preInstantiateSingletons()
 
 ```java
 @Override
@@ -706,7 +704,7 @@ protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory b
 	}
 ```
 
-13. getBean() 实际调用 -> AbstractBeanFactory.doGetBean()
+#### 13. getBean() 实际调用 -> AbstractBeanFactory.doGetBean()
 
 ```java
 /**
@@ -928,7 +926,7 @@ protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory b
 	}
 ```
 
-14. 尝试从缓存中获取 bean -> DefaultSingletonBeanRegistry.getSingleton()
+#### 14. 尝试从缓存中获取 bean -> DefaultSingletonBeanRegistry.getSingleton()
 
 ```java
 /** 一级缓存 这个就是我们大名鼎鼎的单例缓存池 用于保存我们所有的单实例bean */
@@ -1060,7 +1058,7 @@ protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory b
 	}
 ```
 
-15. 第一次创建Bean、第一次调用Bean后置处理器 -> AbstractAutowireCapableBeanFactory.createBean()
+#### 15. 第一次创建Bean、第一次调用Bean后置处理器 -> AbstractAutowireCapableBeanFactory.createBean()
 
 ```java
 /**
@@ -1342,7 +1340,7 @@ protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory b
 	}
 ```
 
-16. 对 Bean 的实例化 -> AbstractAutowireCapableBeanFactory.createBeanInstance()
+#### 16. 对 Bean 的实例化 -> AbstractAutowireCapableBeanFactory.createBeanInstance()
 
 ```java
 protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd, @Nullable Object[] args) {
@@ -1439,7 +1437,7 @@ protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd
 
 
 
-17. 对 Bean 的属性赋值 -> AbstractAutowireCapableBeanFactory.populateBean()
+#### 17. 对 Bean 的属性赋值 -> AbstractAutowireCapableBeanFactory.populateBean()
 
 ```java
 /**
@@ -1661,7 +1659,7 @@ protected BeanWrapper createBeanInstance(String beanName, RootBeanDefinition mbd
 	}
 ```
 
-18. Bean的初始化 -> AbstractAutowireCapableBeanFactory.initializeBean()
+#### 18. Bean的初始化 -> AbstractAutowireCapableBeanFactory.initializeBean()
 
 ```java
 protected Object initializeBean(final String beanName, final Object bean, @Nullable RootBeanDefinition mbd) {
@@ -1840,6 +1838,28 @@ protected void invokeInitMethods(String beanName, final Object bean, @Nullable R
 				//调用我们自己的初始化方法
 				invokeCustomInitMethod(beanName, bean, mbd);
 			}
+		}
+	}
+```
+
+#### 19.  Bean 创建完毕，加入缓存池 -> DefaultSingletonBeanRegistry.addSingleton()
+
+```java
+/**
+	 * 把对象加入到单例缓存池中(所谓的一级缓存 并且考虑循环依赖和正常情况下,移除二三级缓存)
+	 * @param beanName bean的名称
+	 * @param singletonObject 创建出来的单实例bean
+	 */
+	protected void addSingleton(String beanName, Object singletonObject) {
+		synchronized (this.singletonObjects) {
+			//加入到单例缓存池中
+			this.singletonObjects.put(beanName, singletonObject);
+			//从三级缓存中移除(针对的不是处理循环依赖的)
+			this.singletonFactories.remove(beanName);
+			//从二级缓存中移除(循环依赖的时候 早期对象存在于二级缓存)
+			this.earlySingletonObjects.remove(beanName);
+			//用来记录保存已经处理的bean
+			this.registeredSingletons.add(beanName);
 		}
 	}
 ```

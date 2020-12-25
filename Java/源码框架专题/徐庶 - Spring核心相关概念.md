@@ -80,6 +80,13 @@
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1608542200127.png)
 
+### 向上联系图
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1608795496632.png)
+
+- `BeanMetadateElement`：BeanDefinition 元数据，返回该 Bean 的来源
+- `AttributeAccessor`：提供对 BeanDefinition 属性操作能力
+
 ## BeanDefinitionRegistry
 
 ### 简介
@@ -292,6 +299,8 @@ public class Demo implements BeanDefinitionRegistryPostProcessor {
     - BeanClassLoaderAware
     - ...
     - 均作用于 Bean 生命周期中 初始化
+- 介绍 BeanFactoryPostProcessor 在 Spring 中的用途
+  - Bean工厂后置处理器，主要用于读取配置类、便于其他框架接入扩展
 
 ## BeanFactory 和 FactoryBean 的区别
 
