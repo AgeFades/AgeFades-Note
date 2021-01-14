@@ -898,6 +898,13 @@ public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
              *      
              * 对于Full配置类:
              *      getBean() 得到的是被 Cglib 代理的类
+             * 			比如: 
+             *				@Configuration 标记 Java 类 RedisConfig
+             *				RedisConfig 中两个 @Bean
+             *						@Bean A 中属性设置依赖 @Bean B
+             * 				此时被 @Configuration 标记，得到 Cglib 动态代理类
+             * 				@Bean A 设置属性时，就会先去 beanFactory 中 getBean(B)
+             *				这样得到的就是单例 bean，而不是每次重复 new 的对象
              */
             if (ConfigurationClassUtils.isFullConfigurationClass(beanDef) ||
                     ConfigurationClassUtils.isLiteConfigurationClass(beanDef)) {
