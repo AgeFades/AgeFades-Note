@@ -732,7 +732,7 @@ public class DefaultSingletonBeanRegistry
 - 实例化时，Bean 的构造函数触发，属性循环依赖当前Bean
 - 找不到Bean，如此反复，就抛出 循环依赖 异常
 
-## Sptring不能解决多例Bean的循环依赖
+## Spring不能解决多例Bean的循环依赖
 
 - 每次 getBean() 时，创建出来的都是一个新 Bean
 - 就意味着，无法从 三级缓存 取出之前对象
