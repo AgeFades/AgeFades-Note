@@ -742,3 +742,10 @@ public class DefaultSingletonBeanRegistry
 
 - 可以，具体懒得记（还没碰到过这种需求场景）
 
+## Spring读取不完整Bean的解决原理
+
+- getSingleton() 和 createBean() 两个方法，对一级缓存、二级缓存进行加锁
+  - 如: 两个线程同时 getBean(A)
+  - 1线程先标记为正在创建、并存入三级缓存 Function，并准备进行实例化、属性赋值、初始化等...
+  - 2线程进入，一级缓存未找到Bean，且该Bean正在创建，向下执行碰到锁，阻塞等待，直至1线程完成Bean的创建，2线程即可在 getBean() 从一级缓存取到完整的Bean
+
