@@ -897,7 +897,7 @@ public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
              *      getBean() 得到的就是原本的那个配置类
              *      
              * 对于Full配置类:
-             *      getBean() 得到的是被 Cglib 代理的类
+             *      getBean() 得到的是被 Cglib 代理的类、Cglib底层依赖 ASM 框架
              * 			比如: 
              *				@Configuration 标记 Java 类 RedisConfig
              *				RedisConfig 中两个 @Bean
@@ -905,6 +905,10 @@ public void processConfigBeanDefinitions(BeanDefinitionRegistry registry) {
              * 				此时被 @Configuration 标记，得到 Cglib 动态代理类
              * 				@Bean A 设置属性时，就会先去 beanFactory 中 getBean(B)
              *				这样得到的就是单例 bean，而不是每次重复 new 的对象
+             * 			
+             * 			所以:
+             *				Cglib 代理类调用本类方法时，是会进入代理class路由，调用的是被增强的代理类的方法
+             *				JDK 代理类调用本类方法时，不会再走一遍增强代理类
              */
             if (ConfigurationClassUtils.isFullConfigurationClass(beanDef) ||
                     ConfigurationClassUtils.isLiteConfigurationClass(beanDef)) {
