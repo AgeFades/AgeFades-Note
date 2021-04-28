@@ -474,6 +474,49 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 }
 ```
 
+### wrapIfNecessary()
+
+```java
+protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
+  	// 已被处理过（解析切面时,targetSourceBeans 出现过），即为自己实现创建动态代理逻辑
+		if (StringUtils.hasLength(beanName) && this.targetSourcedBeans.contains(beanName)) {
+			return bean;
+		}
+  
+  	// advisedBean 不需要增强
+		if (Boolean.FALSE.equals(this.advisedBeans.get(cacheKey))) {
+			return bean;
+		}
+  
+  	// 是不是基础bean、是不是需要跳过bean
+  	// 这里是重复判断，因为在创建Bean时，循环依赖是可以改变Bean的
+		if (isInfrastructureClass(bean.getClass()) || shouldSkip(bean.getClass(), beanName)) {
+			this.advisedBeans.put(cacheKey, Boolean.FALSE);
+			return bean;
+		}
+
+		// 根据当前Bean找到匹配的 Advisor
+		Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
+  
+  	// 如果当前Bean匹配到了Advisor
+		if (specificInterceptors != DO_NOT_PROXY) {
+      // 标记为已处理
+			this.advisedBeans.put(cacheKey, Boolean.TRUE);
+      
+      // 创建真正的代理对象
+			Object proxy = createProxy(
+					bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
+      
+      // 将代理对象放入缓存
+			this.proxyTypes.put(cacheKey, proxy.getClass());
+			return proxy;
+		}
+
+		this.advisedBeans.put(cacheKey, Boolean.FALSE);
+		return bean;
+	}
+```
+
 
 
 ## 3. 调用

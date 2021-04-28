@@ -259,6 +259,33 @@ into 表名("字段名1", "字段名2" ...) values ("值1"，"值2" ...)
 into 表名("字段名1", "字段名2" ...) values ("值1"，"值2" ...)
 into 表名("字段名1", "字段名2" ...) values ("值1"，"值2" ...)
 SELECT 1 FROM DUAL;
+
+-- 查询表结构
+SELECT
+  utc.column_name AS 字段名,
+  utc.data_type 数据类型,
+  utc.data_length 最大长度,
+CASE
+    utc.nullable 
+    WHEN 'N' THEN
+    '否' ELSE '是' 
+  END 可空,
+  utc.data_default 默认值,
+  CASE
+  UTC.COLUMN_NAME 
+  WHEN ( SELECT col.column_name FROM user_constraints con, user_cons_columns col WHERE con.constraint_name = col.constraint_name AND con.constraint_type = 'P' AND col.table_name = '表名' ) THEN
+  '是' ELSE '否' 
+  END AS 主键,
+  ucc.comments 注释
+FROM
+  user_tab_columns utc,
+  user_col_comments ucc 
+WHERE
+  utc.table_name = ucc.table_name 
+  AND utc.column_name = ucc.column_name 
+  AND utc.table_name = '表名' 
+ORDER BY
+  column_id;
 ```
 
 ## 常见问题
@@ -541,7 +568,7 @@ ORA-00933: SQL 命令未正确结束
                   <id property="month" column="month"/>
                   <collection property="monthRecords" ofType="com.botpy.vosp.client.oil.repository.Record">
                       <!-- 错误XML，这里没有加 id,导致一致报上面的错  -->
-      								<!-- <id column="id" property="id" javaType="java.lang.Long"/> -->
+         								<!-- <id column="id" property="id" javaType="java.lang.Long"/> -->
                       <result column="name" property="name" jdbcType="VARCHAR"/>
                       <result column="oilValue" property="oilValue"/>
                       <result column="recordTime" property="recordTime"/>
