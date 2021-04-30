@@ -1,4 +1,4 @@
-
+[TOC]
 
 # 黑马 - SpringDataJpa
 
@@ -180,11 +180,11 @@ private Specification<T> specification(CurrencySearch<T> currencySearch){
 
 ## 多表操作
 
-### ​	表关系
+### 	表关系
 
-#### ​		一对一
+#### 		一对一
 
-#### ​		一对多
+#### 		一对多
 
 ​			1 : 主表
 
@@ -192,11 +192,11 @@ private Specification<T> specification(CurrencySearch<T> currencySearch){
 
 ​			外键 : 在从表上新建一列作为外键，取值来源主键Id
 
-#### ​		多对多
+#### 		多对多
 
 ​			中间表 : 两个字段，分别作为外键指向两表主键，又组成了联合主键。
 
-### ​	Jpa多表操作
+### 	Jpa多表操作
 
 #### 		一对多
 

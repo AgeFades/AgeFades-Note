@@ -1,3 +1,5 @@
+[TOC]
+
 # 徐庶 - Spring核心节点 & IOC加载
 
 [Spring中文文档](https://github.com/DocsHome/spring-docs/blob/master/SUMMARY.md)

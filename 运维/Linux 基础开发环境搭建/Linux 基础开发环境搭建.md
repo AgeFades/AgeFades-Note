@@ -1,6 +1,4 @@
-[TOC]
-
-# Linux 基础开发环境搭建
+# 杜超 - Linux 基础开发环境搭建
 
 ## 修改 hostname
 

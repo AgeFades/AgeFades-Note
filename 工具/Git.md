@@ -1,3 +1,5 @@
+[TOC]
+
 ## 保姆级Git入门教程，万字详解
 
 **本篇原文地址https://mp.weixin.qq.com/s/Q_O0ey4C9tryPZaZeJocbA**

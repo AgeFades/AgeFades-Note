@@ -1,3 +1,5 @@
+[TOC]
+
 # 杨过 - Synchronized 详解
 
 ## 设计同步器的意义

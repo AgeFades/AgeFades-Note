@@ -1,3 +1,5 @@
+[TOC]
+
 # 慕课 - Spring Security
 
 ## 开发环境
@@ -44,7 +46,7 @@
 
 ​		Restful 只是一种风格，并不是强制标准
 
-### ​	常用注解
+### 	常用注解
 
 ```java
 @PageableDefault(page = 2,size = 10,sort = "id,asc") Pageable pageable
@@ -283,7 +285,7 @@ public class MyExceptionHandle {
 
 ### 	Restful Api 的拦截
 
-#### ​		过滤器（Filter）
+#### 		过滤器（Filter）
 
 ​			Filter 只能拿到请求数据和响应数据。
 
@@ -400,7 +402,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
 ```
 
-#### ​		拦截器（Interceptor）
+#### 		拦截器（Interceptor）
 
 ​			不再赘述，比 Filter 多一个参数，handle 可以拿到目标对象，拿不到参数
 
@@ -408,7 +410,7 @@ public class WebConfig extends WebMvcConfigurerAdapter {
 
 ​			需要 @Component 并注册在配置类中，如上。
 
-#### ​		切片（Aspect）
+#### 		切片（Aspect）
 
 ![UTOOLS1561095650657.png](https://i.loli.net/2019/06/21/5d0c6de50152452925.png)​		
 
@@ -530,7 +532,7 @@ public class DefaultUserDetailsService implements UserDetailsService {
 }
 ```
 
-### ​自定义密码加密工具	
+### 自定义密码加密工具	
 
 ```java
 @Bean

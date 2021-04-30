@@ -1,3 +1,5 @@
+[TOC]
+
 # 徐庶 - Spring循环依赖
 
 [循环依赖脑图](https://www.processon.com/view/link/5f1fb2cf1e08533a628a7b4c)

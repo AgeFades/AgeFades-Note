@@ -1,3 +1,5 @@
+[TOC]
+
 # 硅谷 - JDK8
 
 ## Lambda 表达式
@@ -143,7 +145,7 @@ Supplier<Employee> sup2 = Employee::new;
 
 ### 	数组引用
 
-#### ​		语法格式
+#### 		语法格式
 
 ​			Type :: new
 
@@ -367,7 +369,7 @@ System.out.println(dss.getSum()); // or getAverage | getMax ...
 
 #### 		Fork / Join 框架​			![UTOOLS1561602608462.png](https://i.loli.net/2019/06/27/5d142a31b9b2726965.png)
 
-#### ​		Fork / Join 与传统线程池的区别
+#### 		Fork / Join 与传统线程池的区别
 
 ​			采用 "工作窃取" 模式（work - stealing）:
 

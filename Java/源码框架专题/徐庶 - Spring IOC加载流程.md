@@ -1,3 +1,5 @@
+[TOC]
+
 # 徐庶 - Spring IOC加载流程
 
 ## IOC意义图

@@ -1,3 +1,5 @@
+[TOC]
+
 # 杨过 - CPU缓存一致性协议MESI
 
 ## JVM-JMM-CPU底层全执行流程

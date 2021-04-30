@@ -1,3 +1,5 @@
+[TOC]
+
 # 工作领导 - Awesome Tools
 
  [Awesome List](https://github.com/sindresorhus/awesome#readme)
