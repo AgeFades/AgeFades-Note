@@ -1,61 +1,82 @@
 ## 简介
 
 - SpringBoot 环境整合 Nacos，实现 **服务注册与发现、动态配置刷新**
-- 使用Maven
+- 使用Maven、SpringBoot、SpringCloud、SpingCloudAlibaba 之间版本关系是个大坑
 
 ## 依赖
 
 ```xml
 <properties>
-	 	<spring-boot.version>2.4.4</spring-boot.version>
-    <spring-cloud.version>2020.0.0</spring-cloud.version>
-    <spring-cloud-alibaba.version>2021.1</spring-cloud-alibaba.version>
-    <spring-cloud-starter-bootstrap.version>3.0.2</spring-cloud-starter-bootstrap.version>
+	 	<spring-boot.version>2.3.2.RELEASE</spring-boot.version>
+  	<spring-cloud.version>Hoxton.SR8</spring-cloud.version>
+  	<spring-cloud-alibaba.version>2.2.5.RELEASE</spring-cloud-alibaba.version>
 </properties>
 
 <!-- 其余SpringBoot、Web、AOP之类的依赖自行准备 -->
 
 <dependencyManagement>
 
-	<dependency>
-    <groupId>com.alibaba.cloud</groupId>
-    <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
-    <version>${spring-cloud-alibaba.version}</version>
-  </dependency>
+	 <!-- SpringCloud 版本依赖控制 -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+                <!-- 排除默认日志包，使用Log4j2 -->
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
 
-  <dependency>
-    <groupId>com.alibaba.cloud</groupId>
-    <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-    <version>${spring-cloud-alibaba.version}</version>
-  </dependency>
-
-  <dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-bootstrap</artifactId>
-    <version>${spring-cloud-starter-bootstrap.version}</version>
-  </dependency>
+            <!-- SpringCloud Alibaba 版本依赖控制 -->
+            <dependency>
+                <groupId>com.alibaba.cloud</groupId>
+                <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+                <version>${spring-cloud-alibaba.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+                <!-- 排除默认日志包，使用Log4j2 -->
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-starter-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
   
 </dependencyManagement>
 
 <dependencies>
 
 	<!-- Nacos 动态配置 -->
-  <dependency>
-    <groupId>com.alibaba.cloud</groupId>
-    <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
-  </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+            <!-- 排除默认日志包，使用Log4j2 -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
 
-  <!-- Nacos 服务注册与发现 -->
-  <dependency>
-    <groupId>com.alibaba.cloud</groupId>
-    <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
-  </dependency>
-
-  <!-- Nacos动态配置 bootstrap 依赖 -->
-  <dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-bootstrap</artifactId>
-  </dependency>
+        <!-- Nacos 服务注册与发现 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+            <!-- 排除默认日志包，使用Log4j2 -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
   
 </dependencies>
 ```
