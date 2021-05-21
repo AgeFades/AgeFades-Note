@@ -11,7 +11,7 @@
 
 ```shell
 # 创建 docker 网络
-docker network create --subnet=173.18.0.0/24 iyobee
+docker network create --subnet=173.18.0.0/24 jdy
 
 # 查询 docker 网络列表
 docker network ls

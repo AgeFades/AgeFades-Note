@@ -15,7 +15,7 @@
 [官方原文](https://github.com/alibaba/nacos/blob/1.4.1/config/src/main/resources/META-INF/nacos-db.sql)
 
 - 不同版本去不同分支或tag里找，其他路径与此路径一致
-- 库是 docker-compose 内指定的，这里用的是 iyobee 库
+- 库是 docker-compose 内指定的，这里用的是 jdy 库
 
 ```sql
 /*
@@ -262,7 +262,7 @@ services:
       SPRING_DATASOURCE_PLATFORM: mysql
       MYSQL_SERVICE_HOST: mysql
       MYSQL_SERVICE_PORT: 3306
-      MYSQL_SERVICE_DB_NAME: iyobee
+      MYSQL_SERVICE_DB_NAME: jdy
       MYSQL_SERVICE_USER: root
       MYSQL_SERVICE_PASSWORD: root
       MYSQL_DATABASE_NUM: 1
