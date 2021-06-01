@@ -573,6 +573,8 @@ docker run -d --name grafana -p 3000:3000 grafana/grafana
 # 访问 localhost:3000 ，账号密码默认都是 admin
 ```
 
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1621932993323.png)
+
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1603423434361.png)
 
 ```shell

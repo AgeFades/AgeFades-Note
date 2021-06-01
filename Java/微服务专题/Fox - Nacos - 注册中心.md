@@ -558,4 +558,3 @@ public ClientHttpResponse intercept(final HttpRequest request, final byte[] body
 
 - 在 Spring IOC 容器加载时，通过监听 IOC加载完成 发布事件，实现服务注册
   - Spring扩展点：ApplicationListener # onApplicationEvent
-
