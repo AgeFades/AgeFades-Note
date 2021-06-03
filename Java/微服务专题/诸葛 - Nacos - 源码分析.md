@@ -39,6 +39,10 @@ mvn clean install -DskipTests
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622451981810.png)
 
+## 核心功能源码架构图
+
+![](https://note.youdao.com/yws/public/resource/17c68958637d60582e9c473f69f04aa5/xmlnote/5323031616A443119754E7B357AC478B/108508)
+
 ## 服务启动注册流程
 
 ### 1. 找到自动装配类
@@ -121,4 +125,60 @@ mvn clean install -DskipTests
 
 - 客户端心跳检测线程 run() 方法下面还有代码，一屏截不全，简单讲一下
   - 当前时间 - 上次心跳时间 > 实例剔除阈值（30s），就会发送 Http 请求剔除该实例（ deleteIp() ）
+
+### 3. 添加实例
+
+- 同步添加任务队列，异步执行注册逻辑
+  - 缩短注册实例响应时间、达到更高QPS、TPS
+- 临时实例信息，都是在内存中操作（Cluster 的 Set 成员属性）
+  - 所以异步实行注册，也能达到准实时的服务注册感知（用户启动完项目就能看到实例注册完成的效果）
+  - 一般来说，一次性启动几台、或几十台服务是比较正常的操作
+  - 而对内存中的阻塞队列来说，一次性消费几十个消息，速度也是很快的
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622528515679.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622529933790.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622530079663.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622530177580.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622531013261.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622531845795.png)
+
+- Notifier 线程是在项目启动的时候，用线程池开始调用执行（这个自己点两下就能看到调用了， 不截图了）
+- 线程里是执行死循环，一直从队列中拉取任务进行处理
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622600482129.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622600601510.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622600884333.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622600931340.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622601078940.png)
+
+#### 注册表结构举例
+
+![](https://note.youdao.com/yws/public/resource/17c68958637d60582e9c473f69f04aa5/xmlnote/A347FEB55DAB4CDC810A41591818B8BA/99347)
+
+## Nacos 注册表高性能读写的实现原理
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622604764509.png)
+
+- 正常来说，在对数据写的操作过程中，有读的请求进来，就可能读到脏数据
+  - 这里指 Nacos 的注册表结构，可以类比 MySQL 同时对数据读写可能导致的 脏数据问题
+
+### 读写分离、写时复制
+
+- Nacos 用的是 CopyOnWrite 的思想实现 Nacos注册表高性能读写
+  - 优点：提高读写并发
+  - 缺点：数据感知性延后（这种场景基本没啥影响）
+  - 其实就是注册实例时，操作注册表的操作过程，是对一个临时变量（原注册表中该namespace、group、service中的cluster的赋值）进行操作，所有操作完毕后，再将它赋值给 原注册表
+- Nacos 不会同时有多个 CopyOnWrite  去覆盖原来的注册表数据
+  - 因为实例注册，实际是异步完成，单线程消费阻塞队列中的任务
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622615243324.png)
 
