@@ -43,7 +43,7 @@ mvn clean install -DskipTests
 
 ![](https://note.youdao.com/yws/public/resource/17c68958637d60582e9c473f69f04aa5/xmlnote/5323031616A443119754E7B357AC478B/108508)
 
-## 服务启动注册流程
+## Nacos Client 服务注册
 
 ### 1. 找到自动装配类
 
@@ -97,7 +97,7 @@ mvn clean install -DskipTests
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622463165635.png)
 
-## Nacos Server 处理服务注册请求
+## Nacos Server 服务注册
 
 ### 1. 接口所在类
 
@@ -164,14 +164,14 @@ mvn clean install -DskipTests
 
 ![](https://note.youdao.com/yws/public/resource/17c68958637d60582e9c473f69f04aa5/xmlnote/A347FEB55DAB4CDC810A41591818B8BA/99347)
 
-## Nacos 注册表高性能读写的实现原理
+### Nacos 注册表高性能读写的实现原理
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622604764509.png)
 
 - 正常来说，在对数据写的操作过程中，有读的请求进来，就可能读到脏数据
   - 这里指 Nacos 的注册表结构，可以类比 MySQL 同时对数据读写可能导致的 脏数据问题
 
-### 读写分离、写时复制
+#### 读写分离、写时复制
 
 - Nacos 用的是 CopyOnWrite 的思想实现 Nacos注册表高性能读写
   - 优点：提高读写并发
@@ -181,4 +181,229 @@ mvn clean install -DskipTests
   - 因为实例注册，实际是异步完成，单线程消费阻塞队列中的任务
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622615243324.png)
+
+## Nacos Client 服务发现
+
+### 1. 触发时机
+
+- 微服务间第一次通过 OpenFeign 客户端通信时，
+  - 底层是 Ribbon 负载均衡拦截器将 服务名替换成实际的 ip:port 
+  - 而 Ribbon 完成了 Client 端的服务发现，其实就是 Ribbon 调用了 Nacos Server 的服务发现接口，获取到服务名对应的实例列表
+
+### 2. 开始获取服务所有实例列表
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622684292836.png)
+
+### 3. 尝试从本地缓存中获取
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622684891113.png)
+
+### 4. 本地缓存没有，请求Server端
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622684970544.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622685211549.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622685266476.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622685330146.png)
+
+### 5. Nacos Server的 OpenApi
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622683869429.png)
+
+### 6. 开启延时任务、定时拉取最新服务数据
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1622685483703.png)
+
+- 这里面也是一些逻辑操作，主要就是实现定时刷新服务列表，自己点两下就看懂了，懒得截图了
+
+## Nacos Server 服务发现
+
+- 截图太多了，不截图了，其实大致思路都是一样，Http请求交互，简单记录下核心调用链
+
+### 1. 接收请求
+
+- InstanceController # list() 
+  - 接收客户端的请求，响应服务实例集合
+
+### 2. 核心链路
+
+1. InstanceController # doSrvlPXT() 
+2. InstanceController # 
+   1. Service service = serviceManager.getService(namespaceId, serviceName)
+   2. 获取服务对象
+3. InstanceController #
+   1. List<Instance> srvedIPs = service.srvIPs()
+4. Service # 
+   1. allIps()
+5. Cluster # 
+
+```java
+ /**
+	* 返回的就是注册时写入的实例数据
+ 	*/
+public List<Instance> allIPs() {
+  List<Instance> allInstances = new ArrayList<>();
+  allInstances.addAll(persistentInstances);
+  allInstances.addAll(ephemeralInstances);
+  return allInstances;
+}
+```
+
+## Nacos Client 心跳检查
+
+### 1. 触发时机
+
+- NacosNamingService.java
+
+```java
+@Override
+public void registerInstance(String serviceName, String groupName, Instance instance) throws NacosException {
+      
+        NamingUtils.checkInstanceIsLegal(instance);
+      
+        String groupedServiceName = NamingUtils.getGroupedName(serviceName, groupName);
+      
+  			// 如果是临时实例（默认就是临时）
+        if (instance.isEphemeral()) {
+          	// 构建一个心跳检测对象
+            BeatInfo beatInfo = beatReactor.buildBeatInfo(groupedServiceName, instance);
+          	// 将上面构建的心跳检测对象扔到逻辑处理集合里
+            beatReactor.addBeatInfo(groupedServiceName, beatInfo);
+        }
+      
+        serverProxy.registerService(groupedServiceName, groupName, instance);
+}
+```
+
+### 2. 心跳检测属性
+
+- BeatReactor.java
+
+```java
+/**
+	* Build new beat information.
+  */
+public BeatInfo buildBeatInfo(String groupedServiceName, Instance instance) {
+  BeatInfo beatInfo = new BeatInfo();
+  beatInfo.setServiceName(groupedServiceName);	// 组名、服务名
+  beatInfo.setIp(instance.getIp());							// IP
+  beatInfo.setPort(instance.getPort());					// 端口
+  beatInfo.setCluster(instance.getClusterName());	// 集群名
+  beatInfo.setWeight(instance.getWeight());			// 权重
+  beatInfo.setMetadata(instance.getMetadata());	// 元数据
+  beatInfo.setScheduled(false);									
+  beatInfo.setPeriod(instance.getInstanceHeartBeatInterval()); // 定时任务检测周期，默认5秒
+  return beatInfo;
+}
+```
+
+### 3. 添加定时任务
+
+- BeatReactor.java
+
+```java
+
+    public void addBeatInfo(String serviceName, BeatInfo beatInfo) {
+        NAMING_LOGGER.info("[BEAT] adding beat: {} to beat map.", beatInfo);
+        String key = buildKey(serviceName, beatInfo.getIp(), beatInfo.getPort());
+        BeatInfo existBeat = null;
+        //fix #1733
+        if ((existBeat = dom2Beat.remove(key)) != null) {
+            existBeat.setStopped(true);
+        }
+        dom2Beat.put(key, beatInfo);
+      
+      	// 往线程池里扔一个定时心跳检测任务，默认5秒执行一次
+        executorService.schedule(new BeatTask(beatInfo), beatInfo.getPeriod(), TimeUnit.MILLISECONDS);
+        MetricsMonitor.getDom2BeatSizeMonitor().set(dom2Beat.size());
+    }
+```
+
+### 4. 心跳任务run()
+
+- BeatReactor # BeatTask
+
+```java
+@Override
+public void run() {
+  if (beatInfo.isStopped()) {
+    return;
+  }
+  // 任务执行时间间隔周期，默认5秒
+  long nextTime = beatInfo.getPeriod();
+  try {
+    // 给 Nacos Server 发心跳检测请求
+    JsonNode result = serverProxy.sendBeat(beatInfo, BeatReactor.this.lightBeatEnabled);
+    long interval = result.get("clientBeatInterval").asLong();
+    boolean lightBeatEnabled = false;
+    if (result.has(CommonParams.LIGHT_BEAT_ENABLED)) {
+      lightBeatEnabled = result.get(CommonParams.LIGHT_BEAT_ENABLED).asBoolean();
+    }
+    BeatReactor.this.lightBeatEnabled = lightBeatEnabled;
+    if (interval > 0) {
+      nextTime = interval;
+    }
+    int code = NamingResponseCode.OK;
+    if (result.has(CommonParams.CODE)) {
+      code = result.get(CommonParams.CODE).asInt();
+    }
+    // 如果响应该实例在 Server 端没有，就重新注册
+    if (code == NamingResponseCode.RESOURCE_NOT_FOUND) {
+      Instance instance = new Instance();
+      instance.setPort(beatInfo.getPort());
+      instance.setIp(beatInfo.getIp());
+      instance.setWeight(beatInfo.getWeight());
+      instance.setMetadata(beatInfo.getMetadata());
+      instance.setClusterName(beatInfo.getCluster());
+      instance.setServiceName(beatInfo.getServiceName());
+      instance.setInstanceId(instance.getInstanceId());
+      instance.setEphemeral(true);
+      try {
+        serverProxy.registerService(beatInfo.getServiceName(),
+                                    NamingUtils.getGroupName(beatInfo.getServiceName()), instance);
+      } catch (Exception ignore) {
+      }
+    }
+  } catch (NacosException ex) {
+    NAMING_LOGGER.error("[CLIENT-BEAT] failed to send beat: {}, code: {}, msg: {}",
+                        JacksonUtils.toJson(beatInfo), ex.getErrCode(), ex.getErrMsg());
+
+  }
+  executorService.schedule(new BeatTask(beatInfo), nextTime, TimeUnit.MILLISECONDS);
+}
+```
+
+### 5. 发送心跳检测请求
+
+- NamingProxy.java
+- 请求的具体路径、入参出参，都可以去 Nacos 官方 OpenApi 自己看
+
+```java
+public JsonNode sendBeat(BeatInfo beatInfo, boolean lightBeatEnabled) throws NacosException {
+
+  if (NAMING_LOGGER.isDebugEnabled()) {
+    NAMING_LOGGER.debug("[BEAT] {} sending beat to server: {}", namespaceId, beatInfo.toString());
+  }
+  Map<String, String> params = new HashMap<String, String>(8);
+  Map<String, String> bodyMap = new HashMap<String, String>(2);
+  if (!lightBeatEnabled) {
+    bodyMap.put("beat", JacksonUtils.toJson(beatInfo));
+  }
+  params.put(CommonParams.NAMESPACE_ID, namespaceId);
+  params.put(CommonParams.SERVICE_NAME, beatInfo.getServiceName());
+  params.put(CommonParams.CLUSTER_NAME, beatInfo.getCluster());
+  params.put("ip", beatInfo.getIp());
+  params.put("port", String.valueOf(beatInfo.getPort()));
+  
+  // 拼完参数、发送请求
+  String result = reqApi(UtilAndComs.nacosUrlBase + "/instance/beat", params, bodyMap, HttpMethod.PUT);
+  return JacksonUtils.toObj(result);
+}
+```
+
+## Nacos Server 心跳检查
+
+### 1. 接收请求
 
