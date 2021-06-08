@@ -1,5 +1,7 @@
 # 诸葛 - Nacos - 源码分析
 
+[源码架构图](https://www.processon.com/view/link/60bd8a991e08533a509e3101)
+
 ## 源码下载
 
 [源码下载地址](https://github.com/alibaba/nacos/tree/1.4.1)
@@ -406,4 +408,59 @@ public JsonNode sendBeat(BeatInfo beatInfo, boolean lightBeatEnabled) throws Nac
 ## Nacos Server 心跳检查
 
 ### 1. 接收请求
+
+- InstanceController # beat()
+
+### 2. 核心链路
+
+1. 如果实例不存在则重新注册
+   1. serviceManager.registerInstance（nameSpaceId, serviceName, instance）
+2. service.processClientBeat（clientBeat）
+3. 立即开启一个任务 ClientBeatProcessor，更新客户端实例的最后心跳时间
+   1. instance.setLastBeat（System.currentTimeMillis）
+
+## Nacos集群
+
+[官方搭建文档](https://nacos.io/zh-cn/docs/deployment.html)
+
+- 默认 AP（高可用、分区容错性） 架构集群
+  - 没有主从概念，都是点对点，跟 Eureka 一样
+  - AP架构中，集群各方面信息可能会有一定时间的误差，但最终都会达成最终一致性
+  - 如果对数据强一致性有要求，就可以采用 CP（强一致性、分区容错性）架构
+
+### 集群架构下的心跳检查机制
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1623117467351.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1623117615764.png)
+
+- 集群机器数，比如 3个节点，可能第2个节点挂了，这种时候心跳任务 hash 取模可能有会问题
+- Nacos 的解决方案：
+  - 集群状态下的服务状态同步，允许小范围时间内心跳任务的误差
+
+### 集群架构下的服务状态同步
+
+- ServiceManager # ServiceReporter 定时任务
+  - 也是实例启动，开启定时任务，通过 Http 请求跟集群实例同步服务状态信息
+- 截图直接参考下面 集群架构下 的节点状态同步，有兴趣自己去源码点点看就行
+
+### 集群架构下的服务数据同步
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1623118695137.png)
+
+- 自己点进去看下，也是同步放到任务队列里，异步消费，真正给集群其他节点同步服务数据信息
+
+### 集群架构下的节点状态同步
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1623118149776.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1623118189743.png)![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1623118189743.png)
+
+- 拼接参数、发送请求的代码就不截图了，自己进去点两下就看到了，对应的Http API 也可以去官网找
+
+### 集群架构下新节点启动拉取
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1623119416270.png)
+
+- 也是开任务，发Http请求向其他节点拉取数据
 
