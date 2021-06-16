@@ -184,5 +184,16 @@ public class TestController {
 }
 ```
 
+### @NacosPropertySource
 
+```java
+// 在配置类上加该注解，实现Nacos动态刷新配置
+@NacosPropertySource(dataId = "Nacos上的配置文件名", autoRefreshed = true)
+```
+
+```java
+// 在属性上加该注解
+@NacosValue(value = "${user.name:张三}", autoRefreshed = true)
+private String userName;
+```
 
