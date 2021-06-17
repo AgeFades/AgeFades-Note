@@ -1,3 +1,5 @@
+[TOC]
+
 # Oracle 相关文档
 
 ## Mac 安装 Oracle
