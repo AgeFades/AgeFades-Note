@@ -8,6 +8,8 @@
 
 [AOP创建代理图](https://www.processon.com/view/link/5f1e93f25653bb7fd2549b7c)
 
+[AOP调用代理图](https://www.processon.com/view/link/5f4dd513e0b34d1abc735998)
+
 ## 简介
 
 - `AOP` 指在原有代码基础上，做一些增强功能处理，如:
@@ -517,6 +519,5 @@ protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) 
 	}
 ```
 
-
-
 ## 3. 调用
+
