@@ -1,3 +1,5 @@
+[TOC]
+
 # 诸葛 - Nacos - 注册中心CP架构Raft源码分析
 
 ## 内容
@@ -84,3 +86,93 @@
   - 如上例子，分区后，每边3个节点，每个节点最多获得3票，3 < 6 / 2
   - 这样就避免了脑裂问题
 
+## 源码
+
+- 1.4版本，还是用的阿里自己实现的Raft协议算法，已经被标注为过时，将在之后的版本替换为 JRaft 框架实现
+  - 此时Raft实现没有做写数据的两阶段提交，而是Leader写完磁盘写内存、再通知其他节点
+  - Raft标准规范是，写数据时集群内大于一半节点接收到才算是写成功
+
+### 1. 注册持久实例
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625640405563.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625640527471.png)
+
+### 2. Raft协议实现写注册表
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625640607262.png)
+
+#### 1. 如果当前节点不是Leader，则转发请求到Leader
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625640777276.png)
+
+#### 2. Leader写盘操作
+
+- Nacos 作为注册中心，注册实例数据都不会写到 db
+  - AP写到内存注册表Map
+  - CP写到磁盘
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625640971443.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625641030204.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625641087406.png)
+
+#### 3. 发布数据变更事件
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625641164096.png)
+
+#### 4. 直接更新本地内存注册表
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625641430569.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625641505272.png)
+
+#### 5. 同步数据到集群其他节点
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625642005501.png)
+
+### 3. Raft核心类初始化方法
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625725448973.png)
+
+#### 1. Leader选举
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625725588874.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625725857067.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625726126023.png)
+
+#### 2. 发送心跳
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1625727349984.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1626229556090.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1626229638054.png)
+
+### 4. Follower接收心跳
+
+#### 1. 数据解压缩解码
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1626246802299.png)
+
+#### 2. 解析心跳包数据、Leader判断、Follower更正
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1626313805654.png)
+
+#### 3. 更正Follower中的Leader信息
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1626313980407.png)
+
+#### 4. 处理心跳实例、批量拉取最新实例数据
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1626314193545.png)
+
+- 请求成功回调里，将本地的旧实例数据替换成Leader请求来的最新实例数据
+- 保证集群节点间的最终一致性
+
+#### 5. 删除Leader中没有的本地旧实例数据
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1626314369064.png)
