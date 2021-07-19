@@ -89,6 +89,24 @@
 - `BeanMetadateElement`：BeanDefinition 元数据，返回该 Bean 的来源
 - `AttributeAccessor`：提供对 BeanDefinition 属性操作能力
 
+### 注册顺序
+
+1. @ComponentScan：
+   1.  @Component、@Service、@Controller
+2. @Import：
+   1. @Component、@Service、@Controller
+3. @Configuration
+   1. 该类里的 @Bean
+   2. 该类里 @Import 导入的实现了 @ImportBeanDefinitionRegistrar 接口的
+4. @Import：
+   1. 导入的 @Configuration
+   2. @Configuration 中的 @Bean
+   3. @Configuration 中 @Import 进来的实现了 ImportBeanDefinitionRegistrar 接口的
+5. @Import：
+   1. 导入的实现了 DeffredImportSelector 接口的 @Configuration
+   2. 该 @Configuration 中的 @Bean
+   3. @Configuration 中 @Import 进来的实现了 ImportBeanDefinitionRegistrar 接口的
+
 ## BeanDefinitionRegistry
 
 ### 简介
