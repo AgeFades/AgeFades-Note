@@ -1,3 +1,5 @@
+[TOC]
+
 # Fox - Gateway
 
 ## 资料
