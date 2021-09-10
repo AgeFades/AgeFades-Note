@@ -423,3 +423,30 @@ public abstract class Launcher {
      - 打开方式由 **org.springframework.book.loader.jar.JarUrlConnection** 实现
        - 这里还定义了一套读取 ZipFile 的工具类和方法，就不扩展了
 
+## SpringBoot的Jar应用启动流程总结
+
+1. SpringBoot应用打包之后，生成一个fat jar
+   - 包含 应用依赖的Jar包、SpringBoot Loader相关类
+2. fat jar的启动Main函数是 JarLauncher
+   - JarLauncher负责创建一个 LaunchedURLClassLoader 来加载 /lib 下面的 jar
+   - 同时开启一个新线程，用来启动应用的Main函数
+
+### LaunchedURLClassLoader
+
+- LaunchedURLClassLoader 实现 ClassLoader
+- 具备查找资源和读取资源的能力
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1630911742055.png)
+
+#### 读取依赖Jar流程
+
+- SpringBoot构造LaunchedURLClassLoader时，传递了一个 URL[] 数组，数组里就是 lib 目录下面的 Jar 的 URL
+
+1. LaunchedURLClassLoader.loadClass()
+2. URL.getContent()
+3. URL.openConnection()
+4. Handler.openConnection(URL)
+5. 最终调用 JarUrlConnection.getInputStream() 
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1630912227647.png)
+
