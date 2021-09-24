@@ -25,6 +25,9 @@
 # 1.拉取github上sentry的docker配置文件
 git clone https://github.com/getsentry/onpremise.git
 
+# 补充：推荐切换到 tag 21.5.1
+git checkout 21.5.1
+
 # 2.执行安装 在onpremise目录下
 bash ./install.sh
 
