@@ -84,11 +84,30 @@ mail.use-tls: false
 
 ## 测试案例
 
+- 测试代码
+
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1630897345567.png)
+
+- 请求结果
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1630897364009.png)
 
+- Sentry Issues记录
+
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1630897471961.png)
+
+- 邮件发送报警
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1630897506209.png)
 
+- error日志测试代码
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1632650407672.png)
+
+- Sentry Issues
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1632706621486.png)
+
+- 通过上图中的 traceId 找到此次异常请求链
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1632650496387.png)
