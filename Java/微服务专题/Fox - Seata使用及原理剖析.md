@@ -151,3 +151,133 @@
 - server：
   - 存放server端sql脚本、各个容器配置
 
+#### DB存储模式+Nacos部署
+
+##### 1. 下载安装包
+
+[下载链接](https://github.com/seata/seata/releases)
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/0ED183D3FF244350B65E59CADDB7C5EF/17471)
+
+##### 2. 建表(仅db模式)
+
+- 全局事务会话信息由三项内容组成：
+  - 全局事务：对应表 global_table
+  - 分支事务：对应表 branch_table
+  - 全局锁：对应表 lock_table
+- 创建数据库 seata，执行 sql 脚本
+  - srcipt/server/db/mysql.sql（seata源码sql脚本地址）
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/79042159C84E4825BB830F25E1726C93/17470)
+
+##### 3. 修改store.mode
+
+- 启动包：seata -> conf -> file.conf，修改 store.mode = "db"
+- 源码：根目录 -> seata-server -> resources -> file.conf，修改 store.mode = "db"
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/B9AE178A9E6F4E989900B32E4DB106FD/17473)
+
+##### 4. 修改数据库连接
+
+- 启动包：seata -> conf -> file.conf，修改 store.db 相关属性
+- 源码：根目录 -> seata-server -> resources -> file.conf，修改 store.db 相关属性
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/97178FFB1E8D43A89355A553A87F444A/17474)
+
+##### 5. 配置Nacos注册中心
+
+- 修改 conf 目录下的 registry.conf 配置
+  - 将 seata-server 注册到 nacos 中
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/6D77A79278764D588DE0646E655425F3/17472)
+
+##### 6. 配置Nacos配置中心
+
+- 配置 Nacos 配置中心后，file.conf 可以不用配置
+- 客户端配置 registry.conf 使用 nacos 时，
+  - 要注意 group 和 seata server 中的 group 一致
+  - 默认 gourp 是 `DEFAULT_GROUP`
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/634FF4BA22B74BD297FA61E8BBC61F40/17479)
+
+- 修改 /seata/script/config-center/config.txt
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/A87F86DB907A4499B7DAE2DE341ABD30/17478)
+
+- 配置事务分组，要与客户端的事务分组一致
+
+```yaml
+# 客户端事务分组配置
+spring:
+	cloud:
+		alibaba:
+			seata:
+				tx-service-gourp: my_test_tx_group
+```
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/249A70741E1B4909AF83BA07A4702AB4/17476)
+
+- 配置参数同步到 nacos
+  - /seata-server-1.4.0/seata/conf
+
+```shell
+sh nacos-config.sh -h localhost -p 8848 -u nacos -w nacos -g SEATA_GROUP -t 5a3c7d6c-f497-4d68-a71a-2e5e3340b3ca
+```
+
+- 参数说明
+  - -h：host，默认值 localhost
+  - -p：port，默认值 8848
+  - -g：配置分组，默认值 `SEATA_GROUP`
+  - -t：租户信息，对应 Nacos 的命名空间 id 字段，默认值为空``
+- 精简配置
+
+```apl
+service.vgroupMapping.my_test_tx_group=default
+service.default.grouplist=127.0.0.1:8091
+service.enableDegrade=false
+service.disableGlobalTransaction=false
+store.mode=db
+store.db.datasource=druid
+store.db.dbType=mysql
+store.db.driverClassName=com.mysql.jdbc.Driver
+store.db.url=jdbc:mysql://127.0.0.1:3306/seata?useUnicode=true
+store.db.user=root
+store.db.password=root
+store.db.minConn=5
+store.db.maxConn=30
+store.db.globalTable=global_table
+store.db.branchTable=branch_table
+store.db.queryLimit=100
+store.db.lockTable=lock_table
+store.db.maxWait=5000
+```
+
+##### 7. 启动Seata Server
+
+- /seata-server-1.4.0/seata
+
+```shell
+ sh bin/seata-server.sh
+```
+
+- 支持的启动参数：
+  - -h：指定在注册中心注册的 ip
+    - 不指定时，获取当前ip
+    - 部署在云环境或容器中的 server 建议指定
+  - -p：server 启动的端口，默认 8091
+  - -m：事务日志存储方式
+    - file(默认)
+    - db
+    - redis：需 seata1.3版本及以上
+  - -n：指定 seata-server 节点id
+    - 如 1，2，3... 默认为 1
+  - -e：指定 seata-server 运行环境
+    - 如 dev，test...
+    - 服务启动时会使用 `registry-dev.conf` 这样的配置
+
+##### 启动成功
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/C3CEF164AF714B9EBBA794FAD3ECA801/17480)
+
+![](https://note.youdao.com/yws/public/resource/798546ca0468451ad3e55de6407a9de4/xmlnote/CBB184544ADE4AE2A816ED56B5A64A00/17482)
+
