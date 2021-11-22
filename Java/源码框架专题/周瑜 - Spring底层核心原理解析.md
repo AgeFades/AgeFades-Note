@@ -99,4 +99,53 @@ if (userService instanceof InitializingBean) {
 
 ## AOP底层原理
 
+### 简介
+
+- AOP就是进行动态代理
+  - 在创建一个 bean 的过程中，Spring会在最后一步判断
+  - 当前bean是否需要进行AOP动态代理，如果需要，则创建代理类
+
+### 如何判断bean是否需要代理
+
+1. 找出所有切面bean
+2. 遍历切面中的每个方法，看是否有 @Before、@After 等注解
+3. 如果写了，判断所对应的 pointcut 是否和 当前bean 匹配
+4. 如果匹配，则表示需要创建该 bean 的动态代理对象
+
+### Cglib进行代理增强的大致流程
+
+1. 生成代理类 XxxServiceProxy，代理类继承 XxxService
+2. 代理类中重写父类方法，比如 test()
+3. 代理类中有一个 `target` 属性，target = 目标对象（这里的 XxxService）
+   1. 目标对象，是经过正常 bean 创建流程的对象
+   2. 即: 完成了依赖注入（属性bean有值）、初始化等操作..
+4. 代理类中的 test() 方法被执行时，
+   1. 执行切面增强逻辑，比如: @Before
+   2. 调用 target.test()
+
+### 注意
+
+- 从 Spring 中获取 XxxService 时，实际得到的是 XxxServiceProxy 代理对象
+
 ## Spring事务底层原理
+
+### 简介
+
+- 某个方法上加了 `@Transactional` 注解后，
+  - 表示该方法会在调用后，开启 Spring事务
+  - 该方法所在的 bean 也变成了 动态代理对象
+
+### 流程
+
+1. 判断当前执行方法，是否存在 @Transactional 注解
+2. 如果存在，则利用 TransactionManager 新建一个 数据库连接
+3. 修改数据库连接的 autocommit 为 false
+4. 执行目标方法
+5. 成功则提交、异常则回滚
+
+### 事务是否失效的判断标准
+
+- @Transactional 方法被调用时，
+  - 判断是否为 `直接被代理对象` 调用的
+    - 是：事务生效
+    - 否：事务失效s

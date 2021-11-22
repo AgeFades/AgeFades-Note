@@ -1,3 +1,5 @@
+[TOC]
+
 # 极客时间 - Prometheus + Grafana
 
 ## 监控模式分类
