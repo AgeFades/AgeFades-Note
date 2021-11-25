@@ -146,6 +146,7 @@ if (userService instanceof InitializingBean) {
 ### 事务是否失效的判断标准
 
 - @Transactional 方法被调用时，
-  - 判断是否为 `直接被代理对象` 调用的
+  - 判断是否为 `代理对象` 调用的
     - 是：事务生效
-    - 否：事务失效s
+    - 否：事务失效
+- 是否同一 datasource

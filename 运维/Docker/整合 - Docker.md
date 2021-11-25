@@ -1,3 +1,5 @@
+[TOC]
+
 # 整合 - Docker
 
 ## Docker 的技术原理介绍
@@ -54,7 +56,7 @@
 
 ​		AUFS 将多层合并成文件系统的单层表示，该过程被称为 **写入复制**
 
-### ​	App 打包
+### 	App 打包
 
 ​		LXC 的基础上，Docker 额外提供的 Feature 包括 : 标准统一的打包部署运行方案
 
@@ -96,7 +98,7 @@
 
 ​		Daemon 可以绑定本地端口并提供 Rest Api 服务，用来远程访问和控制
 
-### ​	Registry | Hub
+### 	Registry | Hub
 
 ​		Docker 镜像仓库
 
