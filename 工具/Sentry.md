@@ -18,6 +18,29 @@
 
 [Sentry安装及邮件测试](https://zhuanlan.zhihu.com/p/293863914)
 
+### 问题
+
+#### docker-compose版本问题
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1638176708409.png)
+
+- docker-compose版本过高，降低版本
+
+```bash
+rm -rf /usr/local/bin/docker-compose
+
+curl -L https://get.daocloud.io/docker/compose/releases/download/1.28.0/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose && chmod +x /usr/local/bin/docker-compose
+```
+
+#### 安装时创建账号问题
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1638179845223.png)
+
+- 填Y，跳过的话后面就不知道账号密码是啥，搜半天没搜着，麻烦
+- 填邮箱和两遍密码
+
+### 安装步骤
+
 - 此文档演示Mac本地安装，Centos、Ubuntu安装大同小异
   - 基于 git clone 源码，install.sh 安装依赖，docker-compose 容器化部署
 
@@ -25,8 +48,8 @@
 # 1.拉取github上sentry的docker配置文件
 git clone https://github.com/getsentry/onpremise.git
 
-# 补充：推荐切换到 tag 21.5.1
-git checkout 21.5.1
+# 切换目录
+cd onpremise/
 
 # 2.执行安装 在onpremise目录下
 bash ./install.sh
@@ -35,7 +58,7 @@ bash ./install.sh
 docker-compose up -d
 ```
 
-- 设置Sentry管理员账号步骤略
+- 默认访问地址: localhost:9000
 
 ## 邮件报警
 
@@ -49,21 +72,14 @@ docker-compose up -d
 # Mail Server #
 ###############
 
-mail.backend: 'smtp'  # Use dummy if you want to disable email entirely
+mail.backend: 'smtp'  
 mail.host: 'smtp.qq.com'
 mail.port: 25
 mail.from: '18433216@qq.com'
 mail.username: '18433216@qq.com'
+# smtp密码，不是邮箱密码，不会的自行百度
 mail.password: '****************'
 mail.use-tls: false
-# mail.use-ssl: false
-
-# NOTE: The following 2 configs (mail.from and mail.list-namespace) are set
-#       through SENTRY_MAIL_HOST in sentry.conf.py so remove those first if
-#       you want your values in this file to be effective!
-
-
-# The email address to send on behalf of
 ```
 
 ## 新建项目

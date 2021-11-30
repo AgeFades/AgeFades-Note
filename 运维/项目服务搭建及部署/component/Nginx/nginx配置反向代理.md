@@ -1,3 +1,17 @@
+## 最简单的反向代理配置
+
+```apl
+server {
+        listen       80;
+        server_name  www.agefades.com;
+
+        location / {
+            proxy_pass http://127.0.0.1:10080;
+            index  index.html index.htm index.jsp;
+        }
+    }
+```
+
 ## 操作案例
 
 ```shell

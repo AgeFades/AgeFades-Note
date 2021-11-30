@@ -29,11 +29,12 @@ touch docker-compose-nginx.yaml
 
 ```shell
 # vim nginx.conf
-worker_processes  2;
+user  nginx;
+worker_processes  auto;
 
-error_log  /usr/local/nginx/logs/error.log  notice;
+error_log  /var/log/nginx/error.log notice;
+pid        /var/run/nginx.pid;
 
-pid        /usr/local/nginx/logs/nginx.pid;
 
 events {
     worker_connections  1024;
@@ -41,61 +42,48 @@ events {
 
 
 http {
-    include       mime.types;
+    include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
-
-    server_names_hash_bucket_size   128;
-    client_header_buffer_size       128k;
-    large_client_header_buffers 8   128k;
-    client_max_body_size    200m;
-    client_body_buffer_size 128k;
-    proxy_connect_timeout   600;
-    proxy_read_timeout  600;
-    proxy_send_timeout  600;
-    proxy_buffer_size   16k;
-    proxy_buffers   4   32k;
-    proxy_busy_buffers_size 64k;
 
     log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
                       '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"' '"$upstream_addr"' '"$upstream_response_time"';
+                      '"$http_user_agent" "$http_x_forwarded_for"';
 
-    access_log  /usr/local/nginx/logs/access.log  main;
+    access_log  /var/log/nginx/access.log  main;
 
     sendfile        on;
-    tcp_nopush     on;
-    tcp_nodelay    on;
+    #tcp_nopush     on;
 
-    keepalive_timeout  300s 300s;
-    keepalive_requests 8192;
-    fastcgi_connect_timeout 300;
-    fastcgi_send_timeout 300;
-    fastcgi_read_timeout 300;
-    fastcgi_buffer_size 64k;
-    fastcgi_buffers 4 64k;
-    fastcgi_busy_buffers_size 128k;
-    fastcgi_temp_file_write_size 128k;
+    keepalive_timeout  65;
 
-    gzip  on;
-    gzip_min_length     1k;
-    gzip_buffers        4 16k;
-    gzip_comp_level     8;
-    gzip_http_version   1.1;
-    gzip_types      text/plain  application/xml;
-    gzip_vary       on;
-    #隐藏版本号
-    server_tokens off;
+    #gzip  on;
 
-   # To allow special characters in headers
-   ignore_invalid_headers off;
-   # Allow any size file to be uploaded.
-   # Set to a value such as 1000m; to restrict file size to a specific value
-#   client_max_body_size 1000m;
-   # To disable buffering
-   proxy_buffering off;
+    include /etc/nginx/conf.d/*.conf;
+}
+```
 
-   include conf.d/*.conf;
+### default.conf
 
+```shell
+vim config/conf.d/deafult.conf
+```
+
+```apl
+server {
+    listen       80;
+    listen  [::]:80;
+    server_name  localhost;
+
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html index.htm;
+    }
+
+    error_page   500 502 503 504  /50x.html;
+    location = /50x.html {
+        root   /usr/share/nginx/html;
+    }
+    
 }
 ```
 
@@ -108,10 +96,10 @@ services:
   nginx:
     image: nginx:latest
     container_name: nginx
+    hostname: nginx
     restart: always
     ports:
       - 80:80
-      - 8080:8080
       - 443:443
     volumes:
       # 日志
@@ -124,13 +112,6 @@ services:
       - ./nginx.conf:/etc/nginx/nginx.conf
       # 子配置文件
       - ./config/conf.d/:/etc/nginx/conf.d
-    hostname: nginx
-    networks:
-      jdy:
-        ipv4_address: 173.18.0.13
-networks:
-  jdy:
-    external: true
 ```
 
 ### 简单部署脚本
@@ -141,8 +122,8 @@ vim deploy.sh
 
 ```shell
 # deploy.sh 内容
-sudo docker-compose -f docker-compose-nginx.yaml down
-sudo docker-compose -f docker-compose-nginx.yaml up -d
+docker-compose -f docker-compose-nginx.yaml down
+docker-compose -f docker-compose-nginx.yaml up -d
 ```
 
 ### 执行安装
