@@ -6,11 +6,8 @@
 ```shell
 # 自己找个目录存放这些文件地址
 
-# 创建数据挂载目录
-mkdir data
-
-# 创建配置文件挂载目录
-mkdir config
+# 创建数据挂载目录、配置文件挂载目录
+mkdir data config
 
 # 创建 docker-compose 脚本
 touch docker-compose-mysql.yaml
@@ -19,11 +16,8 @@ touch docker-compose-mysql.yaml
 ### MySQL配置文件
 
 ```shell
-# 到 config 目录下
-cd config
-
 # 创建 my.cnf 文件
-vim my.cnf
+vim config/my.cnf
 ```
 
 ```shell
@@ -80,8 +74,8 @@ vim deploy.sh
 
 ```shell
 # deploy.sh 内容
-sudo docker-compose -f docker-compose-mysql.yaml down
-sudo docker-compose -f docker-compose-mysql.yaml up -d
+docker-compose -f docker-compose-mysql.yaml down
+docker-compose -f docker-compose-mysql.yaml up -d
 ```
 
 ### 执行安装
