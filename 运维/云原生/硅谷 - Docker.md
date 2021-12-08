@@ -143,6 +143,11 @@ curl -L https://get.daocloud.io/docker/compose/releases/download/v2.1.1/docker-c
 
 ## 二. Docker命令
 
+```bash
+# 清理docker游离镜像，释放磁盘资源
+docker system prune -a
+```
+
 [官方命令文档](https://docs.docker.com/engine/reference/commandline/docker/)
 
 - 中文翻译文档，可使用 utools 程序员手册插件、docker命令手册

@@ -12,6 +12,49 @@ server {
     }
 ```
 
+## 最简单的Https反向代理配置
+
+```apl
+server {
+    listen 80;
+    server_name hub.agefades.com;
+    rewrite ^(.*)$ https://${server_name}$1 permanent;
+}
+
+server {
+   listen       443;
+   server_name  hub.agefades.com;
+   ssl on;
+   ssl_certificate /usr/local/nginx/ssl/hub.agefades.com/fullchain.cer;
+   ssl_certificate_key /usr/local/nginx/ssl/hub.agefades.com/hub.agefades.com.key;
+   index index.html index.htm index.php index.jsp;
+   charset utf-8;
+
+
+   location / {
+      proxy_pass          http://172.17.0.1:8880;
+      proxy_redirect      default;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header    Range $http_range;
+      proxy_set_header X-Forwarded-Proto  $scheme;
+      client_max_body_size 100m;    
+      client_body_buffer_size 128k;  
+      proxy_connect_timeout 600; 
+      proxy_send_timeout 600;        
+      proxy_read_timeout 600;         
+      proxy_buffer_size 16k;             
+      proxy_buffers 4 32k;               
+      proxy_busy_buffers_size 64k;    
+      proxy_temp_file_write_size 64k;  
+   }
+ 
+}
+```
+
+
+
 ## 操作案例
 
 ```shell

@@ -8,6 +8,8 @@
 
 [Sentry集成SpringBoot应用](https://sentry.io/onboarding/cheche/get-started/)
 
+[Sentry使用+最佳实践](https://www.cnblogs.com/hacker-linner/p/15346836.html)
+
 ## 简介
 
 - 系统异常、错误日志实时邮件报警的Web服务
@@ -38,6 +40,8 @@ curl -L https://get.daocloud.io/docker/compose/releases/download/1.28.0/docker-c
 
 - 填Y，跳过的话后面就不知道账号密码是啥，搜半天没搜着，麻烦
 - 填邮箱和两遍密码
+
+如果run ./install.sh 过程中我们没有创建用户，接下来我们可以run docker-compose run --rm web createuser 创建用户。
 
 ### 安装步骤
 

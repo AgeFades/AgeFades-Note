@@ -9,8 +9,10 @@ sudo su
 # 安装命令
 curl  https://get.acme.sh | sh
 
+# 安装完成之后可能需要重新打开一个新的Session才有acme命令
+
 # 关闭Nginx，释放80端口 （如果80被占用的话）
-sudo docker stop nignx
+sudo docker stop nginx
 
 # 给域名生成证书（把 mydomain.com 换成 自己的域名）
 # 我这里操作域名是 dev.admin-api.jdy.iyobee.com
