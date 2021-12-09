@@ -316,3 +316,274 @@ Object resolveDependency(DependencyDescriptor descriptor, @Nullable String reque
    1. 则判断当前 beanName 上是否定义了 Qualifier
    2. 并是否和当前 DependencyDescriptor 上的 Qualifier 相等，相等则匹配
 7. 经过上述验证后，当前 beanName 成为一个可注入的，添加到 result 中
+
+## 关于依赖注入中泛型注入的实现
+
+### Type具体分类
+
+- 在Java反射中，有一个Type接口，表示类型，具体分类为：
+  1. raw types：也就是普通 class
+  2. parameterized types：对应 ParameterizedType 接口，泛型类型
+  3. array types：对应 GenericArrayType，泛型数组
+  4. type variables：对应 TypeVariable 接口，表示类型变量
+     - 也就是所定义的泛型，比如 T、K
+  5. primitive types：基本类型，int、boolean
+
+#### 测试代码案例
+
+```java
+package com.agefades.single.admin.demo;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.TypeVariable;
+import java.util.List;
+
+public class TypeTest<T> {
+
+    private int i;
+    private Integer it;
+    private int[] iarray;
+    private List list;
+    private List<String> slist;
+    private List<T> tlist;
+    private T t;
+    private T[] tarray;
+
+    public static void main(String[] args) throws NoSuchFieldException {
+
+        test(TypeTest.class.getDeclaredField("i"));
+        System.out.println("=======");
+        test(TypeTest.class.getDeclaredField("it"));
+        System.out.println("=======");
+        test(TypeTest.class.getDeclaredField("iarray"));
+        System.out.println("=======");
+        test(TypeTest.class.getDeclaredField("list"));
+        System.out.println("=======");
+        test(TypeTest.class.getDeclaredField("slist"));
+        System.out.println("=======");
+        test(TypeTest.class.getDeclaredField("tlist"));
+        System.out.println("=======");
+        test(TypeTest.class.getDeclaredField("t"));
+        System.out.println("=======");
+        test(TypeTest.class.getDeclaredField("tarray"));
+
+    }
+
+    public static void test(Field field) {
+
+        if (field.getType().isPrimitive()) {
+            System.out.println(field.getName() + "是基本数据类型");
+        } else {
+            System.out.println(field.getName() + "不是基本数据类型");
+        }
+
+        if (field.getGenericType() instanceof ParameterizedType) {
+            System.out.println(field.getName() + "是泛型类型");
+        } else {
+            System.out.println(field.getName() + "不是泛型类型");
+        }
+
+        if (field.getType().isArray()) {
+            System.out.println(field.getName() + "是普通数组");
+        } else {
+            System.out.println(field.getName() + "不是普通数组");
+        }
+
+        if (field.getGenericType() instanceof GenericArrayType) {
+            System.out.println(field.getName() + "是泛型数组");
+        } else {
+            System.out.println(field.getName() + "不是泛型数组");
+        }
+
+        if (field.getGenericType() instanceof TypeVariable) {
+            System.out.println(field.getName() + "是泛型变量");
+        } else {
+            System.out.println(field.getName() + "不是泛型变量");
+        }
+
+    }
+
+}
+```
+
+#### 运行结果
+
+```apl
+i是基本数据类型
+i不是泛型类型
+i不是普通数组
+i不是泛型数组
+i不是泛型变量
+=======
+it不是基本数据类型
+it不是泛型类型
+it不是普通数组
+it不是泛型数组
+it不是泛型变量
+=======
+iarray不是基本数据类型
+iarray不是泛型类型
+iarray是普通数组
+iarray不是泛型数组
+iarray不是泛型变量
+=======
+list不是基本数据类型
+list不是泛型类型
+list不是普通数组
+list不是泛型数组
+list不是泛型变量
+=======
+slist不是基本数据类型
+slist是泛型类型
+slist不是普通数组
+slist不是泛型数组
+slist不是泛型变量
+=======
+tlist不是基本数据类型
+tlist是泛型类型
+tlist不是普通数组
+tlist不是泛型数组
+tlist不是泛型变量
+=======
+t不是基本数据类型
+t不是泛型类型
+t不是普通数组
+t不是泛型数组
+t是泛型变量
+=======
+tarray不是基本数据类型
+tarray不是泛型类型
+tarray是普通数组
+tarray是泛型数组
+tarray不是泛型变量
+```
+
+### Spring对泛型注入点的处理
+
+- Spring对泛型注入点也会进行处理
+
+#### 测试代码案例
+
+```java
+@Component
+public class UserService extends BaseService<OrderService, StockService> {
+
+	public void test() {
+		System.out.println(o);
+	}
+
+}
+
+public class BaseService<O, S> {
+
+	@Autowired
+	protected O o;
+
+	@Autowired
+	protected S s;
+}
+```
+
+#### 处理流程
+
+1. Spring扫描到 UserService Bean
+
+2. 取出其注入点，即 BaseService 中的两个泛型属性 O，S
+
+3. Spring确定 O，S 的具体类型
+
+4. 通过如下API获取到具体泛型信息
+
+   1. ```java
+      userService.getClass().getGenericSuperclass().getTypeName()
+      ```
+
+   2. 这里就是：com.xx.BaseService<com.xx.OrderService，com.xx.StockService>
+
+5. 然后再拿到 UserService 的父类 BaseService 的泛型变量
+
+   1. ```java
+      for (TypeVariable<? extends Class<?>> typeParameter : userService.getClass().getSuperclass().getTypeParameters()) {
+         System.out.println(typeParameter.getName());
+      }
+      ```
+
+6. 通过上面两段代码，就得知 O 对应 OrderSerivce，S 对应 StockService
+
+7. 再调用 `oField.getGenericType()` 就知道当前 field 使用的是哪个泛型，就能知道具体类型了
+
+## @Qualifier的使用
+
+- 定义两个注解
+
+```java
+@Target({ElementType.TYPE, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Qualifier("random")
+public @interface Random {
+}
+```
+
+```java
+@Target({ElementType.TYPE, ElementType.FIELD})
+@Retention(RetentionPolicy.RUNTIME)
+@Qualifier("roundRobin")
+public @interface RoundRobin {
+}
+```
+
+- 定义一个接口和两个实现类，表示负载均衡
+
+```java
+public interface LoadBalance {
+	String select();
+}
+```
+
+```java
+@Component
+@Random
+public class RandomStrategy implements LoadBalance {
+
+	@Override
+	public String select() {
+		return null;
+	}
+}
+```
+
+```java
+@Component
+@RoundRobin
+public class RoundRobinStrategy implements LoadBalance {
+
+	@Override
+	public String select() {
+		return null;
+	}
+}
+```
+
+- 使用
+
+```java
+@Component
+public class UserService  {
+
+	@Autowired
+	@RoundRobin
+	private LoadBalance loadBalance;
+
+	public void test() {
+		System.out.println(loadBalance);
+	}
+
+}
+```
+
+## @Resource
+
+[@Resource注解底层工作流程图](https://www.processon.com/view/link/61b053a863768941dcc00e8c)
+
