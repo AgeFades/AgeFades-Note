@@ -94,7 +94,7 @@ yum list docker-ce --showduplicates | sort -r
 # 安装指定版本，用上面的版本号替换<VERSION_STRING>
 sudo yum install docker-ce-<VERSION_STRING>.x86_64 docker-ce-cli- <VERSION_STRING>.x86_64 containerd.io
 #例如:
-#yum install docker-ce-3:20.10.5-3.el7.x86_64 docker-ce-cli-3:20.10.5-3.el7.x86_64 containerd.io
+#yum install docker-ce-3:20.10.5-3.el8.x86_64 docker-ce-cli-3:20.10.5-3.el8.x86_64 containerd.io
 #注意加上 .x86_64 大版本号
 ```
 
