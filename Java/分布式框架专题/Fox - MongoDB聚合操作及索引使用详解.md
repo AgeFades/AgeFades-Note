@@ -1226,3 +1226,444 @@ db.restaurants.find( { cuisine: "Italian", rating: { $gte: 8 } } )
 db.restaurants.find( { cuisine: "Italian" } )
 ```
 
+##### 案例1
+
+- 测试数据
+
+```json
+db.restaurants.insert({
+   "_id" : ObjectId("5641f6a7522545bc535b5dc9"),
+   "address" : {
+      "building" : "1007",
+      "coord" : [
+         -73.856077,
+         40.848447
+      ],
+      "street" : "Morris Park Ave",
+      "zipcode" : "10462"
+   },
+   "borough" : "Bronx",
+   "cuisine" : "Bakery",
+   "rating" : { "date" : ISODate("2014-03-03T00:00:00Z"),
+                "grade" : "A",
+                "score" : 2
+              },
+   "name" : "Morris Park Bake Shop",
+   "restaurant_id" : "30075445"
+})
+```
+
+- 创建索引
+
+```json
+db.restaurants.createIndex(
+   { borough: 1, cuisine: 1 },
+   { partialFilterExpression: { 'rating.grade': { $eq: "A" } } }
+)
+```
+
+- 测试
+
+```json
+db.restaurants.find( { borough: "Bronx", 'rating.grade': "A" } )
+db.restaurants.find( { borough: "Bronx", cuisine: "Bakery" } )
+```
+
+###### 唯一约束结合部分索引使用导致唯一约束失效的问题
+
+- 注意：如果同时指定了 partialFilterExpression 和唯一约束，那么唯一约束只适用于满足筛选器表达式的文档。
+  - 如果文档不满足筛选条件，那么带有唯一约束的部分索引不会阻止插入不满足唯一约束的文档。
+
+##### 案例2
+
+- 测试数据
+
+```json
+db.users.insertMany( [
+   { username: "david", age: 29 },
+   { username: "amanda", age: 35 },
+   { username: "rajiv", age: 57 }
+] )
+```
+
+- 创建索引，指定username字段和部分过滤器表达式age: {$gte:21} 的唯一约束
+
+```json
+db.users.createIndex(
+   { username: 1 },
+   { unique: true, partialFilterExpression: { age: { $gte: 21 } } }
+)
+```
+
+- 测试
+
+```json
+// 索引防止了以下文档的插入，因为文档已经存在，且指定的用户名和年龄字段大于21
+db.users.insertMany( [
+   { username: "david", age: 27 },
+   { username: "amanda", age: 25 },
+   { username: "rajiv", age: 32 }
+] )
+```
+
+```json
+// 但是以下具有重复用户名的文档是允许的，因为唯一约束只适用于年龄大于或等于21岁的文档
+db.users.insertMany( [
+   { username: "david", age: 20 },
+   { username: "amanda" },
+   { username: "rajiv", age: null }
+] )
+```
+
+#### 稀疏索引（Sparse Indexes）
+
+- 索引的稀疏属性确保 **索引只包含具有索引字段的文档的条目，索引将跳过没有索引字段的文档**
+  - 即：只对存在字段的文档进行索引（包括字段值为null的文档）
+- **如果稀疏索引会导致查询和排序操作的结果集不完整，MongoDB将不会使用该索引**，除非 hint() 明确指定索引
+
+```apl
+# 只索引包含 xmpp_id 字段的文档
+db.addresses.createIndex( { "xmpp_id": 1 }, { sparse: true } )
+```
+
+##### 案例1
+
+- 数据准备
+
+```json
+db.scores.insertMany([
+    {"userid" : "newbie"},
+    {"userid" : "abby", "score" : 82},
+    {"userid" : "nina", "score" : 90}
+])
+```
+
+- 创建稀疏索引
+
+```apl
+db.scores.createIndex( { score: 1 } , { sparse: true } )
+```
+
+- 测试
+
+```apl
+# 使用稀疏索引
+db.scores.find( { score: { $lt: 90 } } )
+
+# 即使排序是通过索引字段，MongoDB也不会选择稀疏索引来完成查询，以返回完整的结果
+db.scores.find().sort( { score: -1 } )
+
+# 要使用稀疏索引，使用hint()显式指定索引
+db.scores.find().sort( { score: -1 } ).hint( { score: 1 } )
+```
+
+##### 案例2
+
+- 同时具有稀疏性和唯一性的索引 **可以防止集合中存在字段值重复的文档，但允许不包括此索引字段的文档插入**
+
+```apl
+# 创建具有唯一约束的稀疏索引
+db.scores.createIndex( { score: 1 } , { sparse: true, unique: true } )
+```
+
+- 测试
+
+```apl
+# 索引允许以下文档插入
+db.scores.insertMany( [
+   { "userid": "AAAAAAA", "score": 43 },
+   { "userid": "BBBBBBB", "score": 34 },
+   { "userid": "CCCCCCC" },
+   { "userid": "CCCCCCC" }
+] )
+```
+
+```apl
+# 索引不允许一下文档插入，因为score重复
+db.scores.insertMany( [
+   { "userid": "AAAAAAA", "score": 82 },
+   { "userid": "BBBBBBB", "score": 90 }
+] )
+```
+
+#### TTL索引（TTL Indexes）
+
+- 一般系统中，通常会对过期且不再使用的数据进行老化处理
+- 通常做法如下：
+  1. 为每个数据记录一个时间戳，开启一个定时任务按时间戳定期删除过期数据
+  2. 数据按日期进行分表，使用定时器删除过期的表
+- Mongo提供了一种 TTL（Time To Live）索引
+  - **需要声明在一个日期类型的字段中，是特殊的单字段索引**
+  - 可以用它在一定时间或特定时间后，自动从集合中删除文档
+
+```apl
+# 创建 TTL 索引，TTL 值为3600秒
+db.eventlog.createIndex( { "lastModifiedDate": 1 }, { expireAfterSeconds: 3600 } )
+```
+
+- 对集合创建TTL索引后，MongoDB会在周期性运行的后台线程中，对该集合进行检查及数据清理工作。
+  - 除了 **数据老化清除功能，TTL也具有普通索引功能**，同样可以用于加速数据检索
+- TTL索引不保证过期数据会在过期后立即被删除
+  - **删除过期文档的后台任务每 60s 运行一次**
+  - 因此，在文档到期和后台任务运行之间的时间段内，文档仍然保留在集合中
+
+##### 案例
+
+- 数据准备
+
+```apl
+db.log_events.insertOne( {
+   "createdAt": new Date(),
+   "logEvent": 2,
+   "logMessage": "Success!"
+} )
+```
+
+- 创建TTL索引
+
+```apl
+db.log_events.createIndex( { "createdAt": 1 }, { expireAfterSeconds: 20 } )
+```
+
+###### **可变的过期时间**
+
+- TTL索引在创建后，仍然可以对过期时间进行修改
+- 使用 collMod 命令对索引的定义进行变更
+
+```apl
+db.runCommand({collMod:"log_events",index:{keyPattern:{createdAt:1},expireAfterSeconds:600}})
+```
+
+![](https://note.youdao.com/yws/public/resource/0d777b87c34ec809163471a66bb5033c/xmlnote/F4C4A9396F824D65B198946A2F87A3CF/40115)
+
+##### 使用约束
+
+- 使用TTL索引时，需注意以下的限制
+  1. TTL索引只能支持单个字段，并且必须是非_id字段
+  2. TTL索引不能用于固定集合
+  3. TTL索引无法保证及时的数据老化清除（默认60s，db压力过大时可能更久）
+  4. TTL索引对数据的清理仅仅使用了remove命令，并不高效，在TTL Monitor运行期间，可能对系统CPU、磁盘都会造成一定压力。相比之下，按日期分表的方式操作会更加高效。
+
+#### 隐藏索引（Hidden Indexes）
+
+- 隐藏索引对查询规划器不可见，不能用于支持查询。
+- 通过隐藏索引，用户可以在不实际删除索引的情况下，评估删除索引后的影响，如果影响是负面的，用户可以取消隐藏索引，而不必重新创建索引。
+- 4.4新版功能
+
+##### 案例
+
+```apl
+# 创建隐藏索引
+db.restaurants.createIndex({ borough: 1 },{ hidden: true });
+# 隐藏现有索引
+db.restaurants.hideIndex( { borough: 1} );
+db.restaurants.hideIndex( "索引名称" )
+# 取消隐藏索引
+db.restaurants.unhideIndex( { borough: 1} );
+db.restaurants.unhideIndex( "索引名称" ); 
+```
+
+- 准备数据
+
+```apl
+db.scores.insertMany([
+    {"userid" : "newbie"},
+    {"userid" : "abby", "score" : 82},
+    {"userid" : "nina", "score" : 90}
+])
+```
+
+- 创建隐藏索引
+
+```apl
+db.scores.createIndex(
+   { userid: 1 },
+   { hidden: true }
+)
+```
+
+- 查看索引信息
+  - 索引属性 hidden 只在值为 true 时返回
+
+```apl
+db.scores.getIndexes()
+```
+
+![](https://note.youdao.com/yws/public/resource/0d777b87c34ec809163471a66bb5033c/xmlnote/8266DB18517F4FD1B236F86118BB108C/40053)
+
+- 测试
+
+```apl
+# 不使用索引
+db.scores.find({userid:"abby"}).explain()
+# 取消隐藏索引
+db.scores.unhideIndex( { userid: 1} )
+# 使用索引
+db.scores.find({userid:"abby"}).explain()
+```
+
+### 2.7 索引使用建议
+
+#### 1. 为每一个查询建立合适的索引
+
+- 这是针对文档数较大（几十上百万）的集合，如果没有索引，每次Mongo都要把所有文档读到内存，对性能影响太大
+
+#### 2. 创建合适的复合索引，不要依赖于交叉索引
+
+- 如果查询要使用到多个字段，MongoDB有两种索引技术可以使用：
+  - 交叉索引
+    - 针对每个字段单独建立一个单字段索引，然后在查询执行时，使用相应的单字段索引进行索引交叉而得到查询结果
+    - 交叉索引目前触发率较低，所以一般建议使用复合索引
+  - 复合索引
+
+```apl
+# 查找所有年龄小于30岁的深圳市马拉松运动员
+db.athelets.find({sport: "marathon", location: "sz", age: {$lt: 30}}})
+# 创建复合索引
+db.athelets.createIndex({sport:1, location:1, age:1})
+```
+
+#### 3. 复合索引字段排序：匹配条件在前，范围条件在后
+
+- 原理大致同MySQL  B+Tree 设定，前面字段有序后面字段索引才好用得上
+
+#### 4. 尽可能使用覆盖索引（Covered Index）
+
+- 建议只返回需要的字段，同时利用覆盖索引来提升性能
+
+#### 5. 建索引要在后台运行
+
+- 在对一个集合创建索引时，该集合所在的数据库将不接受其他读写操作
+- **对大数据量的集合建索引，建议使用后台运行选项 { background:true }**
+
+#### 6. 避免设计过长的数组索引
+
+- 数组索引是多值的，在存储时需要使用更多的空间，如果索引数组长度特别长，或者数组的增长不受控制，则可能导致索引空间急剧膨胀。
+
+### 2.8 explain执行计划详解
+
+- 通常关心：
+  - 查询是否使用了索引
+  - 索引是否减少了扫描的记录行数
+  - 是否存在低效的内存排序
+- MongoDB提供了 explain 命令，帮助评估指定查询模型的执行计划
+- explain() 方法形式如下：
+  - verbose：可选参数，表示执行计划的输出模式，默认 queryPlanner
+
+| 模式名字          | 描述                                                         |
+| ----------------- | ------------------------------------------------------------ |
+| queryPlanner      | 执行计划的详细信息，包括查询计划、集合信息、查询条件、最佳执行计划、查询方式和 MongoDB 服务信息等 |
+| exectionStats     | 最佳执行计划的执行情况和被拒绝的计划等信息                   |
+| allPlansExecution | 选择并执行最佳执行计划，并返回最佳执行计划和其他执行计划的执行情况 |
+
+```apl
+db.collection.find().explain(<verbose>)
+```
+
+#### queryPlanner
+
+```apl
+# 未创建title的索引
+db.books.find({title:"book-1"}).explain("queryPlanner")
+```
+
+![](https://note.youdao.com/yws/public/resource/0d777b87c34ec809163471a66bb5033c/xmlnote/3A852A7610C343FF9C7C2B1AA5747B7A/40143)
+
+| **字段名称**   | **描述**          |
+| -------------- | ----------------- |
+| plannerVersion | 执行计划的版本    |
+| namespace      | 查询的集合        |
+| indexFilterSet | 是否使用索引      |
+| parsedQuery    | 查询条件          |
+| winningPlan    | 最佳执行计划      |
+| stage          | 查询方式          |
+| filter         | 过滤条件          |
+| direction      | 查询顺序          |
+| rejectedPlans  | 拒绝的执行计划    |
+| serverInfo     | mongodb服务器信息 |
+
+#### executionStats
+
+- executionStats 返回信息包含了 queryPlanner 的所有字段，并且还包含了最佳执行计划的执行情况
+
+```apl
+# 创建索引
+db.books.createIndex({title:1})
+
+db.books.find({title:"book-1"}).explain("executionStats")
+```
+
+![](https://note.youdao.com/yws/public/resource/0d777b87c34ec809163471a66bb5033c/xmlnote/68BFF24E673F43D0BEFADEA0D35FC6D2/40163)
+
+| **字段名称**                                                 | **描述**                                             |
+| ------------------------------------------------------------ | ---------------------------------------------------- |
+| winningPlan.inputStage                                       | 用来描述子stage，并且为其父stage提供文档和索引关键字 |
+| winningPlan.inputStage.stage                                 | 子查询方式                                           |
+| winningPlan.inputStage.keyPattern                            | 所扫描的index内容                                    |
+| winningPlan.inputStage.indexName                             | 索引名                                               |
+| winningPlan.inputStage.isMultiKey                            | 是否是Multikey。如果索引建立在array上，将是true      |
+| executionStats.executionSuccess                              | 是否执行成功                                         |
+| executionStats.nReturned                                     | 返回的个数                                           |
+| executionStats.executionTimeMillis                           | 这条语句执行时间                                     |
+| executionStats.executionStages.executionTimeMillisEstimate   | 检索文档获取数据的时间                               |
+| executionStats.executionStages.inputStage.executionTimeMillisEstimate | 扫描获取数据的时间                                   |
+| executionStats.totalKeysExamined                             | 索引扫描次数                                         |
+| executionStats.totalDocsExamined                             | 文档扫描次数                                         |
+| executionStats.executionStages.isEOF                         | 是否到达 steam 结尾，1 或者 true 代表已到达结尾      |
+| executionStats.executionStages.works                         | 工作单元数，一个查询会分解成小的工作单元             |
+| executionStats.executionStages.advanced                      | 优先返回的结果数                                     |
+| executionStats.executionStages.docsExamined                  | 文档检查数                                           |
+
+#### allPlanExecution
+
+- 包含 executionStats 内容，还有 allPlansExecution:[] 块
+
+```apl
+"allPlansExecution" : [
+      {
+         "nReturned" : <int>,
+         "executionTimeMillisEstimate" : <int>,
+         "totalKeysExamined" : <int>,
+         "totalDocsExamined" :<int>,
+         "executionStages" : {
+            "stage" : <STAGEA>,
+            "nReturned" : <int>,
+            "executionTimeMillisEstimate" : <int>,
+            ...
+            }
+         }
+      },
+      ...
+   ]
+```
+
+##### stage状态
+
+| **状态**        | **描述**                               |
+| --------------- | -------------------------------------- |
+| COLLSCAN        | 全表扫描                               |
+| IXSCAN          | 索引扫描                               |
+| FETCH           | 根据索引检索指定文档                   |
+| SHARD_MERGE     | 将各个分片返回数据进行合并             |
+| SORT            | 在内存中进行了排序                     |
+| LIMIT           | 使用limit限制返回数                    |
+| SKIP            | 使用skip进行跳过                       |
+| IDHACK          | 对_id进行查询                          |
+| SHARDING_FILTER | 通过mongos对分片数据进行查询           |
+| COUNTSCAN       | count不使用Index进行count时的stage返回 |
+| COUNT_SCAN      | count使用了Index进行count时的stage返回 |
+| SUBPLA          | 未使用到索引的$or查询的stage返回       |
+| TEXT            | 使用全文索引进行查询时候的stage返回    |
+| PROJECTION      | 限定返回字段时候stage的返回            |
+
+- 执行计划的返回结果中尽量不要出现以下stage:
+
+  - COLLSCAN(全表扫描)
+
+  - SORT(使用sort但是无index)
+
+  - 不合理的SKIP
+
+  - SUBPLA(未用到index的$or)
+
+  - COUNTSCAN(不使用index进行count)
