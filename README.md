@@ -67,6 +67,12 @@
 
 ### 分布式框架专题
 
+[Fox - MongoDB快速实战与基本原理](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/Fox%20-%20MongoDB%E5%BF%AB%E9%80%9F%E5%AE%9E%E6%88%98%E4%B8%8E%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86.md)
+
+[Fox - MongoDB聚合操作及索引使用详解](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/Fox%20-%20MongoDB%E8%81%9A%E5%90%88%E6%93%8D%E4%BD%9C%E5%8F%8A%E7%B4%A2%E5%BC%95%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3.md#fox---mongodb%E8%81%9A%E5%90%88%E6%93%8D%E4%BD%9C%E5%8F%8A%E7%B4%A2%E5%BC%95%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3)
+
+[Fox - MongoDB复制（副本）集实战及其原理分析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/Fox%20-%20MongoDB%E5%A4%8D%E5%88%B6%EF%BC%88%E5%89%AF%E6%9C%AC%EF%BC%89%E9%9B%86%E5%AE%9E%E6%88%98%E5%8F%8A%E5%85%B6%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90.md)
+
 [Redisson](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/Redisson.md)
 
 [多租户物理分库实际案例](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%A4%9A%E7%A7%9F%E6%88%B7%E7%89%A9%E7%90%86%E5%88%86%E5%BA%93%E5%AE%9E%E9%99%85%E6%A1%88%E4%BE%8B.md)
@@ -88,6 +94,8 @@
 [诸葛 - Redis(上)](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E8%AF%B8%E8%91%9B%20-%20Redis(%E4%B8%8A).md)
 
 [诸葛 - Redis(下)](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E8%AF%B8%E8%91%9B%20-%20Redis(%E4%B8%8B).md)
+
+[郭嘉 - 深入底层C源码讲透Redis核心设计原理](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E9%83%AD%E5%98%89%20-%20%E6%B7%B1%E5%85%A5%E5%BA%95%E5%B1%82C%E6%BA%90%E7%A0%81%E8%AE%B2%E9%80%8FRedis%E6%A0%B8%E5%BF%83%E8%AE%BE%E8%AE%A1%E5%8E%9F%E7%90%86.md)
 
 [鲁班 - Zookeeper](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E9%B2%81%E7%8F%AD%20-%20Zookeeper.md)
 
@@ -171,6 +179,8 @@
 
 ## 工具
 
+[Redis Lua实现限流(防表单重复提交)](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Redis%20Lua%E5%AE%9E%E7%8E%B0%E9%99%90%E6%B5%81(%E9%98%B2%E8%A1%A8%E5%8D%95%E9%87%8D%E5%A4%8D%E6%8F%90%E4%BA%A4).md)
+
 [Idea使用相关技巧](https://github.com/AgeFades/AgeFades-Note/tree/master/%E5%B7%A5%E5%85%B7/idea)
 
 [Awesome Tools](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Awesome%20Tools.md)
@@ -198,6 +208,8 @@
 [常用正则regex](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/regex.md)
 
 [版本号命名规则](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/%E7%89%88%E6%9C%AC%E5%8F%B7%E5%91%BD%E5%90%8D%E8%A7%84%E5%88%99.md)
+
+[项目开发规范](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/%E9%A1%B9%E7%9B%AE%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83.md)
 
 [Unix内核获取本机公网ip的几种方法](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/%E8%8E%B7%E5%8F%96%E6%9C%AC%E6%9C%BA%E5%85%AC%E7%BD%91ip.md)
 
