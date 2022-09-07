@@ -93,6 +93,8 @@ public class GlobalGrayFilter extends ServerWebExchangeContextFilter {
 
 ## 2. Ribbon自定义负载选择策略
 
+- 注意：这个类一定不能加@Configuration
+
 ```java
 package com.agefades.log.common.core.config;
 
@@ -118,7 +120,6 @@ import java.util.List;
  * @date 2022/8/3 10:08
  */
 @Slf4j
-@Configuration
 public class GrayRule extends AbstractLoadBalancerRule {
 
     @Override
@@ -161,6 +162,47 @@ public class GrayRule extends AbstractLoadBalancerRule {
     @Override
     public void initWithNiwsConfig(IClientConfig iClientConfig) {
 
+    }
+
+}
+```
+
+- 灰度规则配置类
+
+```java
+package com.agefades.log.common.core.config;
+
+import org.springframework.context.annotation.Bean;
+
+public class GrayRuleConfig {
+
+    @Bean
+    public GrayRule grayRule(){
+        return new GrayRule();
+    }
+
+}
+```
+
+- 在每个启动类上加配置注解（不管是网关还是业务服务） @RibbonClients(defaultConfiguration = GrayRuleConfig.class)
+
+```java
+package com.agefades.log.gateway;
+
+import com.agefades.log.common.core.config.GrayRuleConfig;
+import com.agefades.log.common.core.constants.CommonConstant;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.netflix.ribbon.RibbonClients;
+import org.springframework.context.annotation.ComponentScan;
+
+@ComponentScan(basePackages = CommonConstant.BASE_PACKAGES)
+@RibbonClients(defaultConfiguration = GrayRuleConfig.class)
+@SpringBootApplication
+public class GatewayApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(GatewayApplication.class, args);
     }
 
 }

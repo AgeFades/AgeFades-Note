@@ -407,3 +407,171 @@ sh.addTagRange("other.systemLogs",{shardKey:MinKey},{shardKey:MaxKey},"olap")
   - Document中可以不包含ShardKey，插入时被当做 Null 处理
   - 为 ShardKey 添加后缀 refineCollectionShardKey 命令，可以修改 ShardKey 包含的 Field
 - 在4.2版本之前，ShardKey对应的值不可以修改，4.2之后，如果ShardKey为非_id字段，则可以修改
+
+### 数据均衡
+
+#### 均衡的方式
+
+- 均衡性包括两个方面：
+  1. **所有的数据应均匀地分布于不同的chunk上**
+  2. **每个分片上的chunk数量尽可能是相近的**
+- 第一点由业务场景和分片策略来决定，关于第二点，有以下两种选择：
+
+##### 手动均衡
+
+1. 在初始化集合时预分配一定数量的chunk（仅适用于哈希分片），比如10个分片分配100个chunk，那每个分片拥有10个chunk
+2. 可以通过 splitAt、moveChunk 命令进行手动切分、迁移
+
+##### 自动均衡
+
+- 开启MongoDB集群的自动均衡功能。**均衡器会在后台对各分片的chunk进行监控，一旦发现了不均衡状态就会自动进行chunk的搬迁，以达到均衡**
+- 其中，chunk不均衡通常来自于两方面的因素：
+  - 一方面，在没有人工干预的情况下，chunk会持续增长并发生分裂（split），而不断分裂的结果就会出现数量上的不均衡
+  - 另一方面，在动态增加分片服务器时，也会出现不均衡的情况。自动均衡是开箱即用的，可以极大简化集群的管理工作
+
+#### chunk分裂
+
+- 默认情况下， 一个chunk的大小为64MB，该参数由配置的chunksize参数指定。
+- 如果持续地向该chunk写入数据，并导致数据量超过了chunk大小，则MongoDB会自动进行分裂，将该chunk切分为两个相同大小的chunk
+
+![](https://note.youdao.com/yws/public/resource/16c445f1d16c79e23d1205a79110d3c5/xmlnote/961761E46E054C5F8C89986FD739B344/42051)
+
+- **chunk分裂是基于分片键进行的，如果分片键的基数太小，则可能因为无法分裂而出现jumbo chunk（超大块）的问题**
+  - 例如：对 db.users 使用 gender(性别) 作为分片键，同种性别的用户数可能达到数千万，分裂程序并不知道该如何对分片键（gender）的一个单值进行切分，因此最终导致在一个chunk上集中存储了大量的user记录（总大小超过64MB）
+- **jumbo chunk对水平扩展有负面作用，该情况不利于数据的均衡，业务上应尽可能避免**，一些写入压力过大的情况可能会导致chunk多次失败（split），最终当chunk中的文档数大于 1.3xavgObjectSize 时，会导致无法迁移。此外在一些老版本中，如果chunk中的文档数超过250000个，也会导致无法迁移
+
+#### 自动均衡
+
+- MongoDB的数据均衡器运行于 Primary Config Server（配置服务器的主节点）上，而该节点也同时会控制chunk数据的搬迁流程
+
+![](https://note.youdao.com/yws/public/resource/16c445f1d16c79e23d1205a79110d3c5/xmlnote/DB91B049D98F40168428B4F8F58E2611/42063)
+
+- 流程说明：
+  1. 分片shard0在持续的业务写入压力下，产生了chunk分裂
+  2. 分片服务器通知Config Server进行元数据更新
+  3. Config Server的自动均衡器对chunk分布进行检查，发现shard0和shard1的chunk数差异达到了阈值，向shard0下发moveChunk命令以执行chunk迁移
+  4. shard0执行指令，将指定数据块复制到shard1。该阶段会完成索引、chunk数据的复制，而且在整个过程中业务侧对数据的操作仍然会指向shard0；所以，在第一轮复制完毕之后，目标shard1会向shard0确认是否还存在增量更新的数据，如果存在则继续复制
+  5. shard0完成迁移后发送通知，此时Config Server开始更新元数据，将chunk的存量更新为目标shard1。在更新完元数据后，并确保没有关联cursor的情况下，shard0会删除被迁移的chunk副本
+  6. Config Server通知 mongos 服务器更新路由表。此时，新的业务请求会被路由到shard1
+
+##### 迁移阈值
+
+- 均衡器对于数据的 "不均衡状态" 判定，是根据两个分片上的chunk个数差异来进行的
+
+| chunk个数 | 迁移阈值 |
+| --------- | -------- |
+| 少于20    | 2        |
+| 20～79    | 4        |
+| 80及以上  | 8        |
+
+##### 迁移速度
+
+- 数据均衡的整个过程并不是很快，影响MongoDB均衡速度的几个选项如下：
+  - **_secondaryThrottle：用于调整迁移数据写到目标分片的安全级别**。如果没有设定，则会使用w: 2选项，即至少一个备节点确认写入迁移数据后才算成功。从MongoDB3.4版本后，被默认设定为 false，chunk迁移不再等待备节点写入确认
+  - _waitForDelete：在chunk迁移完成后，源分片会将不再使用的chunk删除。如果 _waitForDelete 是true，那么均衡器需要等待chunk同步删除后，才进行下一次迁移。**该选项默认为false，这意味着对于旧chunk的清理是异步进行的**
+  - 并行迁移数量：在早期版本的实现中，均衡器在同一个时刻只能有一个chunk迁移任务。从MongoDB3.4版本开始，**允许n个分片的集群同时执行n/2个并发任务**
+- 随着版本的迭代，MongoDB迁移的能力也在逐步提升。从MongoDB4.0版本开始，支持在迁移数据的过程中并发地读取源端和写入目标端，迁移的整体性能提升了约40%。这样也使得新加入的分片能更快地分担集群的访问读写压力。
+
+#### 数据均衡带来的问题
+
+1. **数据均衡会影响性能**，分片间进行数据块的迁移，很容易带来磁盘I/O使用率飙升，或业务时延陡增等问题。因此，建议尽可能提升磁盘能力，如使用SSD。除此之外，还可以将数据均衡的窗口对齐到业务的低峰期以降低影响。
+
+   - 登陆mongos，在config数据库上更新配置，代码如下：
+
+     - 启用自动均衡器，在每天凌晨2点到4点进行数据均衡操作
+
+   - ```apl
+     use config
+     sh.setBalancerState(true)
+     db.settings.update(
+         {_id:"balancer"},
+         {$set:{activeWindow:{start:"02:00",stop:"04:00"}}},
+         {upsert:true}
+     )
+     ```
+
+2. **对分片集合中执行count命令可能会产生不准确的结果**，mongos在处理count命令时，会分别向各个分片发送请求，并累加最终结果。如果分片上正在执行数据迁移，则可能导致重复的计算。替代办法是使用 db.collection.countDocuments({}) 方法，该方法会执行聚合操作进行实时扫描，可以避免元数据读取的问题，但需要更长时间。
+
+3. **在执行数据库备份的期间，不能进行数据均衡操作**，否则会产生不一致的备份数据。在备份数据之前，可以通过如下命令确认均衡器的状态：
+
+   1. sh.getBalancerState()：查看均衡器是否开启
+   2. sh.isBalancerRunning()：查看均衡器是否正在运行
+   3. sh.getBalancerWindow()：查看当前均衡的窗口设定
+
+
+
+## MongoDB多文档事务
+
+- **在MongoDB中，对单个文档的操作是原子的**。
+- MongoDB支持多文档事务，而使用分布式事务，事务可以跨多个操作、集合、数据库、文档和分片使用
+- MongoDB 4.2版本后，全面支持多文档事务，但 **对事务的使用原则应该是：能不用尽量不用**
+
+### 使用事务的原则
+
+- 无论何时，事务的使用总是能避免则避免
+- **模型设计先于事务，尽可能用模型设计规避事务**
+- 不要使用过大的事务（尽量控制在1000个文档更新以内）
+- 当必须使用事务时，尽可能让涉及事务的文档分布在同一个分片上，这将有效提升效率
+
+### MongoDB对事务支持
+
+| 事务属性           | 支持程度                                                     |
+| ------------------ | ------------------------------------------------------------ |
+| Atomocity 原子性   | 单表单文档 ： 1.x 就支持复制集多表多行：4.0分片集群多表多行：4.2 |
+| Consistency 一致性 | writeConcern, readConcern (3.2)                              |
+| Isolation 隔离性   | readConcern (3.2)                                            |
+| Durability 持久性  | Journal and Replication                                      |
+
+### 使用方法
+
+```apl
+try (ClientSession clientSession = client.startSession()) {
+   clientSession.startTransaction(); 
+   collection.insertOne(clientSession, docOne); 
+   collection.insertOne(clientSession, docTwo); 
+   clientSession.commitTransaction(); 
+ }
+```
+
+### writeConcern
+
+- **决定一个写操作落到多少个节点上才算成功**
+
+- 配置语法格式：
+
+  - ```apl
+    { w: <value>, j: <boolean>, wtimeout: <number> }
+    ```
+
+  - w：数据写入到number个节点才向客户端确认
+
+    - {w:0} 对客户端的写入不需要发送任何确认，适用于性能要求高的场景
+    - {w:1} 默认的writeConcern，数据写入到Primary就向客户端发送确认
+    - ![](https://note.youdao.com/yws/public/resource/4c81223e709ec11e17d06ef08082cfc0/xmlnote/5120DC7466204ED3A37E6CA49C8A8E0E/44022)
+    - {w:"majority"} 数据写入到副本集大多数成员后向客户端发送确认，适用于对数据安全性要求比较高的场景，性能较低
+    - ![](https://note.youdao.com/yws/public/resource/4c81223e709ec11e17d06ef08082cfc0/xmlnote/C841CF45D56F45E691F79482D835E049/44020)
+
+  - j：写入操作的 journal 持久化后才向客户端确认
+
+    - 默认值为 {j:false}，如果要求Primary写入持久化了才向客户端确认，则指定该值为 true
+
+  - wtimeout：写入超时时间，仅w的值大于1时有效，写入超时仍未结束，则认为写入失败
+
+#### 测试
+
+- 包含延迟节点的3节点pss复制集
+
+```apl
+db.user.insertOne({name:"李四"},{writeConcern:{w:"majority"}})
+# 等待延迟节点写入数据后才会响应
+db.user.insertOne({name:"王五"},{writeConcern:{w:3}})
+# 超时写入失败
+db.user.insertOne({name:"小明"},{writeConcern:{w:3,wtimeout:3000}})
+```
+
+#### 注意事项
+
+- 虽然多于半数的 writeConcern 都是安全的，但通常只会 **设置majority，因为这都是等待写入延迟时间最短的选择**
+- **不要设置writeConcern等于总结点数**，因为一旦有一个节点失败，所有写操作都会失败
+- writeConcern 虽然会增加写操作延迟时间，但并不会显著增加集群压力，因此无论是否等待，写操作最终都会复制到所有节点上。设置 writeConcern 只是让写操作等待复制后再返回而已
+- **应对重要数据应用 {w: "majority"}，普通数据可以应用 {w:1} 以确保最佳性能**
