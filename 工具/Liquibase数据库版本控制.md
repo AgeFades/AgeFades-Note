@@ -224,3 +224,219 @@ CREATE TABLE `test`
 insert into `test` values ('1', '张三'),('2','李四');
 ```
 
+## Liquibase & 多数据源管理
+
+### 整体项目文件结构
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1675654890177.png)
+
+### application.yml
+
+```yaml
+server:
+  port: 8003
+spring:
+  # 数据源配置
+  datasource:
+    single:
+      jdbc-url: jdbc:mysql://localhost:3306/single?useUnicode=true&characterEncoding=UTF-8&useSSL=false
+      username: root
+      password: root
+      driverClassName: com.mysql.cj.jdbc.Driver
+      liquibase:
+        change-log: classpath:/db/changelog/single-changelog-master.yaml
+
+    auth:
+      jdbc-url: jdbc:mysql://localhost:3306/auth?useUnicode=true&characterEncoding=UTF-8&useSSL=false
+      username: root
+      password: root
+      driverClassName: com.mysql.cj.jdbc.Driver
+      liquibase:
+        change-log: classpath:/db/changelog/auth-changelog-master.yaml
+```
+
+### single-changelog-master-yaml
+
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 20230206-100
+      author: AgeFades
+      comments: 初始化xx项目库表结构及数据
+      changes:
+        # sql多的可用文件指定
+        - sqlFile:
+            encoding: utf8
+            path: classpath:db/sql/structure/1.0/db-structure-init.sql
+        - sqlFile:
+            encoding: utf8
+            path: classpath:db/sql/data/1.0/db-data-init.sql
+        # sql少的可直接执行sql
+        - sql: alter table test add column single varchar(255) comment "测试changeSet直接执行sql";
+```
+
+### auth-changelog-master-yaml
+
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: 20230206-101
+      author: AgeFades
+      comments: 初始化xx项目库表结构及数据
+      changes:
+        # sql多的可用文件指定
+        - sqlFile:
+            encoding: utf8
+            path: classpath:db/sql/structure/1.0/db-structure-init.sql
+        - sqlFile:
+            encoding: utf8
+            path: classpath:db/sql/data/1.0/db-data-init.sql
+        # sql少的可直接执行sql
+        - sql: alter table test add column auth varchar(255) comment "测试changeSet直接执行sql";
+```
+
+### SingleDsConfig
+
+```java
+package com.agefades.db.config;
+
+import liquibase.integration.spring.SpringLiquibase;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+
+import javax.sql.DataSource;
+
+@Configuration
+public class SingleDsConfig {
+
+    @Bean(name = "singleDataSource")
+    @ConfigurationProperties(prefix = "spring.datasource.single")
+    public DataSource singleDataSource() {
+        return DataSourceBuilder.create().build();
+    }
+
+    /**
+     * 默认使用此事务管理器  如果不想使用 则使用 @Transactional(transactionManager = "transactionManagerWeb") 来指定其他的事务处理器
+     * */
+    @Bean(name = "transactionManagerSingle")
+    @Qualifier(value = "single")
+    @Primary
+    public DataSourceTransactionManager transactionManagerSingle() {
+        return new DataSourceTransactionManager(singleDataSource());
+    }
+
+    /**
+     * 实现 liquibase在多数据源创建表结构
+     * liquibase配置
+     * */
+    @Bean(name = "singleLiquibaseProperties")
+    @ConfigurationProperties(prefix = "spring.datasource.single.liquibase")
+    public LiquibaseProperties singleLiquibaseProperties() {
+        return new LiquibaseProperties();
+    }
+
+    @Bean(name = "singleLiquibase")
+    public SpringLiquibase singleLiquibase() {
+        return springLiquibase(singleDataSource(), singleLiquibaseProperties());
+    }
+
+    private static SpringLiquibase springLiquibase(DataSource dataSource, LiquibaseProperties properties) {
+        SpringLiquibase liquibase = new SpringLiquibase();
+        liquibase.setDataSource(dataSource);
+        liquibase.setChangeLog(properties.getChangeLog());
+        liquibase.setContexts(properties.getContexts());
+        liquibase.setDefaultSchema(properties.getDefaultSchema());
+        liquibase.setDropFirst(properties.isDropFirst());
+        liquibase.setShouldRun(properties.isEnabled());
+        liquibase.setLabels(properties.getLabels());
+        liquibase.setChangeLogParameters(properties.getParameters());
+        liquibase.setRollbackFile(properties.getRollbackFile());
+        liquibase.setDatabaseChangeLogTable("tbl_database_change_log");
+        liquibase.setDatabaseChangeLogLockTable("tbl_database_change_lock_log");
+        return liquibase;
+    }
+
+}
+```
+
+### AuthDsConfig
+
+```java
+package com.agefades.db.config;
+
+import liquibase.integration.spring.SpringLiquibase;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+
+import javax.sql.DataSource;
+
+@Configuration
+public class AuthDsConfig {
+
+    @Bean(name = "authDataSource")
+    @ConfigurationProperties(prefix = "spring.datasource.auth")
+    public DataSource authDataSource() {
+        return DataSourceBuilder.create().build();
+    }
+
+    /**
+     * 默认使用此事务管理器  如果不想使用 则使用 @Transactional(transactionManager = "transactionManagerWeb") 来指定其他的事务处理器
+     * */
+    @Bean(name = "transactionManagerAuth")
+    @Qualifier(value = "auth")
+    @Primary
+    public DataSourceTransactionManager transactionManagerAuth() {
+        return new DataSourceTransactionManager(authDataSource());
+    }
+
+    /**
+     * 实现 liquibase在多数据源创建表结构
+     * liquibase配置
+     * */
+    @Bean(name = "authLiquibaseProperties")
+    @ConfigurationProperties(prefix = "spring.datasource.auth.liquibase")
+    public LiquibaseProperties authLiquibaseProperties() {
+        return new LiquibaseProperties();
+    }
+
+    @Bean(name = "authLiquibase")
+    public SpringLiquibase authLiquibase() {
+        return springLiquibase(authDataSource(), authLiquibaseProperties());
+    }
+
+    private static SpringLiquibase springLiquibase(DataSource dataSource, LiquibaseProperties properties) {
+        SpringLiquibase liquibase = new SpringLiquibase();
+        liquibase.setDataSource(dataSource);
+        liquibase.setChangeLog(properties.getChangeLog());
+        liquibase.setContexts(properties.getContexts());
+        liquibase.setDefaultSchema(properties.getDefaultSchema());
+        liquibase.setDropFirst(properties.isDropFirst());
+        liquibase.setShouldRun(properties.isEnabled());
+        liquibase.setLabels(properties.getLabels());
+        liquibase.setChangeLogParameters(properties.getParameters());
+        liquibase.setRollbackFile(properties.getRollbackFile());
+        liquibase.setDatabaseChangeLogTable("tbl_database_change_log");
+        liquibase.setDatabaseChangeLogLockTable("tbl_database_change_lock_log");
+        return liquibase;
+    }
+
+}
+```
+
+### 测试成功结果
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1675655006244.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1675655031837.png)
