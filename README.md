@@ -50,6 +50,8 @@
 
 [Fox - Tomcat线程模型详解&性能调优](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/Tomcat/Fox%20-%20Tomcat%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3%26%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98.md)
 
+[Fox - Tomcat类加载机制及其热加载和热部署原理剖析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/Tomcat/Fox%20-%20Tomcat%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6%E5%8F%8A%E5%85%B6%E7%83%AD%E5%8A%A0%E8%BD%BD%E5%92%8C%E7%83%AD%E9%83%A8%E7%BD%B2%E5%8E%9F%E7%90%86%E5%89%96%E6%9E%90.md)
+
 [诸葛 - JVM类加载](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/JVM/%E8%AF%B8%E8%91%9B%20-%20JVM%E7%B1%BB%E5%8A%A0%E8%BD%BD.md)
 
 [诸葛 - JVM整体结构深度解析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/JVM/%E8%AF%B8%E8%91%9B%20-%20JVM%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90.md)
