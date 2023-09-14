@@ -16,7 +16,7 @@ sudo docker stop nginx
 
 # 给域名生成证书（把 mydomain.com 换成 自己的域名）
 # 我这里操作域名是 dev.admin-api.jdy.iyobee.com
-acme.sh  --issue -d dev.admin-api.jdy.iyobee.com --standalone
+acme.sh  --issue -d minio.gezizm.com --standalone
 ```
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1623311142217.png)
@@ -25,6 +25,8 @@ acme.sh  --issue -d dev.admin-api.jdy.iyobee.com --standalone
 # 将证书挪到 nginx 配置下
 cd /root/.acme.sh
 mv dev.admin-api.jdy.iyobee.com/ /home/developer/nginx/config/ssl/
+
+/root/.acme.sh/action-api.gezizm.com_ecc
 
 # 使用里面的 fullchain.cer 和 mydomian.com.key
 ```

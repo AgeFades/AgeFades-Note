@@ -410,3 +410,415 @@ SELECT SUM(price) FROM demo.goodsmaster;
 
 ## 03. 表：怎么创建和修改数据表？
 
+- 举例，超市项目里，客户经常需要进货，这就需要在 MySQL 数据库里创建一个表
+- 假设这个表叫做 进货单头表(importhead)，如下图所示
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1679884596150.png)
+
+### 创建数据库
+
+- MySQL 创建表的语法结构如下：
+
+```sql
+CREATE TABLE <表名>
+(
+字段名1 数据类型 [字段级别约束] [默认值]，
+字段名2 数据类型 [字段级别约束] [默认值]，
+......
+[表级别约束]
+);
+```
+
+- 在 MySQL 创建表的语法结构里面，有一个词叫做 `约束`
+  - `约束` **限定了表中数据应该满足的条件**
+- MySQL 会根据这些限定条件，对表的操作进行监控，阻止破坏约束条件的操作执行，并提示错误
+  - 从而确保表中数据的唯一性、合法性和完整性。这是创建表时不可缺少的一部分。
+
+
+
+- 这里我们需要定义默认值，也就是要定义 `默认值约束`，创建代码如下：
+
+```sql
+CREATE TABLE demo.importhead
+(
+  listnumber INT,
+  supplierid INT,
+  stocknumber INT,
+  -- 我们在字段importype定义为INT类型的后面，按照MySQL创建表的语法，加了默认值1。
+  importtype INT DEFAULT 1,
+  quantity DECIMAL(10,3),
+  importvalue DECIMAL(10,2),
+  recorder INT,
+  recordingdate DATETIME
+);
+```
+
+- 在创建表的时候，字段名要避开 MySQL 的 [系统关键字](https://dev.mysql.com/doc/refman/8.0/en/keywords.html#keywords-removed-in-current-series)
+
+### 都有哪些约束
+
+#### 默认约束
+
+- 默认约束就是在插入数据的时候，如果不明确给字段赋值，那么系统会把设置的默认值自动赋值给字段。
+
+#### 非空约束
+
+- 非空约束表示字段值不能为空，如果创建表的时候，指明某个字段非空，那么在添加数据的时候，这个字段就必须有值，否则系统就会提示错误。
+
+#### 唯一性约束
+
+- 表示该字段值不能重复，否则系统会提示错误。
+- 在一个系统中，可以指定多个字段满足唯一性约束，但主键约束则只能有一个
+- **满足主键约束的字段，自动满足非空约束，但是满足唯一性约束的字段，则可以是空值**
+
+#### 自增约束
+
+- 可以让MySQL自动给字段赋值，且保证不会重复
+- 在数据表中，只有整数类型的字段（tinyint、smallint、mediumint、int、bigint）才可以定义自增约束
+- 可以给自增约束的字段赋值，此时，MySQL会重置自增约束字段的自增基数，下次添加数据的时候，自动以自增约束字段的最大值+1为新的字段值
+
+### 如何修改表
+
+- 复制数据表结构SQL：
+
+```sql
+CREATE TABLE demo.importheadhist LIKE demo.importhead;
+```
+
+#### 添加字段
+
+```sql
+mysql> ALTER TABLE demo.importheadhist
+    -> ADD confirmer INT; -- 添加一个字段confirmer，类型INT
+Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+
+mysql> ALTER TABLE demo.importheadhist
+    -> ADD confirmdate DATETIME; -- 添加一个字段confirmdate，类型是DATETIME
+Query OK, 0 rows affected (0.04 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+```
+
+- 查看表结构
+
+```sql
+mysql> DESCRIBE demo.importheadhist;
++----------------+---------------+------+-----+---------+-------+
+| Field          | Type          | Null | Key | Default | Extra |
++----------------+---------------+------+-----+---------+-------+
+| listnumber     | int           | NO   | PRI | NULL    |       |
+| supplierid     | int           | NO   |     | NULL    |       |
+| stocknumber    | int           | NO   |     | NULL    |       |
+| importtype     | int           | YES  |     | 1       |       |
+| quantity       | decimal(10,3) | YES  |     | NULL    |       |
+| importvalue    | decimal(10,2) | YES  |     | NULL    |       |
+| recorder       | int           | YES  |     | NULL    |       |
+| recordingdate  | datetime      | YES  |     | NULL    |       |
+| confirmer      | int           | YES  |     | NULL    |       |
+| confirmdate    | datetime      | YES  |     | NULL    |       |
++----------------+---------------+------+-----+---------+-------+
+10 rows in set (0.02 sec)
+```
+
+#### 修改字段
+
+- 修改字段名称和类型
+  - `quantity` ->  `importquantity`
+  - `decimal(10,3)` -> `double`
+
+```sql
+mysql> ALTER TABLE demo.importheadhist
+    -> CHANGE quantity importquantity DOUBLE;
+Query OK, 0 rows affected (0.15 sec)
+Records: 0  Duplicates: 0  Warnings: 0
+```
+
+- 查看表结构
+
+```sql
+mysql> DESCRIBE demo.importheadhist;
++----------------+---------------+------+-----+---------+-------+
+| Field          | Type          | Null | Key | Default | Extra |
++----------------+---------------+------+-----+---------+-------+
+| listnumber     | int           | NO   | PRI | NULL    |       |
+| supplierid     | int           | NO   |     | NULL    |       |
+| stocknumber    | int           | NO   |     | NULL    |       |
+| importtype     | int           | YES  |     | 1       |       |
+| importquantity | double        | YES  |     | NULL    |       |
+| importvalue    | decimal(10,2) | YES  |     | NULL    |       |
+| recorder       | int           | YES  |     | NULL    |       |
+| recordingdate  | datetime      | YES  |     | NULL    |       |
+| confirmer      | int           | YES  |     | NULL    |       |
+| confirmdate    | datetime      | YES  |     | NULL    |       |
++----------------+---------------+------+-----+---------+-------+
+10 rows in set (0.02 sec)
+```
+
+- 如果只想改变字段类型，可以这么写：
+
+```sql
+ALTER TABLE demo.importheadhist MODIFY importquantity DECIMAL(10,3);
+```
+
+- **指定位置向表中添加一个字段**
+
+```sql
+ALTER TABLE demo.importheadhist ADD suppliername TEXT AFTER supplierid;
+```
+
+### 总结
+
+- 常用的创建表的SQL语句：
+
+```sql
+CREATE TABLE
+(
+字段名 字段类型 PRIMARY KEY
+);
+CREATE TABLE
+(
+字段名 字段类型 NOT NULL
+);
+CREATE TABLE
+(
+字段名 字段类型 UNIQUE
+);
+CREATE TABLE
+(
+字段名 字段类型 DEFAULT 值
+);
+-- 这里要注意自增类型的条件，字段类型必须是整数类型。
+CREATE TABLE
+(
+字段名 字段类型 AUTO_INCREMENT
+);
+-- 在一个已经存在的表基础上，创建一个新表
+CREATE TABLE demo.importheadhist LIKE demo.importhead;
+-- 修改表的相关语句
+ALTER TABLE 表名 CHANGE 旧字段名 新字段名 数据类型;
+ALTER TABLE 表名 ADD COLUMN 字段名 字段类型 FIRST|AFTER 字段名;
+ALTER TABLE 表名 MODIFY 字段名 字段类型 FIRST|AFTER 字段名;
+```
+
+- MySQL支持的数据表操作不止这些，比如：
+
+  - 在表一级指定存储引擎：
+
+    - ```sql
+      ALTER TABLE 表名 ENGINE=INNODB;
+      ```
+
+  - 还可以通过指定关键字 `auto_extendsize` 来指定存储文件自增空间的大小，从而提高存储空间的利用率
+
+  - 在MySQL 8.0.23后的版本中，可以通过 `invisible` 关键字，使字段不可见，但却可以使用
+
+
+
+如果你想了解更多有关数据表的操作，我也给你提供两份资料： [MySQL创建表文档](https://dev.mysql.com/doc/refman/8.0/en/create-table.html) 和 [MySQL修改表文档](https://dev.mysql.com/doc/refman/8.0/en/alter-table.html)。这些都是MySQL的官方文档，相信会对你有所帮助。
+
+
+
+## 04. 增删改查 | 如何操作表中的数据
+
+### 添加数据
+
+- 先看一下添加数据的语法结构：
+
+```sql
+INSERT INTO 表名 [(字段名 [,字段名] ...)] VALUES (值的列表);
+```
+
+- 添加数据分为两种情况：`插入数据记录` 和 `插入查询结果`
+
+#### 插入数据记录
+
+- MySQL支持的数据插入操作十分灵活，既可以给表里所有字段赋值，也可以只给部分字段赋值，只要满足表的约束条件即可 
+- 举例如下：
+
+```sql
+INSERT INTO demo.goodsmaster
+(
+  itemnumber,
+  barcode,
+  goodsname,
+  specification,
+  unit,
+  price
+)
+VALUES
+(
+  4,
+  '0003',
+  '尺子',
+  '三角型',
+  '把',
+  5
+);
+```
+
+```sql
+INSERT INTO demo.goodsmaster
+(
+-- 这里只给3个字段赋值，itemnumber、specification、unit不赋值
+  barcode,
+  goodsname,
+  price
+)
+VALUES
+(
+  '0004',
+  '测试',
+  10
+);
+```
+
+#### 插入查询结果
+
+- MySQL支持把查询的结果插入到数据表中，可以指定字段、甚至是数值，插入到数据表中，语法如下：
+
+```sql
+INSERT INTO 表名 （字段名）
+SELECT 字段名或值
+FROM 表名
+WHERE 条件
+```
+
+### 删除数据
+
+- 语法如下：
+
+```sql
+DELETE FROM 表名 WHERE 条件
+```
+
+### 修改数据
+
+- 语法如下：
+
+```sql
+UPDATE 表名
+SET 字段名=值
+WHERE 条件
+```
+
+### 查询数据
+
+- 语法如下：
+
+```sql
+SELECT *|字段列表
+FROM 数据源
+WHERE 条件
+GROUP BY 字段
+HAVING 条件
+ORDER BY 字段
+LIMIT 起始点，行数
+```
+
+- `select`：查询关键字，* 是一个通配符，表示查询表中所有字段
+- `where`：查询条件
+- `group by`：表示查询结果如何分组，经常与MySQL的聚合函数一起使用
+- `having`：筛选查询结果，跟where类似
+
+#### from
+
+- 表示查询的数据源，不一定是表，也可以是一个查询的结果，比如下面的结果：
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1679886839612.png)
+
+- 红色框里的部分叫 `派生表(derived table)` 或 `子查询(subquery)`
+- 意思是我们可以把一个查询结果数据集，当做一个虚拟的数据表来看待。
+- MySQL 规定，必须要用 as 关键字给这个派生表起一个别名
+
+#### order by
+
+- 表示结果如何排序，**asc 表示升序、desc 表示降序**
+
+#### limit
+
+- 表示只显示部分查询结果，举例如下：
+
+```sql
+mysql> SELECT *
+    -> FROM demo.goodsmaster
+    -> LIMIT 1,2;
++------------+---------+-----------+---------------+------+-------+
+| itemnumber | barcode | goodsname | specification | unit | price |
++------------+---------+-----------+---------------+------+-------+
+|          5 | 0004    | 测试      | NULL          | NULL | 10.00 |
+|          6 | 0003    | 尺子1     | NULL          | NULL | 15.00 |
++------------+---------+-----------+---------------+------+-------+
+2 rows in set (0.00 sec)
+```
+
+- 这里的 `limit 1,2` 中
+  - 1 表示起始位置，MySQL 中，起始位是0，1表示从第2条记录开始；
+  - 2 表示2条数据
+
+### 总结
+
+- 补充：把查询结果插入到表中时，导致主键约束或唯一约束被破坏了，就可以用 `on duplicate` 关键字进行处理。
+- 举例：
+
+```sql
+mysql> SELECT *
+    -> FROM demo.goodsmaster;
++------------+---------+-----------+---------------+------+------------+
+| itemnumber | barcode | goodsname | specification | unit | salesprice |
++------------+---------+-----------+---------------+------+------------+
+|          1 | 0001    | 书        | 16开          | 本   |      89.00 |
+|          2 | 0002    | 笔        | 10支装        | 包   |       5.00 |
+|          3 | 0003    | 橡皮      | NULL          | 个   |       3.00 |
++------------+---------+-----------+---------------+------+------------+
+3 rows in set (0.00 sec)
+```
+
+```sql
+mysql> SELECT *
+    -> FROM demo.goodsmaster1;
++------------+---------+-----------+---------------+------+------------+
+| itemnumber | barcode | goodsname | specification | unit | salesprice |
++------------+---------+-----------+---------------+------+------------+
+|          1 | 0001    | 教科书    | NULL          | NULL |      89.00 |
+|          4 | 0004    | 馒头      |               |      |       1.50 |
++------------+---------+-----------+---------------+------+------------+
+2 rows in set (0.00 sec)
+```
+
+- 把 goodsmaster1 的数据插入到 goodsmaster 中，并处理重复数据
+
+```sql
+INSERT INTO demo.goodsmaster
+SELECT *
+FROM demo.goodsmaster1 as a
+ON DUPLICATE KEY UPDATE barcode = a.barcode,goodsname=a.goodsname;
+-- 运行结果如下
+mysql> SELECT *
+    -> FROM demo.goodsmaster;
++------------+---------+-----------+---------------+------+------------+
+| itemnumber | barcode | goodsname | specification | unit | salesprice |
++------------+---------+-----------+---------------+------+------------+
+|          1 | 0001    | 教科书    | 16开          | 本   |      89.00 |
+|          2 | 0002    | 笔        | 10支装        | 包   |       5.00 |
+|          3 | 0003    | 橡皮      | NULL          | 个   |       3.00 |
+|          4 | 0004    | 馒头      |               |      |       1.50 |
++------------+---------+-----------+---------------+------+------------+
+4 rows in set (0.00 sec)
+```
+
+最后，我再跟你分享3份资料，分别是 [MySQL数据插入](https://dev.mysql.com/doc/refman/8.0/en/insert.html)、 [MySQL数据更新](https://dev.mysql.com/doc/refman/8.0/en/update.html) 和 [MySQL数据查询](https://dev.mysql.com/doc/refman/8.0/en/select.html)，如果你在工作中遇到了更加复杂的操作需求，就可以参考一下。
+
+### 精选问答
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1679888448638.png)
+
+![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1679888506335.png)
+
+## 05. 主键 | 如何正确设置主键
+
+- 一般三种方式：
+  1. 业务数据做主键
+  2. 自增主键（单机推荐）
+  3. 程序手动给主键赋值（分布式项目推荐，如雪花算法id...）
+
+## 06. 外键和连接 | 如何做关联查询

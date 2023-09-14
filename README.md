@@ -8,303 +8,393 @@
 - 只有不断的学习才能不被时代淘汰。
 - 记录AgeFades 成长历程。
 
+## 工作经验积累输出文档
+
+[Redis bitmap 实现签到](工作经验积累输出文档/Redis bitmap 实现签到.md)
+[Linux 基础开发环境搭建](工作经验积累输出文档/Linux 基础开发环境搭建.md)
+[认证鉴权流程](工作经验积累输出文档/认证鉴权流程.md)
+[技术分享 - 微服务日志体系](工作经验积累输出文档/技术分享 - 微服务日志体系.md)
+[Mac M1安装虚拟机](工作经验积累输出文档/Mac M1安装虚拟机.md)
+[Redis Lua实现限流(防表单重复提交)](工作经验积累输出文档/Redis Lua实现限流(防表单重复提交).md)
+[Redisson](工作经验积累输出文档/Redisson.md)
+[Sentry](工作经验积累输出文档/Sentry.md)
+[Git目录账号信息配置](工作经验积累输出文档/Git目录账号信息配置.md)
+[Minio大文件分片上传、断点续传、秒传](工作经验积累输出文档/Minio大文件分片上传、断点续传、秒传.md)[Liquibase数据库版本控制](工作经验积累输出文档/Liquibase数据库版本控制.md)
+[技术分享 - SpringCloud灰度发布方案](工作经验积累输出文档/技术分享 - SpringCloud灰度发布方案.md)
+[AI接口对接及SSEEmitter](工作经验积累输出文档/AI接口对接及SSEEmitter.md)
+[Oracle 相关文档](工作经验积累输出文档/Oracle 相关文档.md)
+[多租户物理分库实际案例](工作经验积累输出文档/多租户物理分库实际案例.md)
+[Knife4j](工作经验积累输出文档/Knife4j.md)
+[MySQL 设计基础约定](工作经验积累输出文档/MySQL 设计基础约定.md)
+[达梦相关文档](工作经验积累输出文档/达梦相关文档.md)
+[Git Commit规范](工作经验积累输出文档/Git Commit规范.md)
+[项目开发规范](工作经验积累输出文档/项目开发规范.md)
+
+
+
 ## Java
 
 ### 微服务专题
 
-[技术分享 - 微服务日志体系](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB%20-%20%E5%BE%AE%E6%9C%8D%E5%8A%A1%E6%97%A5%E5%BF%97%E4%BD%93%E7%B3%BB.md)
-
-[技术分享 - SpringCloud灰度发布方案](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB%20-%20SpringCloud%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83%E6%96%B9%E6%A1%88.md)
-
-[Fox - 微服务介绍](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/Fox%20-%20%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%BB%8B%E7%BB%8D.md)
-
-[Fox - Feign](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/Fox%20-%20Feign.md)
-
-[Fox - Gateway](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/Fox%20-%20Gateway.md)
-
-[方志鹏 - Gateway](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/%E6%96%B9%E5%BF%97%E9%B9%8F%20-%20SpringCloud%20Gateway.md)
-
-[Fox - Nacos - 注册中心](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/Fox%20-%20Nacos%20-%20%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83.md)
-
-[Fox - Nacos - 配置中心](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/Fox%20-%20Nacos%20-%20%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83.md)
-
-[Fox - Nacos - 配置中心源码分析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/Fox%20-%20Nacos%20-%20%E9%85%8D%E7%BD%AE%E4%B8%AD%E5%BF%83%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.md)
-
-[诸葛 - Nacos - 注册中心源码分析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/%E8%AF%B8%E8%91%9B%20-%20Nacos%20-%20%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.md)
-
-[诸葛 - Nacos - 注册中心CP架构Raft源码分析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/%E8%AF%B8%E8%91%9B%20-%20Nacos%20-%20%E6%B3%A8%E5%86%8C%E4%B8%AD%E5%BF%83CP%E6%9E%B6%E6%9E%84Raft%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90.md)
-
-[Fox - Ribbon](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/Fox%20-%20Ribbon.md)
-
-[Fox - 分布式事务的介绍](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/Fox%20-%20%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%9A%84%E4%BB%8B%E7%BB%8D.md)
-
-[Fox - Seata使用及原理剖析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/Fox%20-%20Seata%E4%BD%BF%E7%94%A8%E5%8F%8A%E5%8E%9F%E7%90%86%E5%89%96%E6%9E%90.md)
-
-[慕课 - SpringCloud Alibaba](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/%E6%85%95%E8%AF%BE%20-%20Spring%20Cloud%20Alibaba.md)
-
-[周阳 - SpringCloud](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%BE%AE%E6%9C%8D%E5%8A%A1%E4%B8%93%E9%A2%98/%E5%91%A8%E9%98%B3%20-%20SpringCloud.md)
-
-### 性能调优专题
-
-[Fox - Tomcat整体架构及其设计精髓分析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/Tomcat/Fox%20-%20Tomcat%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84%E5%8F%8A%E5%85%B6%E8%AE%BE%E8%AE%A1%E7%B2%BE%E9%AB%93%E5%88%86%E6%9E%90.md)
-
-[Fox - Tomcat线程模型详解&性能调优](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/Tomcat/Fox%20-%20Tomcat%E7%BA%BF%E7%A8%8B%E6%A8%A1%E5%9E%8B%E8%AF%A6%E8%A7%A3%26%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98.md)
-
-[Fox - Tomcat类加载机制及其热加载和热部署原理剖析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/Tomcat/Fox%20-%20Tomcat%E7%B1%BB%E5%8A%A0%E8%BD%BD%E6%9C%BA%E5%88%B6%E5%8F%8A%E5%85%B6%E7%83%AD%E5%8A%A0%E8%BD%BD%E5%92%8C%E7%83%AD%E9%83%A8%E7%BD%B2%E5%8E%9F%E7%90%86%E5%89%96%E6%9E%90.md)
-
-[诸葛 - JVM类加载](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/JVM/%E8%AF%B8%E8%91%9B%20-%20JVM%E7%B1%BB%E5%8A%A0%E8%BD%BD.md)
-
-[诸葛 - JVM整体结构深度解析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/JVM/%E8%AF%B8%E8%91%9B%20-%20JVM%E6%95%B4%E4%BD%93%E7%BB%93%E6%9E%84%E6%B7%B1%E5%BA%A6%E8%A7%A3%E6%9E%90.md)
-
-[诸葛 - JVM对象创建内存分配机制详解](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/JVM/%E8%AF%B8%E8%91%9B%20-%20JVM%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D%E6%9C%BA%E5%88%B6%E8%AF%A6%E8%A7%A3.md)
-
-[诸葛 - ParNew&CMS 与 三色标记算法](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/JVM/%E8%AF%B8%E8%91%9B%20-%20ParNew%26CMS%20%E4%B8%8E%20%E4%B8%89%E8%89%B2%E6%A0%87%E8%AE%B0%E7%AE%97%E6%B3%95.md)
-
-[诸葛 - G1&ZGC](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/JVM/%E8%AF%B8%E8%91%9B%20-%20G1%26ZGC.md)
-
-[诸葛 - JVM调优(上)](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/JVM/%E8%AF%B8%E8%91%9B%20-%20JVM%20%E8%B0%83%E4%BC%98(%E4%B8%8A).md)
-
-[诸葛 - JVM调优(下)](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/JVM/%E8%AF%B8%E8%91%9B%20-%20JVM%E8%B0%83%E4%BC%98(%E4%B8%8B).md)
-
-[杨过 - 一条SQL的执行过程](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/MySQL/%E6%9D%A8%E8%BF%87%20-%20%E4%B8%80%E6%9D%A1SQL%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B.md)
-
-[诸葛 - MySQL事务与锁](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/MySQL/%E8%AF%B8%E8%91%9B%20-%20MySQL%E4%BA%8B%E5%8A%A1%E4%B8%8E%E9%94%81.md)
-
-[诸葛 - MySQL索引及Explain](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/MySQL/%E8%AF%B8%E8%91%9B%20-%20MySQL%20%E7%B4%A2%E5%BC%95%E5%8F%8AExplain.md)
-
-[诸葛 - MVCC与BufferPool缓存机制](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/MySQL/%E8%AF%B8%E8%91%9B%20-%20MVCC%E4%B8%8EBufferPool%E7%BC%93%E5%AD%98%E6%9C%BA%E5%88%B6.md)
-
-[诸葛 - 索引优化实战](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%80%A7%E8%83%BD%E8%B0%83%E4%BC%98%E4%B8%93%E9%A2%98/MySQL/%E8%AF%B8%E8%91%9B%20-%20%E7%B4%A2%E5%BC%95%E4%BC%98%E5%8C%96%E5%AE%9E%E6%88%98.md)
-
-### 分布式框架专题
-
-[Fox - MongoDB快速实战与基本原理](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/Fox%20-%20MongoDB%E5%BF%AB%E9%80%9F%E5%AE%9E%E6%88%98%E4%B8%8E%E5%9F%BA%E6%9C%AC%E5%8E%9F%E7%90%86.md)
-
-[Fox - MongoDB聚合操作及索引使用详解](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/Fox%20-%20MongoDB%E8%81%9A%E5%90%88%E6%93%8D%E4%BD%9C%E5%8F%8A%E7%B4%A2%E5%BC%95%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3.md#fox---mongodb%E8%81%9A%E5%90%88%E6%93%8D%E4%BD%9C%E5%8F%8A%E7%B4%A2%E5%BC%95%E4%BD%BF%E7%94%A8%E8%AF%A6%E8%A7%A3)
-
-[Fox - MongoDB复制（副本）集实战及其原理分析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/Fox%20-%20MongoDB%E5%A4%8D%E5%88%B6%EF%BC%88%E5%89%AF%E6%9C%AC%EF%BC%89%E9%9B%86%E5%AE%9E%E6%88%98%E5%8F%8A%E5%85%B6%E5%8E%9F%E7%90%86%E5%88%86%E6%9E%90.md)
-
-[Fox - MongoDB分片集群&多文档事务详解](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/Fox%20-%20MongoDB%E5%88%86%E7%89%87%E9%9B%86%E7%BE%A4%26%E5%A4%9A%E6%96%87%E6%A1%A3%E4%BA%8B%E5%8A%A1%E8%AF%A6%E8%A7%A3.md)
-
-[Redisson](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/Redisson.md)
-
-[多租户物理分库实际案例](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%A4%9A%E7%A7%9F%E6%88%B7%E7%89%A9%E7%90%86%E5%88%86%E5%BA%93%E5%AE%9E%E9%99%85%E6%A1%88%E4%BE%8B.md)
-
-[慕课 - RabbitMq](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E6%85%95%E8%AF%BE%20-%20RabbitMq.md)
-
-[楼兰 - MySQL生产环境高可用架构详解](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E6%A5%BC%E5%85%B0%20-%20MySQL%E7%94%9F%E4%BA%A7%E7%8E%AF%E5%A2%83%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84%E8%AF%A6%E8%A7%A3.md)
-
-[楼兰 - RocketMQ](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E6%A5%BC%E5%85%B0%20-%20RocketMQ.md)
-
-[楼兰 - ShardingJDBC核心理念与快速实战](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E6%A5%BC%E5%85%B0%20-%20ShardingJDBC%E6%A0%B8%E5%BF%83%E7%90%86%E5%BF%B5%E4%B8%8E%E5%BF%AB%E9%80%9F%E5%AE%9E%E6%88%98.md)
-
-[楼兰 - ShardingSphere内核原理及源码剖析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E6%A5%BC%E5%85%B0%20-%20ShardingSphere%E5%86%85%E6%A0%B8%E5%8E%9F%E7%90%86%E5%8F%8A%E6%A0%B8%E5%BF%83%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90.md)
-
-[白起 - RabbitMQ](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E7%99%BD%E8%B5%B7%20-%20RabbitMQ.md)
-
-[诸葛 - Kafka](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E8%AF%B8%E8%91%9B%20-%20Kafka.md)
-
-[诸葛 - Redis(上)](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E8%AF%B8%E8%91%9B%20-%20Redis(%E4%B8%8A).md)
-
-[诸葛 - Redis(下)](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E8%AF%B8%E8%91%9B%20-%20Redis(%E4%B8%8B).md)
-
-[郭嘉 - 深入底层C源码讲透Redis核心设计原理](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E9%83%AD%E5%98%89%20-%20%E6%B7%B1%E5%85%A5%E5%BA%95%E5%B1%82C%E6%BA%90%E7%A0%81%E8%AE%B2%E9%80%8FRedis%E6%A0%B8%E5%BF%83%E8%AE%BE%E8%AE%A1%E5%8E%9F%E7%90%86.md)
-
-[鲁班 - Zookeeper](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%88%86%E5%B8%83%E5%BC%8F%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E9%B2%81%E7%8F%AD%20-%20Zookeeper.md)
-
-### 源码框架专题
-
-[徐庶 - Spring核心相关概念](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%BE%90%E5%BA%B6%20-%20Spring%E6%A0%B8%E5%BF%83%E7%9B%B8%E5%85%B3%E6%A6%82%E5%BF%B5.md)
-
-[徐庶 - Spring中的设计模式](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%BE%90%E5%BA%B6%20-%20Spring%E4%B8%AD%E7%9A%84%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F.md)
-
-[徐庶 - Spring IOC加载流程](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%BE%90%E5%BA%B6%20-%20Spring%20IOC%E5%8A%A0%E8%BD%BD%E6%B5%81%E7%A8%8B.md)
-
-[徐庶 - Spring IOC源码剖析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%BE%90%E5%BA%B6%20-%20Spring%20IOC%E6%BA%90%E7%A0%81%E5%89%96%E6%9E%90.md)
-
-[徐庶 - Spring循环依赖](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%BE%90%E5%BA%B6%20-%20Spring%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96.md)
-
-[徐庶 - Spring监听器原理](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%BE%90%E5%BA%B6%20-%20Spring%E7%9B%91%E5%90%AC%E5%99%A8%E5%8E%9F%E7%90%86%E5%AD%A6%E4%B9%A0.md)
-
-[徐庶 - Spring AOP](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%BE%90%E5%BA%B6%20-%20Spring%20AOP.md)
-
-[徐庶 - SpringBoot启动原理](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%BE%90%E5%BA%B6%20-%20SpringBoot%E5%90%AF%E5%8A%A8%E5%8E%9F%E7%90%86.md)
-
-[徐庶 - SpringBoot自动装配](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%BE%90%E5%BA%B6%20-%20SpringBoot%E8%87%AA%E5%8A%A8%E8%A3%85%E9%85%8D.md)
-
-[周瑜 - Spring之底层架构核心概念解析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%91%A8%E7%91%9C%20-%20Spring%E4%B9%8B%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%E8%A7%A3%E6%9E%90.md)
-
-[周瑜 - Spring之底层核心原理解析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%91%A8%E7%91%9C%20-%20Spring%E5%BA%95%E5%B1%82%E6%A0%B8%E5%BF%83%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90.md)
-
-[周瑜 - 手写Spring](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%91%A8%E7%91%9C%20-%20%E6%89%8B%E5%86%99Spring.md)
-
-[周瑜 - Spring之Bean生命周期源码解读](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%91%A8%E7%91%9C%20-%20Spring%E4%B9%8BBean%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB.md)
-
-[周瑜 - Spring之依赖注入源码解析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%91%A8%E7%91%9C%20-%20Spring%E4%B9%8B%E4%BE%9D%E8%B5%96%E6%B3%A8%E5%85%A5%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90.md)
-
-[周瑜 - Spring之AOP](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%91%A8%E7%91%9C%20-%20Spring%E4%B9%8BAOP.md)
-
-[周瑜 - Spring之循环依赖](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%91%A8%E7%91%9C%20-%20Spring%E4%B9%8B%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96.md)
-
-[周瑜 - Spring之事务](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E5%91%A8%E7%91%9C%20-%20Spring%E4%B9%8B%E4%BA%8B%E5%8A%A1.md)
-
-[慕课 - Spring Security](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E6%85%95%E8%AF%BE%20-%20Spring%20Security.md)
-
-[黑马 - GraphQL](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E9%BB%91%E9%A9%AC%20-%20GrapQL.md)
-
-[黑马 - SpringDataJpa](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E6%BA%90%E7%A0%81%E6%A1%86%E6%9E%B6%E4%B8%93%E9%A2%98/%E9%BB%91%E9%A9%AC%20-%20SpringDataJpa.md)
-
-### 并发编程专题
-
-[杨过 - 操作系统底层工作的整体认识](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%93%E9%A2%98/%E6%9D%A8%E8%BF%87%20-%20%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%BA%95%E5%B1%82%E5%B7%A5%E4%BD%9C%E7%9A%84%E6%95%B4%E4%BD%93%E8%AE%A4%E8%AF%86.md)
-
-[杨过 - CPU缓存一致性协议MESI](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%93%E9%A2%98/%E6%9D%A8%E8%BF%87%20-%20CPU%E7%BC%93%E5%AD%98%E4%B8%80%E8%87%B4%E6%80%A7%E5%8D%8F%E8%AE%AEMESI.md)
-
-[杨过 - 深入理解Java内存模型](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%93%E9%A2%98/%E6%9D%A8%E8%BF%87%20-%20%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Java%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B.md)
-
-[杨过 - Synchronized详解](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%93%E9%A2%98/%E6%9D%A8%E8%BF%87%20-%20Synchronized%20%E8%AF%A6%E8%A7%A3.md)
-
-[杨过 - AQS同步器工具类](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%93%E9%A2%98/%E6%9D%A8%E8%BF%87%20-%20AQS%E5%90%8C%E6%AD%A5%E5%99%A8%E5%B7%A5%E5%85%B7%E7%B1%BB.md)
-
-[杨过 - AQS应用Lock详解](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%93%E9%A2%98/%E6%9D%A8%E8%BF%87%20-%20%E6%8A%BD%E8%B1%A1%E9%98%9F%E5%88%97%E5%90%8C%E6%AD%A5%E5%99%A8AQS%E5%BA%94%E7%94%A8Lock%E8%AF%A6%E8%A7%A3.md)
-
-[杨过 - AQS应用BlockingQueue详解](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%93%E9%A2%98/%E6%9D%A8%E8%BF%87%20-%20%E6%8A%BD%E8%B1%A1%E9%98%9F%E5%88%97%E5%90%8C%E6%AD%A5%E5%99%A8AQS%E5%BA%94%E7%94%A8BlockingQueue%E8%AF%A6%E8%A7%A3.md)
-
-[杨过 - Atomic & Unsafe](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B8%93%E9%A2%98/%E6%9D%A8%E8%BF%87%20-%20Atomic%20%26%20Unsafe.md)
+[Fox - Nacos - 注册中心](Java/微服务专题/Fox - Nacos - 注册中心.md)
+[诸葛 - Nacos - 注册中心源码分析](Java/微服务专题/诸葛 - Nacos - 注册中心源码分析.md)
+[Fox - Seata使用及原理剖析](Java/微服务专题/Fox - Seata使用及原理剖析.md)
+[方志鹏 - SpringCloud Gateway](Java/微服务专题/方志鹏 - SpringCloud Gateway.md)
+[Fox - Nacos - 配置中心源码分析](Java/微服务专题/Fox - Nacos - 配置中心源码分析.md)
+[Fox - Feign](Java/微服务专题/Fox - Feign.md)
+[慕课 - Spring Cloud Alibaba](Java/微服务专题/慕课 - Spring Cloud Alibaba.md)
+[Fox - 微服务介绍](Java/微服务专题/Fox - 微服务介绍.md)
+[Fox - Ribbon](Java/微服务专题/Fox - Ribbon.md)
+[Fox - 分布式事务的介绍](Java/微服务专题/Fox - 分布式事务的介绍.md)
+[诸葛 - Nacos - 注册中心CP架构Raft源码分析](Java/微服务专题/诸葛 - Nacos - 注册中心CP架构Raft源码分析.md)
+[Fox - Gateway](Java/微服务专题/Fox - Gateway.md)
+[Fox - Nacos - 配置中心](Java/微服务专题/Fox - Nacos - 配置中心.md)
+[周阳 - SpringCloud](Java/微服务专题/周阳 - SpringCloud.md)
 
 ### 基础及网络通信
 
-[知乎 - 泛型](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%9F%BA%E7%A1%80%E5%8F%8A%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/%E6%B3%9B%E5%9E%8B.md)
+[黑马 - WebSocket](Java/基础及网络通信/黑马 - WebSocket.md)
+[Mark - 深入理解网络通信和TCPIP协议](Java/基础及网络通信/Mark - 深入理解网络通信和TCPIP协议.md)
+[泛型](Java/基础及网络通信/泛型.md)
+[硅谷 - JDK8](Java/基础及网络通信/硅谷 - JDK8.md)
+[Spring-Boot整合Native原生](Java/基础及网络通信/Spring-Boot整合Native原生.md)
+[知乎 - SPI - Java、Dubbo、SpringBoot](Java/基础及网络通信/知乎 - SPI - Java、Dubbo、SpringBoot.md)
+[Spring-Boot整合Swagger2以及Knife4j](Java/基础及网络通信/Spring-Boot整合Swagger2以及Knife4j.md)
+[硅谷 - Netty](Java/基础及网络通信/硅谷 - Netty.md)
+[硅谷 - NIO](Java/基础及网络通信/硅谷 - NIO.md)
 
-[知乎 - Java SPI、Dubbo SPI、SpringBoot SPI原理解析](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%9F%BA%E7%A1%80%E5%8F%8A%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/%E7%9F%A5%E4%B9%8E%20-%20SPI%20-%20Java%E3%80%81Dubbo%E3%80%81SpringBoot.md)
+### 性能调优专题
 
-[硅谷 - JDK8](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%9F%BA%E7%A1%80%E5%8F%8A%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/%E7%A1%85%E8%B0%B7%20-%20JDK8.md)
+#### Tomcat
 
-[硅谷 - NIO](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%9F%BA%E7%A1%80%E5%8F%8A%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/%E7%A1%85%E8%B0%B7%20-%20NIO.md)
+[Fox - Tomcat类加载机制及其热加载和热部署原理剖析](Java/性能调优专题/Tomcat/Fox - Tomcat类加载机制及其热加载和热部署原理剖析.md)
+[Fox - Tomcat整体架构及其设计精髓分析](Java/性能调优专题/Tomcat/Fox - Tomcat整体架构及其设计精髓分析.md)
+[Fox - Tomcat线程模型详解&性能调优](Java/性能调优专题/Tomcat/Fox - Tomcat线程模型详解&性能调优.md)
 
-[硅谷 - Netty](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%9F%BA%E7%A1%80%E5%8F%8A%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/%E7%A1%85%E8%B0%B7%20-%20Netty.md)
+#### JVM
 
-[黑马 - WebSocket](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E5%9F%BA%E7%A1%80%E5%8F%8A%E7%BD%91%E7%BB%9C%E9%80%9A%E4%BF%A1/%E9%BB%91%E9%A9%AC%20-%20WebSocket.md)
+[诸葛 - JVM 调优(上)](Java/性能调优专题/JVM/诸葛 - JVM 调优(上).md)
+[诸葛 - ParNew&CMS 与 三色标记算法](Java/性能调优专题/JVM/诸葛 - ParNew&CMS 与 三色标记算法.md)
+[诸葛 - JVM调优(下)](Java/性能调优专题/JVM/诸葛 - JVM调优(下).md)
+[诸葛 - JVM整体结构深度解析](Java/性能调优专题/JVM/诸葛 - JVM整体结构深度解析.md)
+[诸葛 - JVM类加载](Java/性能调优专题/JVM/诸葛 - JVM类加载.md)
+[诸葛 - JVM对象创建内存分配机制详解](Java/性能调优专题/JVM/诸葛 - JVM对象创建内存分配机制详解.md)
+[诸葛 - G1&ZGC](Java/性能调优专题/JVM/诸葛 - G1&ZGC.md)
 
-[周阳 - volatile、JUC、线程池详解](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E9%9D%A2%E8%AF%95%E5%88%B7%E9%A2%98/%E5%91%A8%E9%98%B3%20-%20Java%20%E5%BA%95%E5%B1%82%E4%B8%8A.md)
+#### MySQL
 
-[周阳 - JVM、GC](https://github.com/AgeFades/AgeFades-Note/blob/master/Java/%E9%9D%A2%E8%AF%95%E5%88%B7%E9%A2%98/%E5%91%A8%E9%98%B3%20-%20Java%20%E5%BA%95%E5%B1%82%E4%B8%8B.md)
+[诸葛 - MySQL 索引及Explain](Java/性能调优专题/MySQL/诸葛 - MySQL 索引及Explain.md)
+[诸葛 - 索引优化实战](Java/性能调优专题/MySQL/诸葛 - 索引优化实战.md)
+[诸葛 - MVCC与BufferPool缓存机制](Java/性能调优专题/MySQL/诸葛 - MVCC与BufferPool缓存机制.md)
+[杨过 - 一条SQL的执行过程](Java/性能调优专题/MySQL/杨过 - 一条SQL的执行过程.md)
+[诸葛 - MySQL事务与锁](Java/性能调优专题/MySQL/诸葛 - MySQL事务与锁.md)
 
-## 工具
+### 面试刷题
 
-[Knife4j API接口文档](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Knife4j.md)
+[敖丙 - 计算机基础](Java/面试刷题/敖丙 - 计算机基础.md)
+[周阳 - Java 底层上](Java/面试刷题/周阳 - Java 底层上.md)
+[敖丙 - Redis基础](Java/面试刷题/敖丙 - Redis基础.md)
+[周阳 - Java 底层下](Java/面试刷题/周阳 - Java 底层下.md)
+[敖丙 - HashMap](Java/面试刷题/敖丙 - HashMap.md)
+[敖丙 - Linux](Java/面试刷题/敖丙 - Linux.md)
 
-[SSEEmitter](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/SSEEmitter.md)
+### 分布式框架专题
 
-[Minio大文件分片上传、断点续传、秒传](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Minio%E5%A4%A7%E6%96%87%E4%BB%B6%E5%88%86%E7%89%87%E4%B8%8A%E4%BC%A0%E3%80%81%E6%96%AD%E7%82%B9%E7%BB%AD%E4%BC%A0%E3%80%81%E7%A7%92%E4%BC%A0.md)
+[Fox - MongoDB复制（副本）集实战及其原理分析](Java/分布式框架专题/Fox - MongoDB复制（副本）集实战及其原理分析.md)
+[白起 - RabbitMQ](Java/分布式框架专题/白起 - RabbitMQ.md)
+[楼兰 - MySQL生产环境高可用架构详解](Java/分布式框架专题/楼兰 - MySQL生产环境高可用架构详解.md)
+[Fox - MongoDB聚合操作及索引使用详解](Java/分布式框架专题/Fox - MongoDB聚合操作及索引使用详解.md)
+[诸葛 - Kafka](Java/分布式框架专题/诸葛 - Kafka.md)
+[楼兰 - ShardingSphere内核原理及核心源码剖析](Java/分布式框架专题/楼兰 - ShardingSphere内核原理及核心源码剖析.md)
+[楼兰 - RocketMQ](Java/分布式框架专题/楼兰 - RocketMQ.md)
+[Fox - MongoDB快速实战与基本原理](Java/分布式框架专题/Fox - MongoDB快速实战与基本原理.md)
+[慕课 - RabbitMq](Java/分布式框架专题/慕课 - RabbitMq.md)
+[郭嘉 - 深入底层C源码讲透Redis核心设计原理](Java/分布式框架专题/郭嘉 - 深入底层C源码讲透Redis核心设计原理.md)
+[楼兰 - ShardingJDBC核心理念与快速实战](Java/分布式框架专题/楼兰 - ShardingJDBC核心理念与快速实战.md)
+[鲁班 - Zookeeper](Java/分布式框架专题/鲁班 - Zookeeper.md)
+[Fox - MongoDB分片集群&多文档事务详解](Java/分布式框架专题/Fox - MongoDB分片集群&多文档事务详解.md)
+[诸葛 - Redis(下)](Java/分布式框架专题/诸葛 - Redis(下).md)
+[诸葛 - Redis(上)](Java/分布式框架专题/诸葛 - Redis(上).md)
 
-[Liquibase数据库版本控制](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Liquibase%E6%95%B0%E6%8D%AE%E5%BA%93%E7%89%88%E6%9C%AC%E6%8E%A7%E5%88%B6.md)
+### 源码框架专题
 
-[Redis Lua实现限流(防表单重复提交)](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Redis%20Lua%E5%AE%9E%E7%8E%B0%E9%99%90%E6%B5%81(%E9%98%B2%E8%A1%A8%E5%8D%95%E9%87%8D%E5%A4%8D%E6%8F%90%E4%BA%A4).md)
+[慕课 - Spring Security](Java/源码框架专题/慕课 - Spring Security.md)
+[周瑜 - Spring之事务](Java/源码框架专题/周瑜 - Spring之事务.md)
+[Graylog](Java/源码框架专题/Graylog.md)
+[周瑜 - Spring之循环依赖](Java/源码框架专题/周瑜 - Spring之循环依赖.md)
+[徐庶 - Spring循环依赖](Java/源码框架专题/徐庶 - Spring循环依赖.md)
+[徐庶 - Spring AOP](Java/源码框架专题/徐庶 - Spring AOP.md)
+[周瑜 - 手写Spring](Java/源码框架专题/周瑜 - 手写Spring.md)
+[周瑜 - SpringMVC启动与请求处理流程解析](Java/源码框架专题/周瑜 - SpringMVC启动与请求处理流程解析.md)
+[徐庶 - Spring中的设计模式](Java/源码框架专题/徐庶 - Spring中的设计模式.md)
+[周瑜 - Spring之AOP](Java/源码框架专题/周瑜 - Spring之AOP.md)
+[周瑜 - Spring之依赖注入源码解析](Java/源码框架专题/周瑜 - Spring之依赖注入源码解析.md)
+[徐庶 - Spring IOC加载流程](Java/源码框架专题/徐庶 - Spring IOC加载流程.md)
+[周瑜 - Spring之底层架构核心概念解析](Java/源码框架专题/周瑜 - Spring之底层架构核心概念解析.md)
+[黑马 - SpringDataJpa](Java/源码框架专题/黑马 - SpringDataJpa.md)
+[徐庶 - Spring监听器原理学习](Java/源码框架专题/徐庶 - Spring监听器原理学习.md)
+[周瑜 - Spring之Bean生命周期源码解读](Java/源码框架专题/周瑜 - Spring之Bean生命周期源码解读.md)
+[徐庶 - SpringBoot启动原理](Java/源码框架专题/徐庶 - SpringBoot启动原理.md)
+[徐庶 - Spring核心相关概念](Java/源码框架专题/徐庶 - Spring核心相关概念.md)
+[徐庶 - SpringBoot自动装配](Java/源码框架专题/徐庶 - SpringBoot自动装配.md)
+[徐庶 - Spring IOC源码剖析](Java/源码框架专题/徐庶 - Spring IOC源码剖析.md)
+[周瑜 - Spring底层核心原理解析](Java/源码框架专题/周瑜 - Spring底层核心原理解析.md)
+[周瑜 - SpringMVC重点功能底层源码解析](Java/源码框架专题/周瑜 - SpringMVC重点功能底层源码解析.md)
+[黑马 - GrapQL](Java/源码框架专题/黑马 - GrapQL.md)
 
-[Idea使用相关技巧](https://github.com/AgeFades/AgeFades-Note/tree/master/%E5%B7%A5%E5%85%B7/idea)
+### 并发编程专题
 
-[Awesome Tools](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Awesome%20Tools.md)
+[杨过 - CPU缓存一致性协议MESI](Java/并发编程专题/杨过 - CPU缓存一致性协议MESI.md)
+[杨过 - 深入理解Java内存模型](Java/并发编程专题/杨过 - 深入理解Java内存模型.md)
+[杨过 - Synchronized 详解](Java/并发编程专题/杨过 - Synchronized 详解.md)
+[杨过 - Atomic & Unsafe](Java/并发编程专题/杨过 - Atomic & Unsafe.md)
+[杨过 - 操作系统底层工作的整体认识](Java/并发编程专题/杨过 - 操作系统底层工作的整体认识.md)
+[杨过 - 抽象队列同步器AQS应用BlockingQueue详解](Java/并发编程专题/杨过 - 抽象队列同步器AQS应用BlockingQueue详解.md)
+[杨过 - AQS同步器工具类](Java/并发编程专题/杨过 - AQS同步器工具类.md)
+[杨过 - 抽象队列同步器AQS应用Lock详解](Java/并发编程专题/杨过 - 抽象队列同步器AQS应用Lock详解.md)
 
-[Git Commit规范](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Git%20Commit%E8%A7%84%E8%8C%83.md)
 
-[Git万字教程](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Git.md)
-
-[Git多目录账号信息配置](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Git%E7%9B%AE%E5%BD%95%E8%B4%A6%E5%8F%B7%E4%BF%A1%E6%81%AF%E9%85%8D%E7%BD%AE.md)
-
-[Lombok](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Lombok.md)
-
-[Mac M1安装虚拟机](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Mac%20M1%E5%AE%89%E8%A3%85%E8%99%9A%E6%8B%9F%E6%9C%BA.md)
-
-[Mac scp命令](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Mac%20scp.md)
-
-[MySQL设计基础约定](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/MySQL%20%E8%AE%BE%E8%AE%A1%E5%9F%BA%E7%A1%80%E7%BA%A6%E5%AE%9A.md)
-
-[Sentry实时异常收集、邮件报警](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Sentry.md)
-
-[掘金 - SnowFlake](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/SnowFlake.md)
-
-[tree命令](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/Tree.md)
-
-[常用正则regex](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/regex.md)
-
-[版本号命名规则](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/%E7%89%88%E6%9C%AC%E5%8F%B7%E5%91%BD%E5%90%8D%E8%A7%84%E5%88%99.md)
-
-[项目开发规范](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/%E9%A1%B9%E7%9B%AE%E5%BC%80%E5%8F%91%E8%A7%84%E8%8C%83.md)
-
-[Unix内核获取本机公网ip的几种方法](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/%E8%8E%B7%E5%8F%96%E6%9C%AC%E6%9C%BA%E5%85%AC%E7%BD%91ip.md)
-
-[后台系统认证鉴权流程](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/%E8%AE%A4%E8%AF%81%E9%89%B4%E6%9D%83%E6%B5%81%E7%A8%8B.md)
-
-[黑马 - Arthas - 基础](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/%E9%BB%91%E9%A9%AC%20-%20Arthas%20-%20%E5%9F%BA%E7%A1%80.md)
-
-[黑马 - Arthas - 进阶](https://github.com/AgeFades/AgeFades-Note/blob/master/%E5%B7%A5%E5%85%B7/%E9%BB%91%E9%A9%AC%20-%20Arthas%20-%20%E8%BF%9B%E9%98%B6.md)
 
 ## 运维
 
-[黑马 - Jenkins - 基础篇](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/CICD/%E9%BB%91%E9%A9%AC%20-%20Jenkins%20-%20%E5%9F%BA%E7%A1%80%E7%AF%87.md)
+### Docker
 
-[黑马 - Jenkins - 微服务篇](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/CICD/%E9%BB%91%E9%A9%AC%20-%20Jenkins%20-%20%E5%BE%AE%E6%9C%8D%E5%8A%A1%E7%AF%87.md)
+[整合 - Docker](运维/Docker/整合 - Docker.md)
 
-[知乎 - Gitlab](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/CICD/%E7%9F%A5%E4%B9%8E%20-%20Gitlab.md)
+### 云原生
 
-[IT牧场 - 蓝绿发布、滚动发布、灰度发布](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/CICD/IT%E7%89%A7%E5%9C%BA%20-%20%E8%93%9D%E7%BB%BF%E5%8F%91%E5%B8%83%E3%80%81%E6%BB%9A%E5%8A%A8%E5%8F%91%E5%B8%83%E3%80%81%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83.md)
+[硅谷 - Docker](运维/云原生/硅谷 - Docker.md)
+[硅谷 - 云原生基础概念术语](运维/云原生/硅谷 - 云原生基础概念术语.md)
+### openResty + nginx + lua
 
-[Linux相关命令整理](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/Linux/%E6%95%B4%E7%90%86%20-%20Linux.md)
+[高可用缓存架构 openResty + nginx + lua](运维/openResty + nginx + lua/高可用缓存架构 openResty + nginx + lua.md)
+### CICD
 
-[Linux基础开发环境搭建](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/Linux%20%E5%9F%BA%E7%A1%80%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA/Linux%20%E5%9F%BA%E7%A1%80%E5%BC%80%E5%8F%91%E7%8E%AF%E5%A2%83%E6%90%AD%E5%BB%BA.md)
+[知乎 - Gitlab](运维/CICD/知乎 - Gitlab.md)
+[黑马 - Jenkins - 基础篇](运维/CICD/黑马 - Jenkins - 基础篇.md)
+[IT牧场 - 蓝绿发布、滚动发布、灰度发布](运维/CICD/IT牧场 - 蓝绿发布、滚动发布、灰度发布.md)
+[黑马 - Jenkins - 微服务篇](运维/CICD/黑马 - Jenkins - 微服务篇.md)
+### Prometheus + Grafana
 
-[慕课 - Linux系统扫描技术及安全防范](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/Linux%E7%B3%BB%E7%BB%9F%E6%89%AB%E6%8F%8F%E6%8A%80%E6%9C%AF%E5%8F%8A%E5%AE%89%E5%85%A8%E9%98%B2%E8%8C%83/%E6%85%95%E8%AF%BE%20-%20Linux%E7%B3%BB%E7%BB%9F%E6%89%AB%E6%8F%8F%E6%8A%80%E6%9C%AF%E5%8F%8A%E5%AE%89%E5%85%A8%E9%98%B2%E8%8C%83.md)
+[极客时间 - Prometheus + Grafana](运维/Prometheus + Grafana/极客时间 - Prometheus + Grafana.md)
+### 用Iptables搭建一套强大的安全防护盾
 
-[慕课 - Iptables搭建安全防护盾](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/%E7%94%A8Iptables%E6%90%AD%E5%BB%BA%E4%B8%80%E5%A5%97%E5%BC%BA%E5%A4%A7%E7%9A%84%E5%AE%89%E5%85%A8%E9%98%B2%E6%8A%A4%E7%9B%BE/%E6%85%95%E8%AF%BE%20-%20%E7%94%A8Iptables%E6%90%AD%E5%BB%BA%E4%B8%80%E5%A5%97%E5%BC%BA%E5%A4%A7%E7%9A%84%E5%AE%89%E5%85%A8%E9%98%B2%E6%8A%A4%E7%9B%BE.md)
+[慕课 - 用Iptables搭建一套强大的安全防护盾](运维/用Iptables搭建一套强大的安全防护盾/慕课 - 用Iptables搭建一套强大的安全防护盾.md)
+### Linux系统扫描技术及安全防范
 
-[项目服务搭建及部署](https://github.com/AgeFades/AgeFades-Note/tree/master/%E8%BF%90%E7%BB%B4/%E9%A1%B9%E7%9B%AE%E6%9C%8D%E5%8A%A1%E6%90%AD%E5%BB%BA%E5%8F%8A%E9%83%A8%E7%BD%B2)
+[慕课 - Linux系统扫描技术及安全防范](运维/Linux系统扫描技术及安全防范/慕课 - Linux系统扫描技术及安全防范.md)
+### Linux
 
-[Nginx免费Https证书生成](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/%E9%A1%B9%E7%9B%AE%E6%9C%8D%E5%8A%A1%E6%90%AD%E5%BB%BA%E5%8F%8A%E9%83%A8%E7%BD%B2/component/Nginx/nginx%E5%85%8D%E8%B4%B9Https%E8%AF%81%E4%B9%A6.md)
+[整理 - Linux](运维/Linux/整理 - Linux.md)
+### Kubernetes
 
-[慕课 - Prometheus + Grafana](https://github.com/AgeFades/AgeFades-Note/tree/master/%E8%BF%90%E7%BB%B4/Prometheus%20%2B%20Grafana)
+[硅谷 - Kubernetes](运维/Kubernetes/硅谷 - Kubernetes.md)
+[黑马 - K8S](运维/Kubernetes/黑马 - K8S.md)
 
-[硅谷 - Docker、Dockerfile](https://github.com/AgeFades/AgeFades-Note/blob/master/%E8%BF%90%E7%BB%B4/%E4%BA%91%E5%8E%9F%E7%94%9F/%E7%A1%85%E8%B0%B7%20-%20Docker.md)
+### 项目服务搭建及部署
+
+#### deploy
+
+[Jar包启动](工作经验积累输出文档/项目服务搭建及部署/deploy/Jar包启动.md)
+[node + dist部署](工作经验积累输出文档/项目服务搭建及部署/deploy/node + dist部署.md)
+[日志配置](工作经验积累输出文档/项目服务搭建及部署/deploy/日志配置.md)
+[shell + nohup部署](工作经验积累输出文档/项目服务搭建及部署/deploy/shell + nohup部署.md)
+
+#### component
+
+[Docker](工作经验积累输出文档/项目服务搭建及部署/component/Docker/Docker.md)
+
+[Gitlab安装](工作经验积累输出文档/项目服务搭建及部署/component/Gitlab/Gitlab安装.md)
+
+[Nacos整合](工作经验积累输出文档/项目服务搭建及部署/component/Nacos/Nacos整合.md)
+[Nacos安装](工作经验积累输出文档/项目服务搭建及部署/component/Nacos/Nacos安装.md)
+
+[Redis安装](工作经验积累输出文档/项目服务搭建及部署/component/Redis/Redis安装.md)
+
+[JDK11安装](工作经验积累输出文档/项目服务搭建及部署/component/JDK/JDK11安装.md)
+
+[Maven安装](工作经验积累输出文档/项目服务搭建及部署/component/Maven/Maven安装.md)
+
+[nginx配置反向代理](工作经验积累输出文档/项目服务搭建及部署/component/Nginx/nginx配置反向代理.md)
+[nginx在docker中访问宿主机](工作经验积累输出文档/项目服务搭建及部署/component/Nginx/nginx在docker中访问宿主机.md)
+[nginx安装](工作经验积累输出文档/项目服务搭建及部署/component/Nginx/nginx安装.md)
+[nginx免费Https证书](工作经验积累输出文档/项目服务搭建及部署/component/Nginx/nginx免费Https证书.md)
+
+[Mysql安装](工作经验积累输出文档/项目服务搭建及部署/component/Mysql/Mysql安装.md)
+
+[Yarn安装](工作经验积累输出文档/项目服务搭建及部署/component/Node/Yarn安装.md)
+[Node安装](工作经验积累输出文档/项目服务搭建及部署/component/Node/Node安装.md)
+
+[Feign集成](工作经验积累输出文档/项目服务搭建及部署/component/OpenFeign/Feign集成.md)
+
+[Git不同项目配置不同账号密码](工作经验积累输出文档/项目服务搭建及部署/component/Git/Git不同项目配置不同账号密码.md)
+[Git拉代码](工作经验积累输出文档/项目服务搭建及部署/component/Git/Git拉代码.md)
+[Git安装](工作经验积累输出文档/项目服务搭建及部署/component/Git/Git安装.md)
+
+
+
+## 工具
+
+[SnowFlake](工具/SnowFlake.md)
+[vscode常用设置](工具/vscode常用设置.md)
+[regex](工具/regex.md)
+[Linux实用命令](工具/Linux实用命令.md)
+[Lombok](工具/Lombok.md)
+[获取本机公网ip](工具/获取本机公网ip.md)
+[Mac scp](工具/Mac scp.md)
+[Awesome Tools](工具/Awesome Tools.md)
+[黑马 - Arthas - 基础](工具/黑马 - Arthas - 基础.md)
+
+### idea
+
+[实时代码模板的使用](工具/idea/实时代码模板的使用.md)
+[Debug技巧](工具/idea/Debug技巧.md)
+[IntelliJ IDEA 推荐设置讲解](工具/idea/IntelliJ IDEA 推荐设置讲解.md)
+[IntelliJ IDEA For Mac 快捷键](工具/idea/IntelliJ IDEA For Mac 快捷键.md)
+[IntelliJ IDEA 常用设置讲解 - 1](工具/idea/IntelliJ IDEA 常用设置讲解 - 1.md)
+[IntelliJ IDEA 配合 Maven 的一些技巧](工具/idea/IntelliJ IDEA 配合 Maven 的一些技巧.md)
+[文件代码模板的使用](工具/idea/文件代码模板的使用.md)
+[Git](工具/Git.md)
+[版本号命名规则](工具/版本号命名规则.md)
+[Tree](工具/Tree.md)
+[黑马 - Arthas - 进阶](工具/黑马 - Arthas - 进阶.md)
+
+
 
 ## 数据库
 
-[达梦相关文档](https://github.com/AgeFades/AgeFades-Note/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/DaMeng/%E8%BE%BE%E6%A2%A6%E7%9B%B8%E5%85%B3%E6%96%87%E6%A1%A3.md)
+### Redis
 
-[Oracle相关文档](https://github.com/AgeFades/AgeFades-Note/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/Oracle/Oracle%20%E7%9B%B8%E5%85%B3%E6%96%87%E6%A1%A3.md)
+[黑马 - Redis](数据库/Redis/黑马 - Redis.md)
+[黑马 - 为接口添加缓存功能](数据库/Redis/黑马 - 为接口添加缓存功能.md)
+[黄康 - Docker 安装 Redis](数据库/Redis/黄康 - Docker 安装 Redis.md)
+[黄康 - Redis 实现分布式锁](数据库/Redis/黄康 - Redis 实现分布式锁.md)
+### MongoDB
 
-[知乎 - MySQL千行笔记](https://github.com/AgeFades/AgeFades-Note/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/%E7%9F%A5%E4%B9%8E%20-%20MySQL%E5%8D%83%E8%A1%8C%E7%AC%94%E8%AE%B0.md)
+[MongoDB - Docker 安装](数据库/MongoDB/MongoDB - Docker 安装.md)
+[慕课 - MongoDB](数据库/MongoDB/慕课 - MongoDB.md)
+[黄康 - Mongo 数据迁移](数据库/MongoDB/黄康 - Mongo 数据迁移.md)
+[黄康 - MongoDB 命令大全](数据库/MongoDB/黄康 - MongoDB 命令大全.md)
+### MySQL
 
-[MySQL时间统计语法](https://github.com/AgeFades/AgeFades-Note/blob/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MySQL/%E7%9F%A5%E4%B9%8E%20-%20MySQL%E5%8D%83%E8%A1%8C%E7%AC%94%E8%AE%B0.md)
+[黄康 - Docker 搭建 MySQL 主从复制](数据库/MySQL/黄康 - Docker 搭建 MySQL 主从复制.md)
+[掘金 - MySQL命令大全](数据库/MySQL/掘金 - MySQL命令大全.md)
+[黄康 - MySQL 时间统计语法](数据库/MySQL/黄康 - MySQL 时间统计语法.md)
+[掘金 - 自顶向下深入剖析MySQL整体架构](数据库/MySQL/掘金 - 自顶向下深入剖析MySQL整体架构.md)
+[博客园 - MySQL之JSON](数据库/MySQL/博客园 - MySQL之JSON.md)
+[掘金 - 索引机制、索引分类、索引使用与管理综述](数据库/MySQL/掘金 - 索引机制、索引分类、索引使用与管理综述.md)
+[黄康 - Docker 安装MySQL](数据库/MySQL/黄康 - Docker 安装MySQL.md)
+[朱晓峰 - MySQL必知必会](数据库/MySQL/朱晓峰 - MySQL必知必会.md)
+[掘金 - 建立索引的正确姿势与使用索引的最佳指南](数据库/MySQL/掘金 - 建立索引的正确姿势与使用索引的最佳指南.md)
+[知乎 - MySQL千行笔记](数据库/MySQL/知乎 - MySQL千行笔记.md)
+[黑马 - MySQL 集群解决方案](数据库/MySQL/黑马 - MySQL 集群解决方案.md)
+[掘金 - 一、二、三、四、五范式、BC范式与反范式详解](数据库/MySQL/掘金 - 一、二、三、四、五范式、BC范式与反范式详解.md)
+[掘金 - 一条SQL语句从诞生至结束的多姿多彩历程](数据库/MySQL/掘金 - 一条SQL语句从诞生至结束的多姿多彩历程.md)
+### Elasticsearch
 
-[MongoDB相关文档](https://github.com/AgeFades/AgeFades-Note/tree/master/%E6%95%B0%E6%8D%AE%E5%BA%93/MongoDB)
+[黄康 - ES 快速开发](数据库/Elasticsearch/黄康 - ES 快速开发.md)
+[中华石杉 - ElasticSearch](数据库/Elasticsearch/中华石杉 - ElasticSearch.md)
+[Spring-Boot整合ELK](数据库/Elasticsearch/Spring-Boot整合ELK.md)
+[黄康 - Docker 安装 ES](数据库/Elasticsearch/黄康 - Docker 安装 ES.md)
+[黑马 - Elastic Stack进阶](数据库/Elasticsearch/黑马 - Elastic Stack进阶.md)
+[黑马 - Elastic Stack入门](数据库/Elasticsearch/黑马 - Elastic Stack入门.md)
 
-[Elasticsearch相关文档](https://github.com/AgeFades/AgeFades-Note/tree/master/%E6%95%B0%E6%8D%AE%E5%BA%93/Elasticsearch)
-
-[Redis相关文档](https://github.com/AgeFades/AgeFades-Note/tree/master/%E6%95%B0%E6%8D%AE%E5%BA%93/Redis)
-
-## 数据结构和算法
-
-[数据结构和算法相关文档、Leetcode刷题](https://github.com/AgeFades/AgeFades-Note/tree/master/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E5%92%8C%E7%AE%97%E6%B3%95)
-
-## Groovy
-
-[Groovy相关文档](https://github.com/AgeFades/AgeFades-Note/tree/master/Groovy)
 
 ## 大数据
 
-[大数据相关文档](https://github.com/AgeFades/AgeFades-Note/tree/master/%E5%A4%A7%E6%95%B0%E6%8D%AE)
+### Shell
 
-## 前端
+[硅谷 - Shell](大数据/Shell/硅谷 - Shell.md)
+### Kafka
 
-[前端相关文档](https://github.com/AgeFades/AgeFades-Note/tree/master/%E5%89%8D%E7%AB%AF)
+[硅谷 - Kafka](大数据/Kafka/硅谷 - Kafka.md)
+### Hadoop
+
+[硅谷 - Hadoop 运行环境搭建](大数据/Hadoop/硅谷 - Hadoop 运行环境搭建.md)
+[硅谷 - 大数据概念](大数据/Hadoop/硅谷 - 大数据概念.md)
+[硅谷 - Hadoop 入门](大数据/Hadoop/硅谷 - Hadoop 入门.md)
+[README](README.md)
+
+
+
+## 数据结构和算法
+
+### Leetcode
+
+#### Algorithm
+
+##### 101-200
+
+[206. 反转链表](数据结构和算法/Leetcode/Algorithm/101-200/206. 反转链表.md)
+##### 1-100
+
+[3. 无重复字符的最大子串](数据结构和算法/Leetcode/Algorithm/1-100/3. 无重复字符的最大子串.md)
+[7. 整数反转](数据结构和算法/Leetcode/Algorithm/1-100/7. 整数反转.md)
+[20. 有效的括号](数据结构和算法/Leetcode/Algorithm/1-100/20. 有效的括号.md)
+[53. 最大子序和](数据结构和算法/Leetcode/Algorithm/1-100/53. 最大子序和.md)
+[13. 罗马数字转整数](数据结构和算法/Leetcode/Algorithm/1-100/13. 罗马数字转整数.md)
+[14. 最长公共前缀](数据结构和算法/Leetcode/Algorithm/1-100/14. 最长公共前缀.md)
+[27. 移除元素](数据结构和算法/Leetcode/Algorithm/1-100/27. 移除元素.md)
+[26. 删除排序数组中的重复项](数据结构和算法/Leetcode/Algorithm/1-100/26. 删除排序数组中的重复项.md)
+[1. 两数之和](数据结构和算法/Leetcode/Algorithm/1-100/1. 两数之和.md)
+[9. 回文数](数据结构和算法/Leetcode/Algorithm/1-100/9. 回文数.md)
+[35. 搜索插入位置](数据结构和算法/Leetcode/Algorithm/1-100/35. 搜索插入位置.md)
+[66. 加一](数据结构和算法/Leetcode/Algorithm/1-100/66. 加一.md)
+[2. 两数相加](数据结构和算法/Leetcode/Algorithm/1-100/2. 两数相加.md)
+[38. 外观数列](数据结构和算法/Leetcode/Algorithm/1-100/38. 外观数列.md)
+[4. 寻找两个正序数组的中位数](数据结构和算法/Leetcode/Algorithm/1-100/4. 寻找两个正序数组的中位数.md)
+[21. 合并两个有序列表](数据结构和算法/Leetcode/Algorithm/1-100/21. 合并两个有序列表.md)
+[58. 最后一个单词的长度](数据结构和算法/Leetcode/Algorithm/1-100/58. 最后一个单词的长度.md)
+[28. 实现strStr()](数据结构和算法/Leetcode/Algorithm/1-100/28. 实现strStr().md)
+#### Sql
+
+[176. 第二高的薪水](数据结构和算法/Leetcode/Sql/176. 第二高的薪水.md)
+[175. 组合两个表](数据结构和算法/Leetcode/Sql/175. 组合两个表.md)
+[177. 第N高的薪水](数据结构和算法/Leetcode/Sql/177. 第N高的薪水.md)
+[178. 分数排名](数据结构和算法/Leetcode/Sql/178. 分数排名.md)
+[硅谷 - 数据结构和算法](数据结构和算法/硅谷 - 数据结构和算法.md)
+
+
 
 ## 踩坑记录
 
-[踩坑记录相关文档](https://github.com/AgeFades/AgeFades-Note/tree/master/%E8%B8%A9%E5%9D%91%E8%AE%B0%E5%BD%95)
+[@Builder问题](踩坑记录/@Builder问题.md)
+[一对多分页问题](踩坑记录/一对多分页问题.md)
+[Maven相关问题](踩坑记录/Maven相关问题.md)
+[Redis问题集锦](踩坑记录/Redis问题集锦.md)
 
-## 联系方式
 
-- QQ：18433216
-- QQ群：764340624
-- 微信：AgeFades
 
+## Groovy
+
+[Gradle(一). Gradle相关概念理解、Groovy基础](Groovy/Gradle(一). Gradle相关概念理解、Groovy基础.md)
+### code
+
+[Groovy文件操作示例](Groovy/code/Groovy文件操作示例.md)
+[Groovy闭包语法示例](Groovy/code/Groovy闭包语法示例.md)
+[Groovy数据结构示例](Groovy/code/Groovy数据结构示例.md)
+[Groovy基础语法示例](Groovy/code/Groovy基础语法示例.md)
+[Gradle(二). Gradle技术探索](Groovy/Gradle(二). Gradle技术探索.md)
+
+
+
+## 设计模式
+
+[韩顺平 - 设计模式](设计模式/韩顺平 - 设计模式.md)
+
+
+
+## 前端
+
+### Ant Design
+
+[黑马 - Ant Design 入门](前端/Ant Design/黑马 - Ant Design 入门.md)
+### React
+
+[黑马 - ReactJS 入门](前端/React/黑马 - ReactJS 入门.md)
+
+
+
+## Go
+
+[Go安装](Go/Go安装.md)

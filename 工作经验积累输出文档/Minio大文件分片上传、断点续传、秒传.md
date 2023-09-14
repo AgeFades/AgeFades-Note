@@ -25,7 +25,7 @@ docker run -d \
   -p 9000:9000 \
   -p 9001:9001 \
   --name minio \
-  -v ~/Documents/Docker/minio:/data \
+  -v ./data:/data \
   -e "MINIO_ROOT_USER=agefades" \
   -e "MINIO_ROOT_PASSWORD=agefades" \
   minio/minio server /data --console-address ":9001"

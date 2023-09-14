@@ -43,9 +43,9 @@ services:
     image: mysql:8.0.20
     restart: always
     ports:
-      - "3306:3306"
+      - "13309:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: -tt!EYuyqfs~
       MYSQL_ROOT_HOST: "%"
     volumes:
       - ./data:/var/lib/mysql
@@ -58,12 +58,6 @@ services:
       --lower_case_table_names=1
       --max_allowed_packet=128M
       --default-time-zone='+8:00'
-    networks:
-      jdy:
-        ipv4_address: 173.18.0.10
-networks:
-  jdy:
-    external: true
 ```
 
 ### 简单部署脚本

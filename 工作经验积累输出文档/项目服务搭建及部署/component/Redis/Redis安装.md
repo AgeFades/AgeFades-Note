@@ -153,7 +153,7 @@ slave-priority 100
 
 # 设置客户端连接后进行任何其他指定前需要使用的密码。
 # 警告：因为 redis 速度相当快，所以在一台比较好的服务器下，一个外部的用户可以在一秒钟进行 150K 次的密码尝试，这意味着你需要指定非常非常强大的密码来防止暴力破解
-# requirepass foobared
+requirepass ts-l!`lVkrNa
 
 # 命令重命名 .
 # 在一个共享环境下可以重命名相对危险的命令。比如把 CONFIG 重名为一个不容易猜测的字符。
@@ -348,17 +348,11 @@ services:
     hostname: redis
     restart: always
     ports:
-      - 6379:6379
+      - 16378:6379
     volumes:
       - ./data:/data
       - ./redis.conf:/redis.conf
     command: redis-server /redis.conf
-    networks:
-      jdy:
-        ipv4_address: 173.18.0.12
-networks:
-  jdy:
-    external: true
 ```
 
 ### 简单部署脚本

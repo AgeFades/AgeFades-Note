@@ -30,7 +30,7 @@
    2. 20230105-100(该时间的被分配到100数据段用户的第一个sql变更文件记录)
    3. 20230105-101(该时间的被分配到100数据段用户的第二个sql变更文件记录)
 2. author必须如实填写操作用户的真实姓名
-3. comments必须填写执行该sql文件的注释以表明其意义
+3. comment必须填写执行该sql文件的注释以表明其意义
 4. 已经被数据库执行过的changeSet严禁修改,每一次执行记录都会用MD5对文件加密存值,用于下次应用启动判断该文件是否被执行过
    1. 所有对已执行过的sql想要回滚或修改,需另外写changeSet进行变更
 5. 实际sql文件存储目录分为 data(对数据的操作)/structure(对库表结构的操作)
@@ -49,7 +49,7 @@ databaseChangeLog:
   - changeSet:
       id: 20230105-100
       author: AgeFades
-      comments: 初始化xx项目库表结构及数据
+      comment: 初始化xx项目库表结构及数据
       changes:
         # sql多的可用文件指定
         - sqlFile:
@@ -194,7 +194,7 @@ databaseChangeLog:
   - changeSet:
       id: 20230105-100
       author: AgeFades
-      comments: 初始化xx项目库表结构及数据
+      comment: 初始化xx项目库表结构及数据
       changes:
         # sql多的可用文件指定
         - sqlFile:
@@ -282,7 +282,7 @@ databaseChangeLog:
   - changeSet:
       id: 20230206-101
       author: AgeFades
-      comments: 初始化xx项目库表结构及数据
+      comment: 初始化xx项目库表结构及数据
       changes:
         # sql多的可用文件指定
         - sqlFile:
