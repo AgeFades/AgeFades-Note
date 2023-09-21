@@ -76,7 +76,7 @@ yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/centos/d
 yum list docker-ce --showduplicates | sort -r
 
 # 选择其中一个安装
-yum install docker-ce-18.06.1.ce -y
+yum install docker-ce-24.0.6-1.el7 -y
 
 # 启动 docker，并设置开机自启
 systemctl start docker

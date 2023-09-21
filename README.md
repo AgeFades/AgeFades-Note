@@ -178,6 +178,10 @@ README中目录是用Java程序根据相对路径生成的，在Typora中都是�
 
 [Fox - ElasticSearch高级查询语法 Query DSL](Java/分布式框架专题/Fox - ElasticSearch高级查询语法Query DSL)
 
+[Fox - ElasticSearch搜索技术深入与聚合查询实战](Java/分布式框架专题/Fox - ElasticSearch搜索技术深入与聚合查询实战)
+
+[Fox - ElasticSearch集群架构实战及其原理剖析](Java/分布式框架专题/Fox - ElasticSearch集群架构实战及其原理剖析)
+
 [Fox - MongoDB复制（副本）集实战及其原理分析](Java/分布式框架专题/Fox - MongoDB复制（副本）集实战及其原理分析.md)
 
 [白起 - RabbitMQ](Java/分布式框架专题/白起 - RabbitMQ.md)
