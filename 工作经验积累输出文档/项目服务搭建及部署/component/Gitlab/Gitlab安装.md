@@ -16,6 +16,9 @@ external_url 'http://117.50.175.156:10080'
 nginx['listen_port'] = 10080
 gitlab_rails['gitlab_shell_ssh_port'] = 10022
 nginx['listen_https'] = false
+postgresql['shared_buffers'] = "128MB"
+postgresql['max_worker_processes'] = 4
+sidekiq['concurrency'] = 15
 ```
 
 ## docker-compose
@@ -71,3 +74,4 @@ sh deploy.sh
 ## 注意
 
 - 按上面的配置，需要开放服务器端口10022，否则ssh免密连接不上
+
