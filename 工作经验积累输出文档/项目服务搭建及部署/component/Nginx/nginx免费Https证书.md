@@ -16,7 +16,7 @@ sudo docker stop nginx
 
 # 给域名生成证书（把 mydomain.com 换成 自己的域名）
 # 我这里操作域名是 dev.admin-api.jdy.iyobee.com
-acme.sh  --issue -d test.gezizm.com --standalone
+acme.sh  --issue -d actiontab.com --standalone
 ```
 
 ![](https://agefades-note.oss-cn-beijing.aliyuncs.com/1623311142217.png)
