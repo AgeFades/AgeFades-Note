@@ -4,9 +4,9 @@
 ## Message 格式
 
     <type>[optional scope]: <description>
-
+    
     [optional body]
-
+    
     [optional footer(s)]
 
 ### type

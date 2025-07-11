@@ -33,7 +33,7 @@
 3. comment必须填写执行该sql文件的注释以表明其意义
 4. 已经被数据库执行过的changeSet严禁修改,每一次执行记录都会用MD5对文件加密存值,用于下次应用启动判断该文件是否被执行过
    1. 所有对已执行过的sql想要回滚或修改,需另外写changeSet进行变更
-5. 实际sql文件存储目录分为 data(对数据的操作)/structure(对库表结构的操作)
+5. 
 6. sql文件命名,为防止绝对路径冲突,在最后加上{该目录下同名文件的数量递增}，举例如下：
    1. db/structure/1.0/alter_user.sql
    2. db/structure/1.0/alter_user_1.sql
